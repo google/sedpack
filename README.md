@@ -1,8 +1,42 @@
-# Sedpack - Scalable and efficient dataset Library for side channel attacks.
+# Sedpack - Scalable and efficient data packing
 
-More to come soon! For now, see https://github.com/google/scaaml.
+Mainly refactored from the [SCAAML](https://github.com/google/scaaml) project.
 
+## Available components
 
-### :warning: Disclaimer :warning:
+- TODO
 
-This is not an officially supported Google product.
+## Install
+
+### Dependencies
+
+To use this library you need to have a working version of [TensorFlow 2.x](https://www.tensorflow.org/install).
+
+### Dataset install
+
+#### Development install
+
+1. Clone the repository: `git clone https://github.com/google/sedpack`
+2. Install dependencies: `python3 -m pip install --require-hashes -r requirements.txt`
+3. Install the package in development mode: `python3 -m pip install --editable .` (short `pip install -e .` or legacy `python setup.py develop`)
+
+### Update dependencies
+
+Make sure to have: `sudo apt install python3 python3-pip python3-venv` and
+activated the virtual environment.
+
+Install requirements: `pip install --require-hashes -r base-tooling-requirements.txt`
+
+Update: `pip-compile requirements.in --generate-hashes --upgrade` and commit requirements.txt.
+
+#### Package install
+
+`pip install sedpack`
+
+### Tutorial
+
+Tutorials available in the docs/tutorials/ directory.
+
+## Disclaimer
+
+This is not an official Google product.
