@@ -35,7 +35,9 @@ Update: `pip-compile requirements.in --generate-hashes --upgrade` and commit req
 
 ### Tutorial
 
-Tutorials available in the docs/tutorials/ directory.
+Tutorials available in the docs/tutorials/ directory.  For a "hello world" see
+`docs/tutorials/quick_start/mnist_save.py` and
+`docs/tutorials/quick_start/mnist_save.py`.
 
 ## Disclaimer
 
