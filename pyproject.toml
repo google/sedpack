@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "sedpack"
+authors = [
+   { name="Elie Bursztein"},
+   { name="Karel Král"},
+   { name="Jean-Michel Picod"},
+]
+description = "General ML dataset package"
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["machine learning", "dataset"]
+license = {text = "Apache License 2.0"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Framework :: Jupyter",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dynamic = ["version"]
+dependencies = [
+    "aiofiles",
+    "asyncstdlib",
+    "flatbuffers",
+    "lz4",
+    "numpy",
+    "perfcounters",
+    "pydantic",
+    "pytest",
+    "pytest-asyncio",
+    "schema",
+    "semver",
+    "tabulate",
+    "tensorflow",
+    "termcolor",
+    "tqdm",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "sedpack.__version__"}
+
+[project.optional-dependencies]
+
+[project.scripts]
+
+[project.urls]
+"Homepage" = "https://github.com/google/sedpack"
+"Bug Tracker" = "https://github.com/google/sedpack"
+
+[tool.setuptools.package-data]
+sedpack = ["py.typed"]
