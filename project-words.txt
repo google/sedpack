@@ -1,1 +1,17 @@
+Elems
+asyncstdlib
+byteswap
+diutils
+fbapi
+flatbuffer
+itemsize
+kwarguments
+ndarray
+pickleable
+savez
 sedpack
+shardfile
+tfdataset
+tfrec
+tobytes
+uoffset
