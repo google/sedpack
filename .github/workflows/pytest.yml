@@ -1,0 +1,53 @@
+name: pytest
+on:
+  push:
+    paths:
+      - '**/*.py'
+      - 'pytest.ini'
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
+
+jobs:
+  unittesting:
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Installing package
+        run: |
+          pip install --require-hashes --no-deps -r requirements.txt
+      - name: Running unit tests
+        run: python -m pytest
+
+  coverage:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Installing package
+        run: |
+          pip install --require-hashes --no-deps -r requirements.txt
+      - name: Install workflow dependencies
+        run: pip install --upgrade pytest coverage
+      - name: Running unit tests with coverage
+        env:
+          DISABLE_AUTOGRAPH: 1
+        run: |
+          coverage run -m pytest
+          coverage xml
+      - name: Upload results
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.xml
+

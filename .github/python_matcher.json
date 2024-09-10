@@ -1,0 +1,46 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "yapf-diff",
+            "pattern": [
+                {
+                    "regexp": "^---\\s*([^\\s]*)\\s*\\(original\\)$",
+                    "file": 1
+                },
+                {
+                    "regexp": "^\\+\\+\\+\\s*([^\\s]*)\\s*\\((.*)\\)$",
+                    "message": 2
+                },
+                {
+                    "regexp": "^@@\\s*-(\\d+),(\\d+)\\s*\\+(\\d+),(\\d+)\\s*@@$",
+                    "line": 1
+                }
+            ]
+        },
+        {
+            "owner": "pylint",
+            "pattern": [
+                {
+                    "regexp": "^([^:]+):(\\d+):(\\d+):\\s*([CEFIRW]\\d{4}):\\s*(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            ]
+        },
+        {
+            "owner": "mypy",
+            "pattern": [
+                {
+                    "regexp": "^([^:]+):(\\d+):\\s*([^:]+):\\s*(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "code": 3,
+                    "message": 4
+                }
+            ]
+        }
+    ]
+}
