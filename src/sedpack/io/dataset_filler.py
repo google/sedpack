@@ -119,10 +119,11 @@ class _DatasetFillerContext:
             dataset_root_path=self._dataset_root_path,
         )
 
-    def write_example(self,
-                      values: ExampleT,
-                      split: SplitT,
-                      custom_metadata: Optional[dict[str, Any]] = None) -> None:
+    def write_example(
+            self,
+            values: ExampleT,
+            split: SplitT,
+            custom_metadata: Optional[dict[str, Any]] = None) -> None:
         """Write an example. Opens a new shard if necessary.
 
         Args:
@@ -152,13 +153,13 @@ class _DatasetFillerContext:
 
         # New metadata
         previous_metadata = current_progress.shard.shard_info.custom_metadata
-        metadata_changed: bool = (custom_metadata and previous_metadata and
-                                  custom_metadata != previous_metadata)
+        metadata_changed: bool = (custom_metadata and previous_metadata
+                                  and custom_metadata != previous_metadata)
 
         # Open a new shard if the current one already contains too many
         # examples.
-        if (current_progress.written_examples >= self._examples_per_shard or
-                metadata_changed):
+        if (current_progress.written_examples >= self._examples_per_shard
+                or metadata_changed):
             # Close the current shard if needed.
             self.close_shard(shard=current_progress.shard, split=split)
             current_progress.shard = self._get_new_shard(split=split)

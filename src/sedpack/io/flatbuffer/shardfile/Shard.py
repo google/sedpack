@@ -4,7 +4,9 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
+
 
 class Shard(object):
     __slots__ = ['_tab']
@@ -20,6 +22,7 @@ class Shard(object):
     def GetRootAsShard(cls, buf, offset=0):
         """This method is deprecated. Please switch to GetRootAs."""
         return cls.GetRootAs(buf, offset)
+
     # Shard
     def Init(self, buf, pos):
         self._tab = flatbuffers.table.Table(buf, pos)
@@ -49,26 +52,35 @@ class Shard(object):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         return o == 0
 
+
 def ShardStart(builder):
     builder.StartObject(1)
+
 
 def Start(builder):
     ShardStart(builder)
 
+
 def ShardAddExamples(builder, examples):
-    builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(examples), 0)
+    builder.PrependUOffsetTRelativeSlot(
+        0, flatbuffers.number_types.UOffsetTFlags.py_type(examples), 0)
+
 
 def AddExamples(builder, examples):
     ShardAddExamples(builder, examples)
 
+
 def ShardStartExamplesVector(builder, numElems):
     return builder.StartVector(4, numElems, 4)
+
 
 def StartExamplesVector(builder, numElems):
     return ShardStartExamplesVector(builder, numElems)
 
+
 def ShardEnd(builder):
     return builder.EndObject()
+
 
 def End(builder):
     return ShardEnd(builder)

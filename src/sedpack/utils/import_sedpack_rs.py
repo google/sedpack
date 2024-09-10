@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def import_sedpack_rs():
     """Try to import the Rust library. If that fails return None. TODO: this
     should return an object which would raise an error when accessing the
