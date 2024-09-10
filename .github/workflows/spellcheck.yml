@@ -1,0 +1,43 @@
+name: spellcheck
+on:
+  push:
+    paths:
+      - '**/*.py'
+      - '**/*.ipynb'
+      - '**/*.md'
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  spellchecking:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+        with:
+          # We need all history to list all changed files.
+          fetch-depth: 0
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "21"
+      - name: Install cspell
+        run: npm install --location=global cspell
+      - name: Run spell checking
+        run: |
+          # Add a problem matcher.
+          echo ::add-matcher::./.github/cspell_matcher.json
+          # Set internal field separator (filenames can have space in them).
+          IFS=$'\n'
+          # Find out which files were changed since main.
+          git diff --name-only origin/main..${{ github.event.after }} | { # Open sub-shell
+            # Spell check all files and remember if some failed.
+            EXIT_CODE=0
+            # Loop over the changed files.
+            while read CHANGED_FILE; do
+              # Run cspell on CHANGED_FILE, do not fail if the file is
+              # ignored or the spell-checking fails.
+              cspell --config ./cspell.json --no-must-find-files "$CHANGED_FILE" || EXIT_CODE=$?
+              echo $EXIT_CODE
+            done ;
+            exit $EXIT_CODE ; # Fail if some check failed.
+          } ;

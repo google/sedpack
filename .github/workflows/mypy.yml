@@ -1,0 +1,27 @@
+name: mypy
+on:
+  push:
+    paths:
+      - '**/*.py'
+      - 'mypy.ini'
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  mypy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Installing package
+        run: |
+          pip install --require-hashes --no-deps -r requirements.txt
+      - name: Register matcher
+        run: echo ::add-matcher::./.github/python_matcher.json
+      - name: Running mypy
+        run: |
+          mkdir -p .mypy_cache
+          mypy --no-color-output --install-types --non-interactive src
