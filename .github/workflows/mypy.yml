@@ -26,4 +26,4 @@ jobs:
         run: |
           mkdir -p .mypy_cache
           stubgen -o mypy_stubs -p flatbuffers
-          python -m mypy --no-color-output --install-types --non-interactive src
+          MYPYPATH=mypy_stubs/ python -m mypy --no-color-output --install-types --non-interactive src
