@@ -272,7 +272,7 @@ class Dataset:
 
         # Full shard file paths.
         shard_paths = [
-            # TODO allow shards consisting of multiple files  # pylint: disable=fixme
+            # TODO allow shards consisting of multiple files
             str(self.path / s.file_infos[0].file_path) for s in shards_list
         ]
 
@@ -306,7 +306,7 @@ class Dataset:
         elif cycle_length is None:
             deterministic = True
 
-        # TODO test: TFRecordDataset takes a list of files (we are passing a  # pylint: disable=fixme
+        # TODO test: TFRecordDataset takes a list of files (we are passing a
         # single file now). Should we batch here for improved performance?
 
         # This is the tricky part, we are using the interleave function to
@@ -588,7 +588,7 @@ class Dataset:
             wrapper_outputs = list(map(_wrapper_func, wrapper_inputs))
         else:
             # Fill writers and collect results.
-            # TODO consider capping the number of processes by CPU count or a  # pylint: disable=fixme
+            # TODO consider capping the number of processes by CPU count or a
             # parameter.
             with Pool(len(custom_arguments)) as pool:
                 wrapper_outputs = list(pool.imap(_wrapper_func,
@@ -610,7 +610,7 @@ class Dataset:
 
         # Check consistency of this dataset.
         if consistency_check:
-            # TODO implement multiprocessing check.  # pylint: disable=fixme
+            # TODO implement multiprocessing check.
             self.check()
 
         # Return user-defined results.

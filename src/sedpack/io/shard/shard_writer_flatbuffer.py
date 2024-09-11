@@ -232,5 +232,5 @@ class ShardWriterFlatBuffer(ShardWriterBase):
     def supported_compressions() -> list[CompressionT]:
         """Return a list of supported compression types.
         """
-        # TODO test this automatically  # pylint: disable=fixme
+        # TODO test this automatically
         return CompressedFile.supported_compressions()
