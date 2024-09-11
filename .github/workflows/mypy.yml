@@ -19,11 +19,11 @@ jobs:
       - name: Installing package
         run: |
           pip install --editable .
-          pip install mypy stubgen
+          pip install mypy
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
         run: |
           mkdir -p .mypy_cache
-          python -m stubgen -o mypy_stubs -p flatbuffers
+          stubgen -o mypy_stubs -p flatbuffers
           python -m mypy --no-color-output --install-types --non-interactive src
