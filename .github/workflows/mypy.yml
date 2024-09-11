@@ -25,4 +25,5 @@ jobs:
       - name: Running mypy
         run: |
           mkdir -p .mypy_cache
+          python -m stubgen -o mypy_stubs -p flatbuffers
           python -m mypy --no-color-output --install-types --non-interactive src
