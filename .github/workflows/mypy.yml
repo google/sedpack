@@ -44,8 +44,10 @@ jobs:
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
+        env:
+          MYPYPATH: mypy_stubs/
         run: |
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
-          stubgen -o mypy_stubs -p flatbuffers
-          MYPYPATH=mypy_stubs/ mypy --no-color-output --install-types --non-interactive src
+          stubgen -o $MYPYPATH -p flatbuffers
+          mypy --no-color-output --install-types --non-interactive src
