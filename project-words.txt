@@ -16,6 +16,7 @@ newbyteorder
 pickleable
 savez
 sedpack
+setaf
 shardfile
 tfdata
 tfdataset
