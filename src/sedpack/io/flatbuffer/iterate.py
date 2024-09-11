@@ -67,7 +67,6 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                     attribute=attribute,
                 )
 
-                # TODO make this copy optional.
                 # Copy otherwise the arrays are immutable and keep the whole
                 # file content from being garbage collected.
                 np_array = np.copy(np_array)

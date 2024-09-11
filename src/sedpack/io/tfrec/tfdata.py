@@ -35,7 +35,6 @@ def bytes_feature(value: Any) -> Any:
 
 def float_feature(value: Any) -> Any:
     """Returns a float_list from a float / double."""
-    # TODO this code likely copies a lot of times, fix
     # Fix shape to 1D
     value = tf.constant([value])  # scalar to list, reshaped anyway
     value = tf.reshape(value, -1)
@@ -48,7 +47,6 @@ def float_feature(value: Any) -> Any:
 
 def int64_feature(value: Any) -> Any:
     """Returns an int64_list from a bool / enum / int / uint."""
-    # TODO this code likely copies a lot of times, fix
     # Fix shape to 1D
     value = tf.constant([value])  # scalar to list, reshaped anyway
     value = tf.reshape(value, -1)
@@ -91,8 +89,6 @@ def get_from_tfrecord(
         tf_features[attribute.name] = tf.io.FixedLenFeature(shape, dtype)
 
     # Define the decoding function
-    # TODO tf.function?
-    # TODO we lose type information by conversion above
     # @tf.function
     def from_tfrecord(tf_record: Any) -> Any:
         rec = tf.io.parse_single_example(tf_record, tf_features)

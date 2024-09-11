@@ -272,7 +272,6 @@ class Dataset:
 
         # Full shard file paths.
         shard_paths = [
-            # TODO allow shards consisting of multiple files
             str(self.path / s.file_infos[0].file_path) for s in shards_list
         ]
 
@@ -305,9 +304,6 @@ class Dataset:
             deterministic = False if cycle_length > 1 else None
         elif cycle_length is None:
             deterministic = True
-
-        # TODO test: TFRecordDataset takes a list of files (we are passing a
-        # single file now). Should we batch here for improved performance?
 
         # This is the tricky part, we are using the interleave function to
         # do the sampling as requested by the user. This is not the
@@ -588,8 +584,6 @@ class Dataset:
             wrapper_outputs = list(map(_wrapper_func, wrapper_inputs))
         else:
             # Fill writers and collect results.
-            # TODO consider capping the number of processes by CPU count or a
-            # parameter.
             with Pool(len(custom_arguments)) as pool:
                 wrapper_outputs = list(pool.imap(_wrapper_func,
                                                  wrapper_inputs))
@@ -610,7 +604,6 @@ class Dataset:
 
         # Check consistency of this dataset.
         if consistency_check:
-            # TODO implement multiprocessing check.
             self.check()
 
         # Return user-defined results.
