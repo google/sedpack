@@ -15,7 +15,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - uses: actions/cache@v4
+      - name: Use cached venv or create it
+        uses: actions/cache@v4
         id: cache-venv  # name for referring later
         with:
           path: ./.venv/  # what we cache: the virtualenv
@@ -30,11 +31,11 @@ jobs:
       # Run tests
       # Note that you have to activate the virtualenv in every step
       # because GitHub actions doesn't preserve the environment
-      - run: . ./.venv/bin/activate
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
         run: |
+          source ./.venv/bin/activate
           mkdir -p .mypy_cache
           stubgen -o mypy_stubs -p flatbuffers
           MYPYPATH=mypy_stubs/ python -m mypy --no-color-output --install-types --non-interactive src
