@@ -3,13 +3,16 @@ MNIST
 SCAAML
 asyncstdlib
 byteswap
+compresslevel
 crossentropy
 diutils
 fbapi
 flatbuffer
+frombuffer
 itemsize
 kwarguments
 ndarray
+newbyteorder
 pickleable
 savez
 sedpack

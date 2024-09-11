@@ -174,7 +174,7 @@ class Collector(threading.Thread):
                  **kwargs: Any) -> None:
         """Take take elements to process from `to_process` queue and put the
         results into `results` (both queues are shared with other threads).
-        When it sees a `StopSentinel` instance it puts it immediatelly into
+        When it sees a `StopSentinel` instance it puts it immediately into
         `results` and stops (consumes at most one `StopSentinel` and returns
         it).
 
@@ -216,4 +216,4 @@ class Collector(threading.Thread):
 
             # Can be blocking, but should be short.
             self._results.put(self.func(element))
-            time.sleep(0.0)  # Giveup GIL.
+            time.sleep(0.0)  # Give up GIL.

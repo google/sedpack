@@ -92,8 +92,8 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
 
           batch_size (int): If `batch_size` is larger than zero we received a
           batch of these attributes. In case when `batch_size == -1` the
-          `np.reshape` autodeduces the dimension. Otherwise we received exactly
-          one value of this attribute.
+          `np.reshape` auto-deduces the dimension. Otherwise we received
+          exactly one value of this attribute.
 
         Returns: the parsed np.ndarray of the correct dtype and shape.
         """
