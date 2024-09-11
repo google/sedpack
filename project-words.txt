@@ -1,4 +1,6 @@
 Elems
+MNIST
+SCAAML
 asyncstdlib
 byteswap
 diutils
@@ -11,7 +13,9 @@ pickleable
 savez
 sedpack
 shardfile
+tfdata
 tfdataset
 tfrec
+tfrecord
 tobytes
 uoffset

@@ -93,7 +93,7 @@ class _DatasetFillerContext:
         # Current shard.
         self._current_shards_progress: dict[SplitT, ShardProgress] = {}
 
-        # Cummulated shard infos.
+        # Cumulated shard infos.
         self._shards_lists: dict[SplitT, ShardsList] = {}
 
     @property

@@ -280,7 +280,7 @@ class Dataset:
 
         Args:
 
-          tf_dataset (tf.data.Dataset): Dataet containing shard paths as
+          tf_dataset (tf.data.Dataset): Dataset containing shard paths as
           strings.
 
           cycle_length (Optional[int]): How many files to read at once.
