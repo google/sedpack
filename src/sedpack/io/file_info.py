@@ -28,7 +28,7 @@ class FileInfo(BaseModel):
 
         hash_checksums (tuple[str]): Control checksums of this shard file. In
         order given by DatasetStructure.hash_checksum_algorithms. As computed
-        by `dataset_lib.io.untils.hash_checksums`.
+        by `dataset_lib.io.utils.hash_checksums`.
     """
     file_path: Path
     hash_checksums: tuple[str, ...] = ()
