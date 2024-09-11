@@ -22,8 +22,8 @@ jobs:
           path: ./.venv/  # what we cache: the virtualenv
           # The cache key depends on requirements.txt
           key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys:
-            | ${{ runner.os }}-venv-
+          restore-keys: |
+            ${{ runner.os }}-venv-
         # Build a virtualenv, but only if it doesn't already exist
         - run: python -m venv ./.venv && . ./.venv/bin/activate && 
                python -m pip install --require-hashes --no-deps -r requirements.txt
