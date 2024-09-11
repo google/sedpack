@@ -23,14 +23,14 @@ jobs:
           key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-venv-
-        # Build a virtualenv, but only if it doesn't already exist
-        - run: python -m venv ./.venv && . ./.venv/bin/activate && 
-               python -m pip install --require-hashes --no-deps -r requirements.txt
-          if: steps.cache-venv.outputs.cache-hit != 'true'
-        # Run tests
-        # Note that you have to activate the virtualenv in every step
-        # because GitHub actions doesn't preserve the environment
-        - run: . ./.venv/bin/activate
+      # Build a virtualenv, but only if it doesn't already exist
+      - run: python -m venv ./.venv && . ./.venv/bin/activate && 
+             python -m pip install --require-hashes --no-deps -r requirements.txt
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+      # Run tests
+      # Note that you have to activate the virtualenv in every step
+      # because GitHub actions doesn't preserve the environment
+      - run: . ./.venv/bin/activate
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
