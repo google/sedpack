@@ -50,7 +50,7 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
             for attribute_id, attribute in enumerate(
                     self.dataset_structure.saved_data_description):
                 # No-copy fast retrieval, represented as bytes.
-                # TODO this is a manually written method which uses the fact
+                # This is a manually written method which uses the fact
                 # that we know what dtype to decode. It might be cleaner to do
                 # this using a union. There are two caveats:
                 # - FlatBuffers only support a subset of types we care about
@@ -67,7 +67,7 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                     attribute=attribute,
                 )
 
-                # TODO make this copy optional.
+                # TODO make this copy optional.  # pylint: disable=fixme
                 # Copy otherwise the arrays are immutable and keep the whole
                 # file content from being garbage collected.
                 np_array = np.copy(np_array)
