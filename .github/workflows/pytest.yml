@@ -44,9 +44,10 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
-      - name: Installing test requirements
+      - name: Installing test requirements and sedpack
         run: |
           pip install -r test_requirements.txt
+          pip install .
       - name: Running unit tests
         run: |
           python -m pytest
@@ -84,9 +85,10 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
-      - name: Installing test requirements
+      - name: Installing test requirements and sedpack
         run: |
           pip install -r test_requirements.txt
+          pip install .
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage
       - name: Running unit tests with coverage
