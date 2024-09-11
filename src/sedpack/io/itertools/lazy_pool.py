@@ -28,7 +28,7 @@ V = TypeVar("V")
 
 
 class StopSentinel:  # pylint: disable=too-few-public-methods
-    """Nothing more is comming.
+    """Nothing more is coming.
     """
 
 
@@ -138,7 +138,7 @@ class LazyPool:
         for i, element in enumerate(iterator_with_stops):
             self._to_process.put(element)
             # One is read and another one should start processing
-            # immediatelly.
+            # immediately.
             if i > 2 * self._threads:
                 break
 
@@ -182,7 +182,7 @@ class Collector(threading.Thread):
 
           func (Callable[[U], V]): The function to be applied.
 
-          to_process (queue.Queue[U | StopSentinel]): Incomming items.
+          to_process (queue.Queue[U | StopSentinel]): Incoming items.
 
           results (queue.Queue[V | StopSentinel]): Return back the results.
 
@@ -202,7 +202,7 @@ class Collector(threading.Thread):
             try:
                 element = self._to_process.get()
             except queue.Empty:
-                time.sleep(0.0)  # Giveup GIL.
+                time.sleep(0.0)  # Give up GIL.
                 continue
 
             if isinstance(element, StopSentinel):

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Allow importing sedpack_rs without an ImportError being raised (useful for
-unittests where we want to run a test only if Rust is present but cannot handle
-an error.
+unit-tests where we want to run a test only if Rust is present but cannot
+handle an error.
 """
 
 
