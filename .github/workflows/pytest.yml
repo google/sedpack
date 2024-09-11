@@ -98,7 +98,7 @@ jobs:
           DISABLE_AUTOGRAPH: 1
         run: |
           coverage run -m pytest
-          coverage xml
+          coverage xml -i
       - name: Upload results
         uses: coverallsapp/github-action@v2
         with:
