@@ -22,7 +22,7 @@ jobs:
           cache: 'pip'
       - name: Installing package
         run: |
-          pip install --require-hashes --no-deps -r requirements.txt
+          pip install --editable .
       - name: Running unit tests
         run: python -m pytest
 
@@ -37,7 +37,7 @@ jobs:
           cache: 'pip'
       - name: Installing package
         run: |
-          pip install --require-hashes --no-deps -r requirements.txt
+          pip install --editable .
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage
       - name: Running unit tests with coverage
