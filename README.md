@@ -4,7 +4,7 @@ Mainly refactored from the [SCAAML](https://github.com/google/scaaml) project.
 
 ## Available components
 
-- TODO
+-  TODO
 
 ## Install
 
@@ -17,10 +17,10 @@ To use this library you need to have a working version of [TensorFlow
 
 #### Development install
 
-1. Clone the repository: `git clone https://github.com/google/sedpack`
-2. Install dependencies: `python3 -m pip install --require-hashes -r requirements.txt`
-3. Install the package in development mode: `python3 -m pip install --editable
-   .` (short `pip install -e .` or legacy `python setup.py develop`)
+1.  Clone the repository: `git clone https://github.com/google/sedpack`
+2.  Install dependencies: `python3 -m pip install --require-hashes -r requirements.txt`
+3.  Install the package in development mode: `python3 -m pip install --editable
+    .` (short `pip install -e .` or legacy `python setup.py develop`)
 
 ### Update dependencies
 
