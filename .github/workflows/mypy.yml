@@ -47,7 +47,7 @@ jobs:
           MYPYPATH: mypy_stubs/
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
-          echo "PYTHONPATH=/src:$PYTHONPATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
           stubgen -o $MYPYPATH -p flatbuffers -p lz4
