@@ -340,18 +340,18 @@ class Dataset:
 
         return tf_dataset
 
-    def as_tfdataset(self,  # pylint: disable=too-many-arguments
-                     split: SplitT,
-                     process_record: Optional[Callable[[ExampleT], T]] = None,
-                     shards: Optional[int] = None,
-                     shard_filter: Optional[Callable[[ShardInfo],
-                                                     bool]] = None,
-                     repeat: bool = True,
-                     batch_size: int = 32,
-                     prefetch: int = 2,
-                     file_parallelism: Optional[int] = os.cpu_count(),
-                     parallelism: Optional[int] = os.cpu_count(),
-                     shuffle: int = 1_000) -> TFDatasetT:
+    def as_tfdataset(  # pylint: disable=too-many-arguments
+            self,
+            split: SplitT,
+            process_record: Optional[Callable[[ExampleT], T]] = None,
+            shards: Optional[int] = None,
+            shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+            repeat: bool = True,
+            batch_size: int = 32,
+            prefetch: int = 2,
+            file_parallelism: Optional[int] = os.cpu_count(),
+            parallelism: Optional[int] = os.cpu_count(),
+            shuffle: int = 1_000) -> TFDatasetT:
         """"Dataset as tfdataset
 
         Args:
@@ -519,13 +519,13 @@ class Dataset:
             return relative_path
         return path / relative_path
 
-    def write_multiprocessing(self,  # pylint: disable=too-many-arguments
-                              feed_writer: Callable[..., Any],
-                              custom_arguments: List[Any],
-                              custom_kwarguments: Optional[List[Dict[
-                                  str, Any]]] = None,
-                              consistency_check: bool = True,
-                              single_process: bool = False) -> List[Any]:
+    def write_multiprocessing(  # pylint: disable=too-many-arguments
+            self,
+            feed_writer: Callable[..., Any],
+            custom_arguments: List[Any],
+            custom_kwarguments: Optional[List[Dict[str, Any]]] = None,
+            consistency_check: bool = True,
+            single_process: bool = False) -> List[Any]:
         """Multiprocessing write support. Spawn `len(custom_arguments)`
         processes to write examples in parallel. Note that all computation is
         run on the CPU (using `tf.device("CPU")`) in order to prevent each
