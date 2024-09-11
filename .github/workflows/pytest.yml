@@ -44,6 +44,7 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Installing test requirements and sedpack
         run: |
           pip install -r test_requirements.txt
@@ -85,6 +86,7 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Installing test requirements and sedpack
         run: |
           pip install -r test_requirements.txt
