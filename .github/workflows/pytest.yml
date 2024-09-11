@@ -23,6 +23,7 @@ jobs:
       - name: Installing package
         run: |
           pip install --require-hashes --no-deps -r requirements.txt
+          pip install --require-hashes --no-deps -r test_requirements.txt
       - name: Running unit tests
         run: python -m pytest
 
@@ -38,6 +39,7 @@ jobs:
       - name: Installing package
         run: |
           pip install --require-hashes --no-deps -r requirements.txt
+          pip install --require-hashes --no-deps -r test_requirements.txt
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage
       - name: Running unit tests with coverage
