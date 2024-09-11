@@ -49,5 +49,5 @@ jobs:
         run: |
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
-          stubgen -o $MYPYPATH -p flatbuffers
+          stubgen -o $MYPYPATH -p flatbuffers -p lz4
           mypy --no-color-output --install-types --non-interactive src
