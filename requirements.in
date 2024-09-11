@@ -1,0 +1,15 @@
+aiofiles
+asyncstdlib
+flatbuffers
+lz4
+numpy
+perfcounters
+pydantic
+pytest
+pytest-asyncio
+schema
+semver
+tabulate
+tensorflow
+termcolor
+tqdm

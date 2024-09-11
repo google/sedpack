@@ -28,7 +28,7 @@ class FileInfo(BaseModel):
 
         hash_checksums (tuple[str]): Control checksums of this shard file. In
         order given by DatasetStructure.hash_checksum_algorithms. As computed
-        by `dataset_lib.io.untils.hash_checksums`.
+        by `dataset_lib.io.utils.hash_checksums`.
     """
     file_path: Path
     hash_checksums: tuple[str, ...] = ()
@@ -36,6 +36,18 @@ class FileInfo(BaseModel):
     @field_validator("file_path")
     @classmethod
     def no_directory_traversal(cls, v: Path) -> Path:
+        """Make sure there is no directory traversal.
+
+        Args:
+
+          cls: A validator for BaseModel needs to be a classmethod.
+
+          v (Path): The path to be checked.
+
+        Return: the original path `v`.
+
+        Raises: ValueError in case `v` contains "..".
+        """
         if ".." in v.parts:
             raise ValueError("A .. is present in the path which could allow "
                              "directory traversal above `dataset_root_path`.")

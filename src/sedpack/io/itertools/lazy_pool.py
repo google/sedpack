@@ -27,10 +27,9 @@ U = TypeVar("U")
 V = TypeVar("V")
 
 
-class StopSentinel:
-    """Nothing more is comming.
+class StopSentinel:  # pylint: disable=too-few-public-methods
+    """Nothing more is coming.
     """
-    pass
 
 
 class LazyPool:
@@ -82,11 +81,10 @@ class LazyPool:
         # Stop threads if needed.
         if self._to_process is None:
             return
-        else:
-            # Send stop to all threads.
-            for _ in range(self._threads):
-                self._to_process.put(StopSentinel())
-            self._to_process = None
+        # Send stop to all threads.
+        for _ in range(self._threads):
+            self._to_process.put(StopSentinel())
+        self._to_process = None
 
     def __exit__(self, exc_type: Type[BaseException] | None,
                  exc: BaseException | None,
@@ -140,7 +138,7 @@ class LazyPool:
         for i, element in enumerate(iterator_with_stops):
             self._to_process.put(element)
             # One is read and another one should start processing
-            # immediatelly.
+            # immediately.
             if i > 2 * self._threads:
                 break
 
@@ -176,7 +174,7 @@ class Collector(threading.Thread):
                  **kwargs: Any) -> None:
         """Take take elements to process from `to_process` queue and put the
         results into `results` (both queues are shared with other threads).
-        When it sees a `StopSentinel` instance it puts it immediatelly into
+        When it sees a `StopSentinel` instance it puts it immediately into
         `results` and stops (consumes at most one `StopSentinel` and returns
         it).
 
@@ -184,7 +182,7 @@ class Collector(threading.Thread):
 
           func (Callable[[U], V]): The function to be applied.
 
-          to_process (queue.Queue[U | StopSentinel]): Incomming items.
+          to_process (queue.Queue[U | StopSentinel]): Incoming items.
 
           results (queue.Queue[V | StopSentinel]): Return back the results.
 
@@ -204,7 +202,7 @@ class Collector(threading.Thread):
             try:
                 element = self._to_process.get()
             except queue.Empty:
-                time.sleep(0.0)  # Giveup GIL.
+                time.sleep(0.0)  # Give up GIL.
                 continue
 
             if isinstance(element, StopSentinel):
@@ -218,4 +216,4 @@ class Collector(threading.Thread):
 
             # Can be blocking, but should be short.
             self._results.put(self.func(element))
-            time.sleep(0.0)  # Giveup GIL.
+            time.sleep(0.0)  # Give up GIL.

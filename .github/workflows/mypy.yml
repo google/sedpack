@@ -16,12 +16,39 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-      - name: Installing package
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
         run: |
-          pip install --require-hashes --no-deps -r requirements.txt
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Build a virtualenv, but only if it doesn't already exist
+      - name: Populate pip cache
+        run: pip install --require-hashes --no-deps -r requirements.txt
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
+        env:
+          MYPYPATH: mypy_stubs/
+        # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
+          pip install -r test_requirements.txt
           mkdir -p .mypy_cache
+          stubgen -o $MYPYPATH -p flatbuffers -p lz4
           mypy --no-color-output --install-types --non-interactive src

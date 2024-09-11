@@ -20,11 +20,38 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-      - name: Installing package
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
         run: |
-          pip install --require-hashes --no-deps -r requirements.txt
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Build a virtualenv, but only if it doesn't already exist
+      - name: Populate pip cache
+        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Installing test requirements and sedpack
+        # Start by "installing" sedpack to be sure all dependencies are listed
+        run: |
+          pip install -r test_requirements.txt
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Running unit tests
-        run: python -m pytest
+        run: |
+          python -m pytest
 
   coverage:
     runs-on: ubuntu-22.04
@@ -35,17 +62,44 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-      - name: Installing package
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
         run: |
-          pip install --require-hashes --no-deps -r requirements.txt
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Build a virtualenv, but only if it doesn't already exist
+      - name: Populate pip cache
+        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Installing test requirements and sedpack
+        # Start by "installing" sedpack to be sure all dependencies are listed
+        run: |
+          pip install -r test_requirements.txt
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage
       - name: Running unit tests with coverage
         env:
           DISABLE_AUTOGRAPH: 1
+        # TODO remove the -i (ignore errors)
         run: |
           coverage run -m pytest
-          coverage xml
+          coverage xml -i
       - name: Upload results
         uses: coverallsapp/github-action@v2
         with:

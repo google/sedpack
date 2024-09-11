@@ -60,7 +60,8 @@ class ShardWriterNP(ShardWriterBase):
         # Just buffer all values.
         if not self._buffer:
             self._buffer = {
-                name: [np.copy(value)] for name, value in values.items()
+                name: [np.copy(value)]
+                for name, value in values.items()
             }
         else:
             for name, value in values.items():
@@ -94,5 +95,4 @@ class ShardWriterNP(ShardWriterBase):
     def supported_compressions() -> list[CompressionT]:
         """Return a list of supported compression types.
         """
-        # TODO test this automatically
         return ["ZIP", ""]

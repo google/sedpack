@@ -23,7 +23,7 @@ e() {
 # Files we want to check for copyright
 EXTENSIONS="py\|sh"
 
-EXCLUDE_FILES="scaaml/capture/scope/ps6424e\.py"
+EXCLUDE_FILES="src/sedpack/io/flatbuffer/shardfile/*\.py"
 
 for file in $(git ls-files | \
   grep -e '\.\('"${EXTENSIONS}"'\)$' | \

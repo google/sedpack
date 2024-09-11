@@ -33,6 +33,7 @@ def test_compress_gzip_write(tmpdir: str | Path) -> None:
     with CompressedFile("GZIP").open(file_name, "rb") as f:
         assert f.read() == payload
 
+
 def test_compress_gzip_read(tmpdir: str | Path) -> None:
     file_name = tmpdir / "compressed_file"
     payload = bytes(x % 13 for x in range(10 * (1024**2)))  # 10MB

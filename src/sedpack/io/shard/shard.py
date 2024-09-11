@@ -80,7 +80,6 @@ class Shard():
     def _get_full_path(self) -> Path:
         """Return full path to the shard file.
         """
-        # TODO support saving shards into multiple files.
         return self._dataset_path / self.shard_info.file_infos[0].file_path
 
     def _compute_file_hash_checksums(self) -> str:

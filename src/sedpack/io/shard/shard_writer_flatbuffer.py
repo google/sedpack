@@ -82,7 +82,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             fbapi_Attribute.AttributeStart(self._builder)
             fbapi_Attribute.AttributeAddAttributeBytes(self._builder,
                                                        attribute_bytes)
-            saved_attributes.append(fbapi_Attribute.AttributeEnd(self._builder))
+            saved_attributes.append(fbapi_Attribute.AttributeEnd(
+                self._builder))
 
         # Save attributes vector.
         fbapi_Example.ExampleStartAttributesVector(self._builder,
@@ -205,7 +206,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             return
 
         # Save examples vector.
-        fbapi_Shard.ShardStartExamplesVector(self._builder, len(self._examples))
+        fbapi_Shard.ShardStartExamplesVector(self._builder,
+                                             len(self._examples))
         for offset in reversed(self._examples):
             self._builder.PrependUOffsetTRelative(offset)
         examples_vector_offset = self._builder.EndVector()
@@ -230,5 +232,4 @@ class ShardWriterFlatBuffer(ShardWriterBase):
     def supported_compressions() -> list[CompressionT]:
         """Return a list of supported compression types.
         """
-        # TODO test this automatically
         return CompressedFile.supported_compressions()

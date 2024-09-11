@@ -16,10 +16,11 @@
 
 import bz2
 import gzip
-import lz4.frame
 import lzma
 from pathlib import Path
 from typing import IO
+
+import lz4.frame
 
 from sedpack.io.types import CompressionT
 

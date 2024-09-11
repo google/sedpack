@@ -171,14 +171,20 @@ class Dataset:
 
     @property
     def metadata(self) -> Metadata:
+        """Return the metadata of this dataset.
+        """
         return self._dataset_info.metadata
 
     @metadata.setter
     def metadata(self, value: Metadata) -> None:
+        """Set the metadata of this dataset.
+        """
         self._dataset_info.metadata = value
 
     @property
     def dataset_structure(self) -> DatasetStructure:
+        """Return the structure of this dataset.
+        """
         return self._dataset_info.dataset_structure
 
     @dataset_structure.setter
@@ -246,7 +252,8 @@ class Dataset:
             shards_list = list(filter(shard_filter, shards_list))
 
             kept_metadata: set[str] = {
-                str(s.custom_metadata) for s in shards_list
+                str(s.custom_metadata)
+                for s in shards_list
             }
             self._logger.info(
                 "Filtered shards with custom metadata: %s from split: %s",
@@ -265,7 +272,6 @@ class Dataset:
 
         # Full shard file paths.
         shard_paths = [
-            # TODO allow shards consisting of multiple files
             str(self.path / s.file_infos[0].file_path) for s in shards_list
         ]
 
@@ -279,7 +285,7 @@ class Dataset:
 
         Args:
 
-          tf_dataset (tf.data.Dataset): Dataet containing shard paths as
+          tf_dataset (tf.data.Dataset): Dataset containing shard paths as
           strings.
 
           cycle_length (Optional[int]): How many files to read at once.
@@ -298,9 +304,6 @@ class Dataset:
             deterministic = False if cycle_length > 1 else None
         elif cycle_length is None:
             deterministic = True
-
-        # TODO test: TFRecordDataset takes a list of files (we are passing a
-        # single file now). Should we batch here for improved performance?
 
         # This is the tricky part, we are using the interleave function to
         # do the sampling as requested by the user. This is not the
@@ -333,17 +336,18 @@ class Dataset:
 
         return tf_dataset
 
-    def as_tfdataset(self,
-                     split: SplitT,
-                     process_record: Optional[Callable[[ExampleT], T]] = None,
-                     shards: Optional[int] = None,
-                     shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
-                     repeat: bool = True,
-                     batch_size: int = 32,
-                     prefetch: int = 2,
-                     file_parallelism: Optional[int] = os.cpu_count(),
-                     parallelism: Optional[int] = os.cpu_count(),
-                     shuffle: int = 1_000) -> TFDatasetT:
+    def as_tfdataset(  # pylint: disable=too-many-arguments
+            self,
+            split: SplitT,
+            process_record: Optional[Callable[[ExampleT], T]] = None,
+            shards: Optional[int] = None,
+            shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+            repeat: bool = True,
+            batch_size: int = 32,
+            prefetch: int = 2,
+            file_parallelism: Optional[int] = os.cpu_count(),
+            parallelism: Optional[int] = os.cpu_count(),
+            shuffle: int = 1_000) -> TFDatasetT:
         """"Dataset as tfdataset
 
         Args:
@@ -509,16 +513,15 @@ class Dataset:
         relative_path: Path = Path("dataset_info.json")
         if relative:
             return relative_path
-        else:
-            return path / relative_path
+        return path / relative_path
 
-    def write_multiprocessing(self,
-                              feed_writer: Callable[..., Any],
-                              custom_arguments: List[Any],
-                              custom_kwarguments: Optional[List[Dict[
-                                  str, Any]]] = None,
-                              consistency_check: bool = True,
-                              single_process: bool = False) -> List[Any]:
+    def write_multiprocessing(  # pylint: disable=too-many-arguments
+            self,
+            feed_writer: Callable[..., Any],
+            custom_arguments: List[Any],
+            custom_kwarguments: Optional[List[Dict[str, Any]]] = None,
+            consistency_check: bool = True,
+            single_process: bool = False) -> List[Any]:
         """Multiprocessing write support. Spawn `len(custom_arguments)`
         processes to write examples in parallel. Note that all computation is
         run on the CPU (using `tf.device("CPU")`) in order to prevent each
@@ -581,10 +584,9 @@ class Dataset:
             wrapper_outputs = list(map(_wrapper_func, wrapper_inputs))
         else:
             # Fill writers and collect results.
-            # TODO consider capping the number of processes by CPU count or a
-            # parameter.
             with Pool(len(custom_arguments)) as pool:
-                wrapper_outputs = list(pool.imap(_wrapper_func, wrapper_inputs))
+                wrapper_outputs = list(pool.imap(_wrapper_func,
+                                                 wrapper_inputs))
 
         # Retrieve filled dataset_fillers and feed_writer results.
         dataset_fillers = [
@@ -602,7 +604,6 @@ class Dataset:
 
         # Check consistency of this dataset.
         if consistency_check:
-            # TODO implement multiprocessing check.
             self.check()
 
         # Return user-defined results.
@@ -623,7 +624,7 @@ class Dataset:
         """
         return DatasetFiller(self)
 
-    async def as_numpy_iterator_async(
+    async def as_numpy_iterator_async(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
@@ -711,12 +712,13 @@ class Dataset:
 
         # Process each record if requested.
         if process_record:
-            example_iterator = asyncstdlib.map(process_record, example_iterator)
+            example_iterator = asyncstdlib.map(process_record,
+                                               example_iterator)
 
         async for example in example_iterator:
             yield example
 
-    def _as_numpy_common(
+    def _as_numpy_common(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         shards: Optional[int] = None,
@@ -765,7 +767,7 @@ class Dataset:
                                                   buffer_size=len(shard_paths))
         return shard_paths_iterator
 
-    def as_numpy_iterator_concurrent(
+    def as_numpy_iterator_concurrent(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
@@ -868,7 +870,7 @@ class Dataset:
                             itertools.islice(shard_paths_iterator,
                                              file_parallelism))
 
-    def as_numpy_iterator(
+    def as_numpy_iterator(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,

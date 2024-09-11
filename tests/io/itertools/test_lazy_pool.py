@@ -53,8 +53,9 @@ def test_two_functions() -> None:
 
         result: set[str] = set(  # type: ignore[no-redef]
             pool.imap_unordered(g, range(10)))
-        assert result == set(f"{i} is a number" for i in range(10)
-                         )  # type: ignore[comparison-overlap]
+        assert result == set(
+            f"{i} is a number"
+            for i in range(10))  # type: ignore[comparison-overlap]
 
 
 def test_break_from_loop_break_and_iterate_again() -> None:

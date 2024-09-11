@@ -24,7 +24,7 @@ from sedpack.io import Dataset
 from sedpack.io import Metadata, DatasetStructure, Attribute
 from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
 
-pytest_plugins = ("pytest_asyncio",)
+pytest_plugins = ("pytest_asyncio", )
 
 
 async def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
