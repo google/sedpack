@@ -21,7 +21,8 @@ from typing import Iterable, Callable
 
 import numpy as np
 
-import sedpack_rs
+# This class makes no sense without being able to import sedpack_rs.
+import sedpack_rs  # pylint: disable=import-error
 
 from sedpack.io.flatbuffer.iterate import IterateShardFlatBuffer
 from sedpack.io.metadata import DatasetStructure
@@ -75,7 +76,7 @@ class IterateShardFlatBufferRs(IterateShardBase[T]):
         """Iterate a shard.
         """
         shard_content: dict[str, np.ndarray] = self.get_content(file_path)
-        num_examples: int = next(iter(shard_content.values())).shape[0]
+        num_examples: int = next(iter(shard_content.values())).shape[0]  # pylint: disable=stop-iteration-return
         for i in range(num_examples):
             yield {name: value[i] for name, value in shard_content.items()}
 
