@@ -25,7 +25,7 @@ from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT
-from sedpack.io.utils import identity
+from sedpack.io.utils import func_or_identity
 
 
 class IterateShardTFRec(IterateShardBase[T]):
@@ -83,10 +83,7 @@ class IterateShardTFRec(IterateShardBase[T]):
         Returns a list of examples present in the shard identified by the path
         where a `process_record` function has been applied (if not None).
         """
-        if self.process_record:
-            process_record = self.process_record
-        else:
-            process_record = identity
+        process_record = func_or_identity(self.process_record)
 
         return [
             process_record(example)

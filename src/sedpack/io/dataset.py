@@ -171,14 +171,20 @@ class Dataset:
 
     @property
     def metadata(self) -> Metadata:
+        """Return the metadata of this dataset.
+        """
         return self._dataset_info.metadata
 
     @metadata.setter
     def metadata(self, value: Metadata) -> None:
+        """Set the metadata of this dataset.
+        """
         self._dataset_info.metadata = value
 
     @property
     def dataset_structure(self) -> DatasetStructure:
+        """Return the structure of this dataset.
+        """
         return self._dataset_info.dataset_structure
 
     @dataset_structure.setter
@@ -334,7 +340,7 @@ class Dataset:
 
         return tf_dataset
 
-    def as_tfdataset(self,
+    def as_tfdataset(self,  # pylint: disable=too-many-arguments
                      split: SplitT,
                      process_record: Optional[Callable[[ExampleT], T]] = None,
                      shards: Optional[int] = None,
@@ -511,10 +517,9 @@ class Dataset:
         relative_path: Path = Path("dataset_info.json")
         if relative:
             return relative_path
-        else:
-            return path / relative_path
+        return path / relative_path
 
-    def write_multiprocessing(self,
+    def write_multiprocessing(self,  # pylint: disable=too-many-arguments
                               feed_writer: Callable[..., Any],
                               custom_arguments: List[Any],
                               custom_kwarguments: Optional[List[Dict[
@@ -626,7 +631,7 @@ class Dataset:
         """
         return DatasetFiller(self)
 
-    async def as_numpy_iterator_async(
+    async def as_numpy_iterator_async(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
@@ -720,7 +725,7 @@ class Dataset:
         async for example in example_iterator:
             yield example
 
-    def _as_numpy_common(
+    def _as_numpy_common(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         shards: Optional[int] = None,
@@ -769,7 +774,7 @@ class Dataset:
                                                   buffer_size=len(shard_paths))
         return shard_paths_iterator
 
-    def as_numpy_iterator_concurrent(
+    def as_numpy_iterator_concurrent(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
@@ -872,7 +877,7 @@ class Dataset:
                             itertools.islice(shard_paths_iterator,
                                              file_parallelism))
 
-    def as_numpy_iterator(
+    def as_numpy_iterator(  # pylint: disable=too-many-arguments
         self,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,

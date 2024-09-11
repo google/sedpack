@@ -16,7 +16,7 @@
 import hashlib
 from pathlib import Path
 import time
-from typing import TypeVar
+from typing import Callable, TypeVar
 import uuid
 
 from sedpack.io.file_info import FileInfo
@@ -103,3 +103,11 @@ def identity(x: T) -> T:
     unnecessary-lambda-assignment.
     """
     return x
+
+
+def func_or_identity(f: Callable | None) -> Callable:
+    """Return the function or an identity in case the argument is None.
+    """
+    if f is None:
+        return identity
+    return f

@@ -16,6 +16,8 @@
 
 # namespace: shard_writer_flatbuffer_test_schema
 
+# pylint: skip-file
+
 import flatbuffers
 from flatbuffers.compat import import_numpy
 

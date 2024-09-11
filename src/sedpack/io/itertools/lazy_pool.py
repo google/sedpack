@@ -27,10 +27,9 @@ U = TypeVar("U")
 V = TypeVar("V")
 
 
-class StopSentinel:
+class StopSentinel:  # pylint: disable=too-few-public-methods
     """Nothing more is comming.
     """
-    pass
 
 
 class LazyPool:
@@ -82,11 +81,10 @@ class LazyPool:
         # Stop threads if needed.
         if self._to_process is None:
             return
-        else:
-            # Send stop to all threads.
-            for _ in range(self._threads):
-                self._to_process.put(StopSentinel())
-            self._to_process = None
+        # Send stop to all threads.
+        for _ in range(self._threads):
+            self._to_process.put(StopSentinel())
+        self._to_process = None
 
     def __exit__(self, exc_type: Type[BaseException] | None,
                  exc: BaseException | None,

@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Allow importing sedpack_rs without an ImportError being raised (useful for
+unittests where we want to run a test only if Rust is present but cannot handle
+an error.
+"""
 
 
 def import_sedpack_rs():
@@ -19,7 +23,7 @@ def import_sedpack_rs():
     result.
     """
     try:
-        import sedpack_rs
+        import sedpack_rs  # pylint: disable=import-outside-toplevel
         return sedpack_rs
     except ImportError:
         return None

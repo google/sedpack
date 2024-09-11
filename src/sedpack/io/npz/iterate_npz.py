@@ -25,7 +25,7 @@ import numpy as np
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.types import AttributeValueT, ExampleT
-from sedpack.io.utils import identity
+from sedpack.io.utils import func_or_identity
 
 
 class IterateShardNP(IterateShardBase[T]):
@@ -67,10 +67,7 @@ class IterateShardNP(IterateShardBase[T]):
             yield {name: value[i] for name, value in shard_content.items()}
 
     def process_and_list(self, shard_file: Path) -> list[T]:
-        if self.process_record:
-            process_record = self.process_record
-        else:
-            process_record = identity
+        process_record = func_or_identity(self.process_record)
 
         return [
             process_record(example)

@@ -13,7 +13,7 @@
 # limitations under the License.
 """Metadata of a dataset."""
 
-from typing import Any, Dict, List, Tuple  # Needed up to 3.8
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,7 +36,7 @@ class Metadata(BaseModel):
         download_from (str): Download URL for where this data has been
         downloaded. Details TBD when download API is decided.
 
-        custom_metadata (Dict[str, Any]): Custom metadata. Needs to be
+        custom_metadata (dict[str, Any]): Custom metadata. Needs to be
         serializable as JSON.
 
         sedpack_version (str): Version of the dataset library used to
@@ -46,7 +46,7 @@ class Metadata(BaseModel):
     dataset_license: str = "https://creativecommons.org/licenses/by/4.0/"
     dataset_version: str = "1.0.0"
     download_from: str = ""
-    custom_metadata: Dict[str, Any] = Field(default_factory=dict)
+    custom_metadata: dict[str, Any] = Field(default_factory=dict)
     sedpack_version: str = sedpack.__version__
 
 
@@ -63,21 +63,35 @@ class Attribute(BaseModel):
         arbitrary length file contents (e.g., JPEG files provide much better
         compression than generic compression algorithms).
 
-        shape (Tuple[int, ...]): Shape of the saved data. Empty tuple stands
+        shape (tuple[int, ...]): Shape of the saved data. Empty tuple stands
         for an unknown shape but then `dtype` must be "bytes". Only strictly
         positive integers.
 
-        custom_metadata (Dict[str, Any]): Custom metadata. Needs to be
+        custom_metadata (dict[str, Any]): Custom metadata. Needs to be
         serializable as JSON.
     """
     name: str
     dtype: str
-    shape: Tuple[int, ...]
-    custom_metadata: Dict[str, Any] = Field(default_factory=dict)
+    shape: tuple[int, ...]
+    custom_metadata: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("shape")
     @classmethod
-    def only_positive_dimensions(cls, v: Tuple[int, ...]) -> Tuple[int, ...]:
+    def only_positive_dimensions(cls, v: tuple[int, ...]) -> tuple[int, ...]:
+        """Allow only positive dimensions in a shape. Namely there cannot be a
+        value of -1 or None which are sometimes used in reshaping.
+
+        Args:
+
+          cls: A BaseModel has to be a classmethod.
+
+          v (tuple[int, ...]): The shape dimensions.
+
+        Returns: unchanged value `v`.
+
+        Raises: ValueError when there is any dimension in `v` which is not a
+        positive integer.
+        """
         if any(dimension <= 0 for dimension in v):
             raise ValueError("All dimensions in the shape must be strictly "
                              "positive")
@@ -95,7 +109,7 @@ class DatasetStructure(BaseModel):
 
     Attributes:
 
-        saved_data_description (List[Attribute]): Description of all saved
+        saved_data_description (list[Attribute]): Description of all saved
         attributes. When `shard_file_type` is "fb" then all attributes must be
         saved in this order.
 
@@ -110,7 +124,7 @@ class DatasetStructure(BaseModel):
         hash_checksum_algorithms (tuple[HashChecksumT, ...]): Which hash
         algorithms should be computed for file hash checksums.
     """
-    saved_data_description: List[Attribute] = Field(default_factory=list)
+    saved_data_description: list[Attribute] = Field(default_factory=list)
     compression: CompressionT = "GZIP"
     examples_per_shard: int = 256
     shard_file_type: ShardFileTypeT = "tfrec"
@@ -127,7 +141,7 @@ class DatasetInfo(BaseModel):
 
       dataset_structure (DatasetStructure): Structure of saved data.
 
-      shards_list (Dict[SplitT, List[ShardInfo]]): A dictionary with a list of
+      shards_list (dict[SplitT, list[ShardInfo]]): A dictionary with a list of
       all ShardInfo in a given split.
 
       splits (dict[SplitT, list[ShardInfo]]): A dictionary with a list of top

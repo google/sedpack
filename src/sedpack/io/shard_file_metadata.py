@@ -73,6 +73,18 @@ class ShardListInfo(BaseModel):
     @field_validator("shard_list_info_file")
     @classmethod
     def check_is_shards_list(cls, v: FileInfo) -> FileInfo:
+        """Check the path is leading to `shards_list.json`.
+
+        Args:
+
+          cls: BaseModel validator has to be a classmethod.
+
+          v (Path): The path to be checked.
+
+        Returns: the original path `v`.
+
+        Raises: ValueError in case the file name is not `shards_list.json`.
+        """
         if v.file_path.name != "shards_list.json":
             raise ValueError(f"The name must be \"shards_list.json\", got "
                              f"{v.file_path.name} in the path {v.file_path}")
@@ -112,6 +124,20 @@ class ShardsList(BaseModel):
     @field_validator("relative_path_self")
     @classmethod
     def check_is_shards_list(cls, v: Path) -> Path:
+        """Check the path is leading to `shards_list.json` and if there is no
+        directory traversal.
+
+        Args:
+
+          cls: BaseModel validator has to be a classmethod.
+
+          v (Path): The path to be checked.
+
+        Returns: the original path `v`.
+
+        Raises: ValueError in case the file name is not `shards_list.json` or
+        if there is ".." in the path.
+        """
         if v.name != "shards_list.json":
             raise ValueError(f"The name must be \"shards_list.json\", got "
                              f"{v.name} in the path {v}")
@@ -171,5 +197,5 @@ class ShardsList(BaseModel):
             # Load
             return ShardsList.model_validate_json(
                 (dataset_root_path / relative_path_self).read_text())
-        else:
-            return ShardsList(relative_path_self=relative_path_self)
+
+        return ShardsList(relative_path_self=relative_path_self)
