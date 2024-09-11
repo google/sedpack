@@ -1,9 +1,0 @@
-mypy
-pydantic
-pytest
-pytest-cov
-flake8
-twine
-perfCounters
-psutil
-types-tensorflow
