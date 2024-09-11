@@ -142,8 +142,8 @@ def main() -> None:
         print(f"Predicted: {predicted_class} (should be {correct_class}) for")
         # Turn into ASCII art
         for row in image:
-            print("".join(
-                ascii_shades[int(pixel * len(ascii_shades))] for pixel in row))
+            print("".join(ascii_shades[int(pixel * len(ascii_shades))]
+                          for pixel in row))
 
 
 if __name__ == "__main__":

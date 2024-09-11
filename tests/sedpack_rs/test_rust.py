@@ -23,11 +23,11 @@ from sedpack.io.shard.shard_writer_flatbuffer import ShardWriterFlatBuffer
 from sedpack.io.metadata import Attribute, DatasetStructure
 from sedpack.utils import import_sedpack_rs
 
-
 # Skip all tests if we failed to import sedpack_rs.
 sedpack_rs = import_sedpack_rs()
 if sedpack_rs:
-  from sedpack.io.flatbuffer.iterate_rs import IterateShardFlatBufferRs
+    from sedpack.io.flatbuffer.iterate_rs import IterateShardFlatBufferRs
+
 pytestmark = pytest.mark.skipif(not sedpack_rs, reason="Need Rust binding")
 
 
@@ -51,7 +51,8 @@ def shard_write_and_read(attributes: dict[str, np.ndarray],
     one_value = next(iter(attributes.values()))  # One of the values.
     for i in range(one_value.shape[0]):
         writer.write(values={
-            name: value[i] for name, value in attributes.items()
+            name: value[i]
+            for name, value in attributes.items()
         })
     writer.close()
 
@@ -99,17 +100,29 @@ def test_fb_all_dtypes(tmp_path):
     E = 111
     shard_file = tmp_path / "shard_file"
     attributes = {
-        "a_int8": np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
-        "a_uint8": np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
-        "a_int16": np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),
-        "a_uint16": np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),
-        "a_int32": np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
-        "a_uint32": np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),
-        "a_int64": np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
-        "a_uint64": np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),
-        "a_float16": np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
-        "a_float32": np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
-        "a_float64": np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        "a_float128": np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
+        "a_int8":
+        np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
+        "a_uint8":
+        np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
+        "a_int16":
+        np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),
+        "a_uint16":
+        np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),
+        "a_int32":
+        np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
+        "a_uint32":
+        np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),
+        "a_int64":
+        np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
+        "a_uint64":
+        np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),
+        "a_float16":
+        np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
+        "a_float32":
+        np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
+        "a_float64":
+        np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
+        "a_float128":
+        np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
     shard_write_and_read(attributes, shard_file)

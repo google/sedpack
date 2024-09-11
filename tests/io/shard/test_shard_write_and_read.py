@@ -47,7 +47,8 @@ def shard_write_and_read(attributes: dict[str, np.ndarray], shard_file: Path,
     one_value = next(iter(attributes.values()))  # One of the values.
     for i in range(one_value.shape[0]):
         writer.write(values={
-            name: value[i] for name, value in attributes.items()
+            name: value[i]
+            for name, value in attributes.items()
         })
     writer.close()
 
@@ -157,18 +158,30 @@ def test_fb_all_dtypes_np(tmp_path):
     E = 111
     shard_file = tmp_path / "shard_file.npz"
     attributes = {
-        "a_int8": np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
-        "a_uint8": np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
-        "a_int16": np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),
-        "a_uint16": np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),
-        "a_int32": np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
-        "a_uint32": np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),
-        "a_int64": np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
-        "a_uint64": np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),
-        "a_float16": np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
-        "a_float32": np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
-        "a_float64": np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        "a_float128": np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
+        "a_int8":
+        np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
+        "a_uint8":
+        np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
+        "a_int16":
+        np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),
+        "a_uint16":
+        np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),
+        "a_int32":
+        np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
+        "a_uint32":
+        np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),
+        "a_int64":
+        np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
+        "a_uint64":
+        np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),
+        "a_float16":
+        np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
+        "a_float32":
+        np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
+        "a_float64":
+        np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
+        "a_float128":
+        np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
     shard_write_and_read(attributes, shard_file, shard_file_type="npz")
 
@@ -178,16 +191,22 @@ def test_fb_all_dtypes_tfrec(tmp_path):
     E = 111
     shard_file = tmp_path / "shard_file"
     attributes = {
-        "a_int8": np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
-        "a_uint8": np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
+        "a_int8":
+        np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
+        "a_uint8":
+        np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
         #"a_int16": np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),  # not supported
         #"a_uint16": np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),  # not supported
-        "a_int32": np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
+        "a_int32":
+        np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
         #"a_uint32": np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),  # not supported
-        "a_int64": np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
+        "a_int64":
+        np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
         #"a_uint64": np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),  # not supported
-        "a_float16": np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
-        "a_float32": np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
+        "a_float16":
+        np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
+        "a_float32":
+        np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
         #"a_float64": np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),  # not supported
         #"a_float128": np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),  # not supported
     }
@@ -199,18 +218,30 @@ def test_fb_all_dtypes_fb(tmp_path):
     E = 111
     shard_file = tmp_path / "shard_file"
     attributes = {
-        "a_int8": np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
-        "a_uint8": np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
-        "a_int16": np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),
-        "a_uint16": np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),
-        "a_int32": np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
-        "a_uint32": np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),
-        "a_int64": np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
-        "a_uint64": np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),
-        "a_float16": np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
-        "a_float32": np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
-        "a_float64": np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        "a_float128": np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
+        "a_int8":
+        np.random.uniform(-5, 5, size=(E, 15)).astype(np.int8),
+        "a_uint8":
+        np.random.uniform(-5, 5, size=(E, 3, 15)).astype(np.uint8),
+        "a_int16":
+        np.random.uniform(-5, 5, size=(E, 15, 7, 3, 2)).astype(np.int16),
+        "a_uint16":
+        np.random.uniform(-5, 5, size=(E, 1, 1, 15)).astype(np.uint16),
+        "a_int32":
+        np.random.uniform(-5, 5, size=(E, 1)).astype(np.int32),
+        "a_uint32":
+        np.random.uniform(-5, 5, size=(E, 11, 15)).astype(np.uint32),
+        "a_int64":
+        np.random.uniform(-5, 5, size=(E, 15, 17, 19)).astype(np.int64),
+        "a_uint64":
+        np.random.uniform(-5, 5, size=(E, 2, 3, 15)).astype(np.uint64),
+        "a_float16":
+        np.random.uniform(-5, 5, size=(E, 15, 2, 3)).astype(np.float16),
+        "a_float32":
+        np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
+        "a_float64":
+        np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
+        "a_float128":
+        np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
     shard_write_and_read(attributes, shard_file, shard_file_type="fb")
 
@@ -218,12 +249,18 @@ def test_fb_all_dtypes_fb(tmp_path):
 def test_wrong_shape(tmp_path):
     dataset_structure = DatasetStructure(
         saved_data_description=[
-            Attribute(name="VARSIZE", shape=(), dtype="bytes"),  # true variable size
-            Attribute(name="CONSTSIZE1", shape=(10,), dtype="bytes"),  # not variable size
-            Attribute(name="CONSTSIZE2", shape=(), dtype="uint8"),  # not variable size
-            Attribute(name="CONSTSIZE3", shape=(), dtype="int8"),  # not variable size
-            Attribute(name="CONSTSIZE4", shape=(), dtype="int32"),  # not variable size
-            Attribute(name="CONSTSIZE5", shape=(5,), dtype="int32"),  # not variable size
+            Attribute(name="VARSIZE", shape=(),
+                      dtype="bytes"),  # true variable size
+            Attribute(name="CONSTSIZE1", shape=(10, ),
+                      dtype="bytes"),  # not variable size
+            Attribute(name="CONSTSIZE2", shape=(),
+                      dtype="uint8"),  # not variable size
+            Attribute(name="CONSTSIZE3", shape=(),
+                      dtype="int8"),  # not variable size
+            Attribute(name="CONSTSIZE4", shape=(),
+                      dtype="int32"),  # not variable size
+            Attribute(name="CONSTSIZE5", shape=(5, ),
+                      dtype="int32"),  # not variable size
         ],
         shard_file_type="npz",
         compression="",
@@ -234,56 +271,61 @@ def test_wrong_shape(tmp_path):
                               shard_file=tmp_path / "filename.npz")
 
     with pytest.raises(ValueError) as err:
-        writer.write(values={
-            "VARSIZE": bytearray(range(11)),
-            "CONSTSIZE1": bytes(range(11)),
-            "CONSTSIZE2": 7,
-            "CONSTSIZE3": -1,
-            "CONSTSIZE4": 1_024,
-            "CONSTSIZE5": np.arange(5),
-        })
+        writer.write(
+            values={
+                "VARSIZE": bytearray(range(11)),
+                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE2": 7,
+                "CONSTSIZE3": -1,
+                "CONSTSIZE4": 1_024,
+                "CONSTSIZE5": np.arange(5),
+            })
         assert "CONSTSIZE1" in str(err.value)
 
     with pytest.raises(ValueError) as err:
-        writer.write(values={
-            "VARSIZE": bytearray(range(11)),
-            "CONSTSIZE1": bytes(range(10)),
-            "CONSTSIZE2": [7, 8],
-            "CONSTSIZE3": -1,
-            "CONSTSIZE4": 1_024,
-            "CONSTSIZE5": np.arange(5),
-        })
+        writer.write(
+            values={
+                "VARSIZE": bytearray(range(11)),
+                "CONSTSIZE1": bytes(range(10)),
+                "CONSTSIZE2": [7, 8],
+                "CONSTSIZE3": -1,
+                "CONSTSIZE4": 1_024,
+                "CONSTSIZE5": np.arange(5),
+            })
         assert "CONSTSIZE2" in str(err.value)
 
     with pytest.raises(ValueError) as err:
-        writer.write(values={
-            "VARSIZE": bytearray(range(11)),
-            "CONSTSIZE1": bytes(range(11)),
-            "CONSTSIZE2": 7,
-            "CONSTSIZE3": [-1, 0],
-            "CONSTSIZE4": 1_024,
-            "CONSTSIZE5": np.arange(5),
-        })
+        writer.write(
+            values={
+                "VARSIZE": bytearray(range(11)),
+                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE2": 7,
+                "CONSTSIZE3": [-1, 0],
+                "CONSTSIZE4": 1_024,
+                "CONSTSIZE5": np.arange(5),
+            })
         assert "CONSTSIZE3" in str(err.value)
 
     with pytest.raises(ValueError) as err:
-        writer.write(values={
-            "VARSIZE": bytearray(range(11)),
-            "CONSTSIZE1": bytes(range(11)),
-            "CONSTSIZE2": 7,
-            "CONSTSIZE3": -1,
-            "CONSTSIZE4": [0, 1_024],
-            "CONSTSIZE5": np.arange(5),
-        })
+        writer.write(
+            values={
+                "VARSIZE": bytearray(range(11)),
+                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE2": 7,
+                "CONSTSIZE3": -1,
+                "CONSTSIZE4": [0, 1_024],
+                "CONSTSIZE5": np.arange(5),
+            })
         assert "CONSTSIZE4" in str(err.value)
 
     with pytest.raises(ValueError) as err:
-        writer.write(values={
-            "VARSIZE": bytearray(range(11)),
-            "CONSTSIZE1": bytes(range(11)),
-            "CONSTSIZE2": 7,
-            "CONSTSIZE3": -1,
-            "CONSTSIZE4": 1_024,
-            "CONSTSIZE5": np.arange(6),
-        })
+        writer.write(
+            values={
+                "VARSIZE": bytearray(range(11)),
+                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE2": 7,
+                "CONSTSIZE3": -1,
+                "CONSTSIZE4": 1_024,
+                "CONSTSIZE5": np.arange(6),
+            })
         assert "CONSTSIZE5" in str(err.value)

@@ -25,8 +25,10 @@ from sedpack.io import Metadata, DatasetStructure, Attribute
 from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
 
 
-def end2end(tmpdir: Union[str, Path], input_dtype: npt.DTypeLike, saved_dtype: npt.DTypeLike, method: str,
-            shard_file_type: ShardFileTypeT, compression: CompressionT) -> None:
+def end2end(tmpdir: Union[str, Path], input_dtype: npt.DTypeLike,
+            saved_dtype: npt.DTypeLike, method: str,
+            shard_file_type: ShardFileTypeT,
+            compression: CompressionT) -> None:
     array_of_values = np.random.random((10, 138)) * 256
     array_of_values = np.array(array_of_values, dtype=input_dtype)
     #print(f">>> {array_of_values.dtype = }")
@@ -124,8 +126,7 @@ def end2end(tmpdir: Union[str, Path], input_dtype: npt.DTypeLike, saved_dtype: n
         0], "Not all examples have been iterated"
 
 
-def test_end2end_wrong_value_type(
-        tmpdir: Union[str, Path]) -> None:
+def test_end2end_wrong_value_type(tmpdir: Union[str, Path]) -> None:
     end2end(tmpdir=tmpdir,
             input_dtype="uint8",
             saved_dtype="int32",
@@ -134,8 +135,7 @@ def test_end2end_wrong_value_type(
             compression="LZ4")
 
 
-def test_end2end_wrong_value_type_no_cast(
-        tmpdir: Union[str, Path]) -> None:
+def test_end2end_wrong_value_type_no_cast(tmpdir: Union[str, Path]) -> None:
     with pytest.raises(ValueError) as e:
         end2end(tmpdir=tmpdir,
                 input_dtype="float32",

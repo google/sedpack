@@ -37,12 +37,12 @@ def get_dataset(tmpdir: Union[str, Path]) -> Dataset:
         sedpack.io.metadata.Attribute(
             name="attribute_name",
             dtype="float32",
-            shape=(138,),
+            shape=(138, ),
         ),
     ]
 
     dataset_structure = sedpack.io.metadata.DatasetStructure(
-        saved_data_description=example_attributes,)
+        saved_data_description=example_attributes, )
 
     dataset = Dataset.create(
         path=tiny_experiment_path,
