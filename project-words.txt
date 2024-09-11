@@ -3,6 +3,7 @@ MNIST
 SCAAML
 asyncstdlib
 byteswap
+crossentropy
 diutils
 fbapi
 flatbuffer

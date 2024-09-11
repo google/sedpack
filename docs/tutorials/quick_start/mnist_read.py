@@ -108,7 +108,7 @@ def main() -> None:
         validation_steps=steps_per_epoch // 10,
     )
 
-    # Evaluate the model on hodlout.
+    # Evaluate the model on holdout.
     holdout_data = dataset.as_tfdataset(
         "holdout",
         batch_size=batch_size,
