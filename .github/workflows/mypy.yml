@@ -25,7 +25,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
       # Build a virtualenv, but only if it doesn't already exist
-      - run: python -m venv ./.venv && . ./.venv/bin/activate && 
+      - run: python -m venv ./.venv && source ./.venv/bin/activate && 
              python -m pip install --require-hashes --no-deps -r requirements.txt
         if: steps.cache-venv.outputs.cache-hit != 'true'
       # Run tests
