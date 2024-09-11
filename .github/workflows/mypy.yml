@@ -47,6 +47,7 @@ jobs:
         env:
           MYPYPATH: mypy_stubs/
         run: |
+          pip install .
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
           stubgen -o $MYPYPATH -p flatbuffers -p lz4
