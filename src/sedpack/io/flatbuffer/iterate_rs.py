@@ -76,7 +76,11 @@ class IterateShardFlatBufferRs(IterateShardBase[T]):
         """Iterate a shard.
         """
         shard_content: dict[str, np.ndarray] = self.get_content(file_path)
-        num_examples: int = next(iter(shard_content.values())).shape[0]  # pylint: disable=stop-iteration-return
+        num_examples: int = 0
+        try:
+            num_examples = next(iter(shard_content.values())).shape[0]
+        except StopIteration:  # Zero is fine.
+            pass
         for i in range(num_examples):
             yield {name: value[i] for name, value in shard_content.items()}
 
