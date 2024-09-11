@@ -19,7 +19,7 @@ jobs:
       - name: Installing package
         run: |
           pip install --editable .
-          pip install mypy
+          pip install mypy stubgen
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
