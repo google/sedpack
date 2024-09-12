@@ -51,7 +51,7 @@ class ShardWriterTFRec(ShardWriterBase):
         )
 
         # Open the tf.io.TFRecordWriter only with the first `write` call. Make
-        # it None immediatelly during a call to `close`.
+        # it None immediately during a call to `close`.
         self._tf_shard_writer: Optional[Any] = None
 
     def _write(self, values: ExampleT) -> None:
