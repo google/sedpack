@@ -29,12 +29,11 @@ def test_dataset_exists(tmpdir: str | Path) -> None:
         sedpack.io.metadata.Attribute(
             name="attribute_name",
             dtype="float32",
-            shape=(10,),
+            shape=(10, ),
         ),
     ]
     dataset_structure = sedpack.io.metadata.DatasetStructure(
-        saved_data_description=example_attributes,
-    )
+        saved_data_description=example_attributes)
 
     # First should be ok.
     dataset = Dataset.create(
