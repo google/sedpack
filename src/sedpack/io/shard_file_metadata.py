@@ -15,7 +15,6 @@
 
 from pathlib import Path
 from typing import Any
-from typing_extensions import Self
 
 from pydantic import BaseModel, field_validator
 
@@ -147,7 +146,7 @@ class ShardsList(BaseModel):
         return v
 
     def write_config(self, dataset_root_path: Path,
-                     hashes: tuple[HashChecksumT]) -> ShardListInfo:
+                     hashes: tuple[HashChecksumT, ...]) -> ShardListInfo:
         """Write this config into dataset root path / `relative_path_self` and
         return the corresponding `ShardListInfo`.
 
@@ -155,7 +154,7 @@ class ShardsList(BaseModel):
 
             dataset_root_path (Path): Path where the dataset is saved.
 
-            hashes (tuple[HashChecksumT]): Which hashes to compute (can be
+            hashes (tuple[HashChecksumT, ...]): Which hashes to compute (can be
             empty if we do not need the output).
 
         Returns: an object of `ShardListInfo` representing this file.
@@ -178,7 +177,7 @@ class ShardsList(BaseModel):
 
     @staticmethod
     def load_or_create(dataset_root_path: Path,
-                       relative_path_self: Path) -> Self:
+                       relative_path_self: Path) -> "ShardsList":
         """Load or create a new object.
 
         Args:

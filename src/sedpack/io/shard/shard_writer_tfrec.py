@@ -61,9 +61,17 @@ class ShardWriterTFRec(ShardWriterBase):
 
             values (ExampleT): Attribute values.
         """
+        if (self.dataset_structure.compression
+                not in ShardWriterTFRec.supported_compressions()):
+            raise ValueError(
+                f"Unsupported compression {self.dataset_structure.compression}"
+                " requested for TFRecordWriter, expected "
+                f"{ShardWriterTFRec.supported_compressions()}")
         if not self._tf_shard_writer:
             self._tf_shard_writer = tf.io.TFRecordWriter(
-                str(self._shard_file), self.dataset_structure.compression)
+                str(self._shard_file),
+                self.dataset_structure.compression,  # type: ignore
+            )
 
         example = to_tfrecord(
             saved_data_description=self.dataset_structure.

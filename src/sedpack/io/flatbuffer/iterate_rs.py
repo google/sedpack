@@ -22,7 +22,7 @@ from typing import Iterable, Callable
 import numpy as np
 
 # This class makes no sense without being able to import sedpack_rs.
-import sedpack_rs  # pylint: disable=import-error
+import sedpack_rs  # type: ignore # pylint: disable=import-error
 
 from sedpack.io.flatbuffer.iterate import IterateShardFlatBuffer
 from sedpack.io.metadata import DatasetStructure

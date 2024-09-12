@@ -23,7 +23,7 @@ def import_sedpack_rs():
     result.
     """
     try:
-        import sedpack_rs  # pylint: disable=import-outside-toplevel
+        import sedpack_rs  # type: ignore # pylint: disable=import-outside-toplevel
         return sedpack_rs
     except ImportError:
         return None

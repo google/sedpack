@@ -51,10 +51,10 @@ class IterateShardNP(IterateShardBase[T]):
         """Asynchronously iterate a shard saved in the NumPy format npz.
         """
         async with aiofiles.open(file_path, "rb") as f:
-            content = await f.read()
-            content = io.BytesIO(content)
+            content_bytes: bytes = await f.read()
+            content_io = io.BytesIO(content_bytes)
 
-        shard_content: dict[str, list[AttributeValueT]] = np.load(content)
+        shard_content: dict[str, list[AttributeValueT]] = np.load(content_io)
 
         # A given shard contains the same number of elements for each
         # attribute.

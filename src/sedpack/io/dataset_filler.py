@@ -109,9 +109,8 @@ class _DatasetFillerContext:
         # Create new shard info.
         file_type: str = self._dataset_structure.shard_file_type
         file_name: str = f"{uuid.uuid4().hex}.{file_type}"
-        shard_info = ShardInfo(file_infos=[
-            FileInfo(file_path=relative_path_with_split / file_name)
-        ])
+        shard_info = ShardInfo(file_infos=(FileInfo(
+            file_path=relative_path_with_split / file_name), ))
 
         return Shard(
             shard_info=shard_info,
@@ -153,7 +152,8 @@ class _DatasetFillerContext:
 
         # New metadata
         previous_metadata = current_progress.shard.shard_info.custom_metadata
-        metadata_changed: bool = (custom_metadata and previous_metadata
+        metadata_changed: bool = (bool(custom_metadata)
+                                  and bool(previous_metadata)
                                   and custom_metadata != previous_metadata)
 
         # Open a new shard if the current one already contains too many

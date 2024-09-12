@@ -19,7 +19,20 @@ import itertools
 import logging
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+    get_args,
+)
 import os
 import uuid
 
@@ -30,15 +43,16 @@ import tensorflow as tf
 
 import sedpack
 from sedpack.io.errors import DatasetExistsError
-from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
+from sedpack.io.file_info import FileInfo
+from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
-from sedpack.io.metadata import DatasetInfo, DatasetStructure, Metadata
+from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
 from sedpack.io.merge_shard_infos import merge_shard_infos
-from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
+from sedpack.io.metadata import DatasetInfo, DatasetStructure, Metadata
+from sedpack.io.npz import IterateShardNP
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
-from sedpack.io.flatbuffer import IterateShardFlatBuffer
-from sedpack.io.npz import IterateShardNP
+from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
 from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 
@@ -321,7 +335,10 @@ class Dataset:
         # pool created by num_parallel_calls).
         tf_dataset = tf_dataset.interleave(
             lambda x: tf.data.TFRecordDataset(
-                x, compression_type=self.dataset_structure.compression),
+                x,
+                compression_type=self.dataset_structure.
+                compression,  # type: ignore
+            ),
             cycle_length=cycle_length,
             block_length=1,
             num_parallel_calls=num_parallel_calls,
@@ -458,8 +475,7 @@ class Dataset:
                         )
         return True
 
-    def write_config(self,
-                     updated_infos: list[ShardListInfo]) -> tuple[str, ...]:
+    def write_config(self, updated_infos: list[ShardListInfo]) -> FileInfo:
         """Save configuration as json.
 
         Args:
@@ -478,7 +494,10 @@ class Dataset:
         for info in updated_infos:
             # The path is at least `split / shards_list.json` or longer.
             split = str(info.shard_list_info_file.file_path.parts[0])
-            splits_to_update[split].append(info)
+            # Type narrowing with get_args does not seem to work with mypy.
+            if split not in get_args(SplitT):
+                raise ValueError(f"Not a known split value: {split}")
+            splits_to_update[split].append(info)  # type: ignore
 
         # Merge recursively.
         for split, updates in splits_to_update.items():
@@ -631,9 +650,9 @@ class Dataset:
         shards: Optional[int] = None,
         shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
         repeat: bool = True,
-        file_parallelism: int = os.cpu_count(),
+        file_parallelism: int = os.cpu_count() or 4,
         shuffle: int = 1_000,
-    ) -> Iterable[ExampleT] | Iterable[T]:
+    ) -> AsyncIterator[ExampleT] | AsyncIterator[T]:
         """"Dataset as a numpy iterator (no batching). Pure Python
         implementation. Iterates in random order.
 
@@ -701,14 +720,16 @@ class Dataset:
         # Automatically shuffle.
         if shuffle:
             example_iterator = round_robin_async(
-                asyncstdlib.map(shard_iterator.iterate_shard_async,
-                                shard_paths_iterator),
+                asyncstdlib.map(
+                    shard_iterator.iterate_shard_async,  # type: ignore
+                    shard_paths_iterator),
                 buffer_size=file_parallelism,
             )
         else:
             example_iterator = asyncstdlib.chain.from_iterable(
-                asyncstdlib.map(shard_iterator.iterate_shard_async,
-                                shard_paths_iterator))
+                asyncstdlib.map(
+                    shard_iterator.iterate_shard_async,  # type: ignore
+                    shard_paths_iterator))
 
         # Process each record if requested.
         if process_record:
@@ -759,12 +780,13 @@ class Dataset:
         if repeat:
             shard_paths_iterator = itertools.cycle(shard_paths)
         else:
-            shard_paths_iterator = shard_paths
+            shard_paths_iterator = shard_paths  # type: ignore
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
-            shard_paths_iterator = shuffle_buffer(shard_paths_iterator,
-                                                  buffer_size=len(shard_paths))
+            shard_paths_iterator = shuffle_buffer(
+                shard_paths_iterator,  # type: ignore
+                buffer_size=len(shard_paths))
         return shard_paths_iterator
 
     def as_numpy_iterator_concurrent(  # pylint: disable=too-many-arguments
@@ -816,10 +838,9 @@ class Dataset:
         )
 
         # Decoding and processing function based on shard file type.
-        if process_record:
-            shard_iterator: IterateShardBase[T]
-        else:
-            shard_iterator: IterateShardBase[ExampleT]
+        # Since we do not know if `process_record` is applied or not we also do
+        # not know the type of elements.
+        shard_iterator: IterateShardBase[Any]
         match self.dataset_structure.shard_file_type:
             case "tfrec":
                 shard_iterator = IterateShardTFRec(
@@ -846,7 +867,7 @@ class Dataset:
                 with LazyPool(file_parallelism) as pool:
                     yield from round_robin(
                         pool.imap_unordered(
-                            shard_iterator.process_and_list,
+                            shard_iterator.process_and_list,  # type: ignore
                             shard_paths_iterator,
                         ),
                         # round_robin keeps the whole shard files in memory.
@@ -938,16 +959,20 @@ class Dataset:
                                  f"{self.dataset_structure.shard_file_type}")
 
         example_iterator = itertools.chain.from_iterable(
-            map(shard_iterator.iterate_shard, shard_paths_iterator))
+            map(
+                shard_iterator.iterate_shard,  # type: ignore
+                shard_paths_iterator))  # type: ignore
 
         # Process each record if requested
         if process_record:
-            example_iterator = map(process_record, example_iterator)
+            example_iterator = map(process_record,
+                                   example_iterator)  # type: ignore
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
-            example_iterator = shuffle_buffer(example_iterator,
-                                              buffer_size=shuffle)
+            example_iterator = shuffle_buffer(
+                example_iterator,  # type: ignore
+                buffer_size=shuffle)
 
         yield from example_iterator
 
