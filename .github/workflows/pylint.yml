@@ -4,6 +4,7 @@ on:
     paths:
       - '**/*.py'
       - '.pylintrc'
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:

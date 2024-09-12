@@ -4,6 +4,7 @@ on:
     paths:
       - '**/*.md'
       - '.markdownlint.json'
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
 

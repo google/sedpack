@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '**/*.py'
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
