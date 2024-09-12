@@ -4,6 +4,7 @@ on:
     paths:
       - '**/*.py'
       - 'mypy.ini'
+  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
