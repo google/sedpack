@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from sedpack.io.metadata import DatasetStructure
-from sedpack.io.types import ExampleT, CompressionT
+from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
 
 
@@ -48,7 +48,7 @@ class ShardWriterNP(ShardWriterBase):
             shard_file=shard_file,
         )
 
-        self._buffer: ExampleT = {}
+        self._buffer: dict[str, list[AttributeValueT]] = {}
 
     def _write(self, values: ExampleT) -> None:
         """Write an example on disk. Writing may be buffered.
@@ -77,9 +77,10 @@ class ShardWriterNP(ShardWriterBase):
         # Write the buffer into a file.
         match self.dataset_structure.compression:
             case "ZIP":
-                np.savez_compressed(str(self._shard_file), **self._buffer)
+                np.savez_compressed(str(self._shard_file),
+                                    **self._buffer)  # type: ignore
             case "":
-                np.savez(str(self._shard_file), **self._buffer)
+                np.savez(str(self._shard_file), **self._buffer)  # type: ignore
             case _:
                 # Default should never happen since ShardWriterBase checks that
                 # the requested compression type is supported.

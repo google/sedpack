@@ -24,12 +24,11 @@ from sedpack.io.shard.shard_writer_flatbuffer import ShardWriterFlatBuffer
 from sedpack.io.shard.shard_writer_np import ShardWriterNP
 from sedpack.io.shard.shard_writer_tfrec import ShardWriterTFRec
 
-_SHARD_FILE_TYPE_TO_CLASS: dict[ShardFileTypeT,
-                                type(ShardWriterBase)] = {
-                                    "tfrec": ShardWriterTFRec,
-                                    "npz": ShardWriterNP,
-                                    "fb": ShardWriterFlatBuffer,
-                                }
+_SHARD_FILE_TYPE_TO_CLASS: dict[ShardFileTypeT, type[ShardWriterBase]] = {
+    "tfrec": ShardWriterTFRec,
+    "npz": ShardWriterNP,
+    "fb": ShardWriterFlatBuffer,
+}
 
 
 def get_shard_writer(dataset_structure: DatasetStructure,

@@ -50,5 +50,5 @@ jobs:
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
-          stubgen -o $MYPYPATH -p flatbuffers -p lz4
+          stubgen -o $MYPYPATH -p flatbuffers
           mypy --no-color-output --install-types --non-interactive src

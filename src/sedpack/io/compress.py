@@ -20,7 +20,7 @@ import lzma
 from pathlib import Path
 from typing import IO
 
-import lz4.frame
+import lz4.frame  # type: ignore
 
 from sedpack.io.types import CompressionT
 
@@ -72,7 +72,7 @@ class CompressedFile:
                 # No compression.
                 return open(file=file, mode=mode, encoding=encoding)
             case "GZIP" | "ZLIB":
-                return gzip.open(
+                return gzip.open(  # type: ignore
                     filename=file,
                     mode=mode,
                     compresslevel=9,  # slow write, but large compression
@@ -91,7 +91,7 @@ class CompressedFile:
                     # preset=None,
                 )
             case "LZ4":
-                return lz4.frame.open(file, mode=mode)
+                return lz4.frame.open(file, mode=mode)  # type: ignore
             case _:
                 raise NotImplementedError(f"CompressedFile does not implement "
                                           f"{self.compression_type} yet.")

@@ -59,6 +59,9 @@ class Shard():
 
             values (ExampleT): Attribute values.
         """
+        if not self._shard_writer:
+            raise ValueError("Attempting to write to a closed shard.")
+
         self._shard_writer.write(values)
         self.shard_info.number_of_examples += 1
 
@@ -82,7 +85,7 @@ class Shard():
         """
         return self._dataset_path / self.shard_info.file_infos[0].file_path
 
-    def _compute_file_hash_checksums(self) -> str:
+    def _compute_file_hash_checksums(self) -> tuple[str, ...]:
         """Compute hash checksums of the shard file(-s).
 
         TODO This method should return a list of checksums defined by the user

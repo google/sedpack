@@ -33,15 +33,15 @@ class IterateShardTFRec(IterateShardBase[T]):
     """
 
     def __init__(
-            self,
-            dataset_structure: DatasetStructure,
-            process_record: Callable[[ExampleT], Any] | None,
-            num_parallel_calls: int = os.cpu_count(),
+        self,
+        dataset_structure: DatasetStructure,
+        process_record: Callable[[ExampleT], Any] | None,
+        num_parallel_calls: int = os.cpu_count() or 4,
     ) -> None:
         super().__init__(dataset_structure=dataset_structure,
                          process_record=process_record)
         # This is not pickleable, but can be created on the fly.
-        self.from_tfrecord = None
+        self.from_tfrecord: Callable[[Any], Any] | None = None
         self.num_parallel_calls: int = num_parallel_calls
 
     def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
@@ -52,18 +52,19 @@ class IterateShardTFRec(IterateShardBase[T]):
                 self.dataset_structure.saved_data_description)
 
         # Read the shard.
-        tf_dataset = tf.data.TFRecordDataset(
-            file_path,
-            compression_type=self.dataset_structure.compression,
+        tf_dataset_records = tf.data.TFRecordDataset(
+            str(file_path),
+            compression_type=self.dataset_structure.
+            compression,  # type: ignore
         )
 
         # Decode examples.
-        tf_dataset = tf_dataset.map(
+        tf_dataset_examples = tf_dataset_records.map(
             self.from_tfrecord,
             num_parallel_calls=self.num_parallel_calls,
         )
 
-        yield from tf_dataset.as_numpy_iterator()
+        yield from tf_dataset_examples.as_numpy_iterator()  # type: ignore
 
     async def iterate_shard_async(self, file_path: Path):
         raise NotImplementedError

@@ -18,8 +18,8 @@
 
 # pylint: skip-file
 
-import flatbuffers
-from flatbuffers.compat import import_numpy
+import flatbuffers  # type: ignore
+from flatbuffers.compat import import_numpy  # type: ignore
 
 np = import_numpy()
 
