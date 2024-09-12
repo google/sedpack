@@ -1,0 +1,29 @@
+name: piptest
+on:
+  push:
+    paths:
+      - 'docs/**/*.py'
+      - 'pytest.ini'
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
+
+jobs:
+  piptesting:
+    runs-on: ubuntu-22.04
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Installing sedpack pip package
+        run: |
+          pip install sedpack
+      - name: Run tutorial using sedpack pip package
+        run: |
+          python docs/tutorials/quick_start/mnist_save.py -d mnist_dataset
+          python docs/tutorials/quick_start/mnist_read.py -d mnist_dataset
