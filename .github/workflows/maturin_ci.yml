@@ -95,6 +95,9 @@ jobs:
           path: dist
 
   coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
     needs: [linux, sdist]
     steps:
       - uses: actions/download-artifact@v4
@@ -111,18 +114,3 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           file: coverage.xml
-
-#  release:
-#    name: Release
-#    runs-on: ubuntu-latest
-#    if: "startsWith(github.ref, 'refs/tags/')"
-#    needs: [linux, sdist]
-#    steps:
-#      - uses: actions/download-artifact@v4
-#      - name: Publish to PyPI
-#        uses: PyO3/maturin-action@v1
-#        env:
-#          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-#        with:
-#          command: upload
-#          args: --non-interactive --skip-existing wheels-*/*
