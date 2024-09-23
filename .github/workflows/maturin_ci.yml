@@ -94,6 +94,24 @@ jobs:
           name: wheels-sdist
           path: dist
 
+  coverage:
+    needs: [linux, sdist]
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Install workflow dependencies
+        run: pip install --upgrade pytest coverage
+      - name: Running unit tests with coverage
+        env:
+          DISABLE_AUTOGRAPH: 1
+        # TODO remove the -i (ignore errors)
+        run: |
+          coverage run -m pytest
+          coverage xml -i
+      - name: Upload results
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.xml
+
 #  release:
 #    name: Release
 #    runs-on: ubuntu-latest
