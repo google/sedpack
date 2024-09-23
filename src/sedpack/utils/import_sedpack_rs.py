@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Allow importing sedpackrs without an ImportError being raised (useful for
+"""Allow importing sedpack_rs without an ImportError being raised (useful for
 unit-tests where we want to run a test only if Rust is present but cannot
 handle an error.
 """
 
 
-def import_sedpackrs():
+def import_sedpack_rs():
     """Try to import the Rust library. If that fails return None. TODO: this
     should return an object which would raise an error when accessing the
     result.
     """
     try:
-        import sedpackrs  # type: ignore # pylint: disable=import-outside-toplevel
-        return sedpackrs
+        import sedpack_rs  # type: ignore # pylint: disable=import-outside-toplevel
+        return sedpack_rs
     except ImportError:
         return None

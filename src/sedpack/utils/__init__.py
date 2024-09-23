@@ -13,8 +13,8 @@
 # limitations under the License.
 """Utilities for sedpack.
 """
-from sedpack.utils.import_sedpackrs import import_sedpackrs
+from sedpack.utils.import_sedpack_rs import import_sedpack_rs
 
 __all__ = [
-    "import_sedpackrs",
+    "import_sedpack_rs",
 ]

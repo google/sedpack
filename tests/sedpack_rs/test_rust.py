@@ -21,14 +21,14 @@ import numpy as np
 from sedpack.io.metadata import Attribute, DatasetStructure
 from sedpack.io.shard.shard_writer_flatbuffer import ShardWriterFlatBuffer
 from sedpack.io.metadata import Attribute, DatasetStructure
-from sedpack.utils import import_sedpackrs
+from sedpack.utils import import_sedpack_rs
 
-# Skip all tests if we failed to import sedpackrs.
-sedpackrs = import_sedpackrs()
-if sedpackrs:
+# Skip all tests if we failed to import sedpack_rs.
+sedpack_rs = import_sedpack_rs()
+if sedpack_rs:
     from sedpack.io.flatbuffer.iterate_rs import IterateShardFlatBufferRs
 
-pytestmark = pytest.mark.skipif(not sedpackrs, reason="Need Rust binding")
+pytestmark = pytest.mark.skipif(not sedpack_rs, reason="Need Rust binding")
 
 
 def shard_write_and_read(attributes: dict[str, np.ndarray],
