@@ -125,7 +125,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
           builder (flatbuffers.Builder): The byte buffer being constructed.
           Must be initialized.
 
-          attribute (Attribute): Description of this attribute (shape and dtype).
+          attribute (Attribute): Description of this attribute (shape and
+          dtype).
 
           value (AttributeValueT): The array to be saved. The shape should be
           as defined in `attribute` (will be flattened).
