@@ -43,7 +43,6 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
-          sccache: 'true'
           manylinux: auto
       - name: Save cache
         id: cache-save
