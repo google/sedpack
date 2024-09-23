@@ -187,11 +187,64 @@ jobs:
       - name: Running unit tests with coverage
         env:
           DISABLE_AUTOGRAPH: 1
-        # TODO remove the -i (ignore errors)
         run: |
           coverage run -m pytest
-          coverage xml -i
+          coverage xml
       - name: Upload results
         uses: coverallsapp/github-action@v2
         with:
           file: coverage.xml
+
+  mypy:
+    name: Mypy
+    needs: [linux, sdist]
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+          cache: 'pip'
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Fail if cache not found
+        run: exit 1
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/download-artifact@v4
+      - name: List all wheels
+        run: ls wheels-*/*
+      - name: Install wheel packages needed for wheel installation
+        run: python -m pip install wheel
+      - name: Install the correct wheel
+        # Try installing all the wheels (one will be ok).
+        run: |
+          for W in wheels-*/* ; do python -m pip install $W || echo "" ; done
+      - name: Register matcher
+        run: echo ::add-matcher::./.github/python_matcher.json
+      - name: Running mypy
+        env:
+          MYPYPATH: mypy_stubs/
+        # Start by "installing" sedpack to be sure all dependencies are listed
+        run: |
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
+          pip install -r test_requirements.txt
+          mkdir -p .mypy_cache
+          stubgen -o $MYPYPATH -p flatbuffers
+          mypy --no-color-output --install-types --non-interactive src
