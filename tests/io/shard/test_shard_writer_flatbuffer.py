@@ -31,32 +31,32 @@ def test_can_write_and_read():
 
     attributes: dict[str, np.ndarray] = {
         "attribute_bool":
-            np.random.randint(0, 1, size=13, dtype=bool),
+        np.random.randint(0, 1, size=13, dtype=bool),
         "attribute_byte":
-            np.random.randint(-120, 120, size=17, dtype=np.int8),
+        np.random.randint(-120, 120, size=17, dtype=np.int8),
         "attribute_ubyte":
-            np.random.randint(0, 256, size=23, dtype=np.uint8),
+        np.random.randint(0, 256, size=23, dtype=np.uint8),
         #// 16 bit
         "attribute_short":
-            np.random.randint(-1000, 1000, size=7, dtype=np.int16),
+        np.random.randint(-1000, 1000, size=7, dtype=np.int16),
         "attribute_ushort":
-            np.random.randint(0, 1000, size=(3, 7), dtype=np.uint16),
+        np.random.randint(0, 1000, size=(3, 7), dtype=np.uint16),
 
         #// 32 bit
         "attribute_int":
-            np.random.randint(-2000, 2000, size=(5, 11, 51), dtype=np.int32),
+        np.random.randint(-2000, 2000, size=(5, 11, 51), dtype=np.int32),
         "attribute_uint":
-            np.random.randint(0, 3000, size=(71, 3), dtype=np.uint32),
+        np.random.randint(0, 3000, size=(71, 3), dtype=np.uint32),
         "attribute_float":
-            np.random.uniform(size=11).astype(dtype=np.float32),
+        np.random.uniform(size=11).astype(dtype=np.float32),
 
         #// 64 bit
         "attribute_long":
-            np.random.randint(-2000, 200, size=(2, 51), dtype=np.int64),
+        np.random.randint(-2000, 200, size=(2, 51), dtype=np.int64),
         "attribute_ulong":
-            np.random.randint(0, 3333, size=(3, 71), dtype=np.uint64),
+        np.random.randint(0, 3333, size=(3, 71), dtype=np.uint64),
         "attribute_double":
-            np.random.uniform(size=(11, 91)).astype(dtype=np.float64),
+        np.random.uniform(size=(11, 91)).astype(dtype=np.float64),
     }
 
     attribute_offsets: dict[str, int] = {}

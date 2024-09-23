@@ -27,7 +27,8 @@ from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
 
 def end2end(tmpdir: Union[str, Path], input_dtype: npt.DTypeLike,
             saved_dtype: npt.DTypeLike, method: str,
-            shard_file_type: ShardFileTypeT, compression: CompressionT) -> None:
+            shard_file_type: ShardFileTypeT,
+            compression: CompressionT) -> None:
     array_of_values = np.random.random((10, 138)) * 256
     array_of_values = np.array(array_of_values, dtype=input_dtype)
     #print(f">>> {array_of_values.dtype = }")

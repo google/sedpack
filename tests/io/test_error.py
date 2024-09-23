@@ -29,7 +29,7 @@ def test_dataset_exists(tmpdir: str | Path) -> None:
         sedpack.io.metadata.Attribute(
             name="attribute_name",
             dtype="float32",
-            shape=(10,),
+            shape=(10, ),
         ),
     ]
     dataset_structure = sedpack.io.metadata.DatasetStructure(

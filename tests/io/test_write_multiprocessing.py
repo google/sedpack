@@ -25,7 +25,8 @@ from sedpack.io.types import SplitT, TRAIN_SPLIT
 
 
 def feed_writer(dataset_filler: DatasetFiller,
-                array_of_values: npt.NDArray[np.generic], split: SplitT) -> int:
+                array_of_values: npt.NDArray[np.generic],
+                split: SplitT) -> int:
     # Fill data in the dataset
 
     with dataset_filler as filler:
@@ -71,9 +72,9 @@ def test_write_multiprocessing(tmpdir: Union[str, Path]) -> None:
     )
 
     custom_arguments = [
-        (array_of_values[:100],),
-        (array_of_values[100:900],),
-        (array_of_values[900:],),
+        (array_of_values[:100], ),
+        (array_of_values[100:900], ),
+        (array_of_values[900:], ),
     ]
     custom_kwarguments = [
         {
