@@ -114,7 +114,7 @@ jobs:
         if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
         uses: uraimo/run-on-arch-action@v2
         with:
-          arch: ${{ matrix.platform.target }}
+          arch: x86_64
           distro: ubuntu22.04
           githubToken: ${{ github.token }}
           install: |
@@ -133,12 +133,17 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
       - name: Install workflow dependencies
-        run: pip install --upgrade pytest coverage
+        run: |
+          set -e
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pytest coverage
       - name: Running unit tests with coverage
         env:
           DISABLE_AUTOGRAPH: 1
         # TODO remove the -i (ignore errors)
         run: |
+          set -e
           coverage run -m pytest
           coverage xml -i
       - name: Upload results
