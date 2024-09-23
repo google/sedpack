@@ -78,31 +78,6 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
-      - name: pytest
-        if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
-        shell: bash
-        run: |
-          set -e
-          python3 -m venv .venv
-          source .venv/bin/activate
-          pip install sedpack --find-links dist --force-reinstall
-          pip install pytest
-          pytest
-      - name: pytest
-        if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
-        uses: uraimo/run-on-arch-action@v2
-        with:
-          arch: ${{ matrix.platform.target }}
-          distro: ubuntu22.04
-          githubToken: ${{ github.token }}
-          install: |
-            apt-get update
-            apt-get install -y --no-install-recommends python3 python3-pip
-            pip3 install -U pip pytest
-          run: |
-            set -e
-            pip3 install sedpack --find-links dist --force-reinstall
-            pytest
 
   sdist:
     runs-on: ubuntu-latest
@@ -155,6 +130,11 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
       - uses: actions/download-artifact@v4
+      - name: Installing test requirements and sedpack
+        # Start by "installing" sedpack to be sure all dependencies are listed
+        run: |
+          pip install -r test_requirements.txt
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: pytest
         shell: bash
         run: |
