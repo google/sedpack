@@ -132,7 +132,9 @@ jobs:
       - name: Install wheel packages needed for wheel installation
         run: python -m pip install wheel
       - name: Install the correct wheel
-        run: python -m pip install wheels-*/*
+        # Try installing all the wheels (one will be ok).
+        run: |
+          for W in wheels-*/* ; do python -m pip install $W || echo "" ; done
       - name: pytest
         shell: bash
         run: |
