@@ -24,6 +24,14 @@ To use this library you need to have a working version of [TensorFlow
 3.  Install the package in development mode: `python3 -m pip install --editable
     .` (short `pip install -e .` or legacy `python setup.py develop`)
 
+#### Rust install
+
+-   Activate your Python virtual environment
+-   [Install Rust](https://www.rust-lang.org/tools/install)
+-   Run `maturin develop --release`
+-   Run `python -m pytest` from the project root directory -- no tests should
+    be skipped
+
 ### Update dependencies
 
 Make sure to have: `sudo apt install python3 python3-pip python3-venv` and
