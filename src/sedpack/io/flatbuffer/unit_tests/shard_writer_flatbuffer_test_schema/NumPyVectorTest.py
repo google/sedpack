@@ -135,8 +135,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeShort(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -146,8 +145,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeShortAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -155,22 +153,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeShortLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeShortIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(10))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         return o == 0
 
     # NumPyVectorTest
     def AttributeUshort(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(12))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -180,8 +175,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeUshortAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(12))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -189,22 +183,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeUshortLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(12))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeUshortIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(12))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(12))
         return o == 0
 
     # NumPyVectorTest
     def AttributeInt(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -214,8 +205,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeIntAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -223,22 +213,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeIntLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeIntIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(14))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         return o == 0
 
     # NumPyVectorTest
     def AttributeUint(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -248,8 +235,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeUintAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -257,22 +243,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeUintLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeUintIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(16))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(16))
         return o == 0
 
     # NumPyVectorTest
     def AttributeFloat(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(18))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -282,8 +265,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeFloatAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(18))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -291,22 +273,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeFloatLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(18))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeFloatIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(18))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(18))
         return o == 0
 
     # NumPyVectorTest
     def AttributeLong(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(20))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(20))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -316,8 +295,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeLongAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(20))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(20))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -325,22 +303,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeLongLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(20))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(20))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeLongIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(20))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(20))
         return o == 0
 
     # NumPyVectorTest
     def AttributeUlong(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(22))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(22))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -350,8 +325,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeUlongAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(22))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(22))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -359,22 +333,19 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeUlongLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(22))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(22))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeUlongIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(22))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(22))
         return o == 0
 
     # NumPyVectorTest
     def AttributeDouble(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(24))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(24))
         if o != 0:
             a = self._tab.Vector(o)
             return self._tab.Get(
@@ -384,8 +355,7 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeDoubleAsNumpy(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(24))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(24))
         if o != 0:
             return self._tab.GetVectorAsNumpy(
                 flatbuffers.number_types.Int8Flags, o)
@@ -393,16 +363,14 @@ class NumPyVectorTest(object):
 
     # NumPyVectorTest
     def AttributeDoubleLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(24))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(24))
         if o != 0:
             return self._tab.VectorLen(o)
         return 0
 
     # NumPyVectorTest
     def AttributeDoubleIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(
-            self._tab.Offset(24))
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(24))
         return o == 0
 
 

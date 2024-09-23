@@ -98,10 +98,10 @@ def merge_shard_infos(updates: list[ShardListInfo], dataset_root: Path,
     # Recursively update.
     merged: dict[str, ShardListInfo] = {  # Merge recursively.
         directory:
-        merge_shard_infos(updates=recursive_updates,
-                          dataset_root=dataset_root,
-                          common=common + 1,
-                          hashes=hashes)
+            merge_shard_infos(updates=recursive_updates,
+                              dataset_root=dataset_root,
+                              common=common + 1,
+                              hashes=hashes)
         for directory, recursive_updates in recursively_update.items()
     }
 

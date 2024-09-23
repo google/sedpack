@@ -47,8 +47,7 @@ def shard_write_and_read(attributes: dict[str, np.ndarray], shard_file: Path,
     one_value = next(iter(attributes.values()))  # One of the values.
     for i in range(one_value.shape[0]):
         writer.write(values={
-            name: value[i]
-            for name, value in attributes.items()
+            name: value[i] for name, value in attributes.items()
         })
     writer.close()
 
@@ -192,8 +191,7 @@ def test_processing_process_and_list_npz_with_int(tmp_path):
                          shard_file,
                          shard_file_type="npz",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -206,8 +204,7 @@ def test_processing_process_and_list_npz_with_float(tmp_path):
                          shard_file,
                          shard_file_type="npz",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -222,8 +219,7 @@ def test_processing_process_and_list_npz_mixed(tmp_path):
                          shard_file,
                          shard_file_type="npz",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -236,8 +232,7 @@ def test_processing_process_and_list_tfrec_with_int(tmp_path):
                          shard_file,
                          shard_file_type="tfrec",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -250,8 +245,7 @@ def test_processing_process_and_list_tfrec_with_float(tmp_path):
                          shard_file,
                          shard_file_type="tfrec",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -266,8 +260,7 @@ def test_processing_process_and_list_tfrec_mixed(tmp_path):
                          shard_file,
                          shard_file_type="tfrec",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -280,8 +273,7 @@ def test_processing_process_and_list_fb_with_int(tmp_path):
                          shard_file,
                          shard_file_type="fb",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -294,8 +286,7 @@ def test_processing_process_and_list_fb_with_float(tmp_path):
                          shard_file,
                          shard_file_type="fb",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })
 
 
@@ -310,6 +301,5 @@ def test_processing_process_and_list_fb_mixed(tmp_path):
                          shard_file,
                          shard_file_type="fb",
                          process_record=lambda x: {
-                             name: value + 1
-                             for name, value in x.items()
+                             name: value + 1 for name, value in x.items()
                          })

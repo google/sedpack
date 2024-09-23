@@ -24,8 +24,8 @@ from sedpack.io.npz import IterateShardNP
 def test_attribute_bytes(tmpdir: str | Path) -> None:
     shard_file = Path(tmpdir / "test_shard.npz")
     examples_per_shard = 4
-    attr_1_shape = (128, )
-    attr_2_shape = (8, )
+    attr_1_shape = (128,)
+    attr_2_shape = (8,)
     attr_1_values = np.random.uniform(size=(examples_per_shard, *attr_1_shape))
     attr_2_values = np.random.uniform(size=(examples_per_shard, *attr_2_shape))
 

@@ -110,7 +110,7 @@ class _DatasetFillerContext:
         file_type: str = self._dataset_structure.shard_file_type
         file_name: str = f"{uuid.uuid4().hex}.{file_type}"
         shard_info = ShardInfo(file_infos=(FileInfo(
-            file_path=relative_path_with_split / file_name), ))
+            file_path=relative_path_with_split / file_name),))
 
         return Shard(
             shard_info=shard_info,
@@ -118,11 +118,10 @@ class _DatasetFillerContext:
             dataset_root_path=self._dataset_root_path,
         )
 
-    def write_example(
-            self,
-            values: ExampleT,
-            split: SplitT,
-            custom_metadata: Optional[dict[str, Any]] = None) -> None:
+    def write_example(self,
+                      values: ExampleT,
+                      split: SplitT,
+                      custom_metadata: Optional[dict[str, Any]] = None) -> None:
         """Write an example. Opens a new shard if necessary.
 
         Args:
@@ -160,8 +159,8 @@ class _DatasetFillerContext:
 
         # Open a new shard if the current one already contains too many
         # examples.
-        if (current_progress.written_examples >= self._examples_per_shard
-                or metadata_changed):
+        if (current_progress.written_examples >= self._examples_per_shard or
+                metadata_changed):
             # Close the current shard if needed.
             self.close_shard(shard=current_progress.shard, split=split)
             current_progress.shard = self._get_new_shard(split=split)
