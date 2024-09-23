@@ -88,10 +88,11 @@ def test_write_multiprocessing(tmpdir: Union[str, Path]) -> None:
         },
     ]
 
-    results = dataset.write_multiprocessing(feed_writer,
-                                            custom_arguments,
-                                            custom_kwarguments,
-                                            single_process=True)
+    results = dataset.write_multiprocessing(
+        feed_writer=feed_writer,
+        custom_arguments=custom_arguments,
+        custom_kwarguments=custom_kwarguments,
+        single_process=True)
 
     assert results == [
         len(part_of_array_of_values[0])

@@ -87,7 +87,8 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
 
           np_bytes (np.ndarray): The bytes as an np.array of bytes.
 
-          attribute (Attribute): Description of the final array (dtype and shape).
+          attribute (Attribute): Description of the final array (dtype and
+          shape).
 
           batch_size (int): If `batch_size` is larger than zero we received a
           batch of these attributes. In case when `batch_size == -1` the
