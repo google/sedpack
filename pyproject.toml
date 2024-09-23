@@ -4,9 +4,10 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "src"
-module-name = "sedpack"
 manifest-path = "rust/Cargo.toml"
 features = ["pyo3/extension-module"]
+# Implemented in Rust:
+module-name = "sedpack._sedpack_rs"
 
 [project]
 name = "sedpack"

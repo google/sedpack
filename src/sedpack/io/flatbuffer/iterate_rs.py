@@ -21,9 +21,7 @@ from typing import Iterable, Callable
 
 import numpy as np
 
-# This class makes no sense without being able to import sedpack_rs.
-import sedpack_rs  # type: ignore # pylint: disable=import-error
-
+from sedpack import _sedpack_rs
 from sedpack.io.flatbuffer.iterate import IterateShardFlatBuffer
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.types import ExampleT
@@ -35,7 +33,7 @@ class IterateShardFlatBufferRs(IterateShardBase[T]):
     """Remember everything to be able to iterate shards. This can be pickled
     and passed as a callable object into another process.
 
-    This class uses the Rust code present in sedpack_rs.
+    This class uses the Rust code present in _sedpack_rs.
     """
 
     def __init__(self, dataset_structure: DatasetStructure,
@@ -57,7 +55,7 @@ class IterateShardFlatBufferRs(IterateShardBase[T]):
         shard the following holds:
         `result[attribute.name].shape = (E, *attribute.shape)`.
         """
-        parsed: list[np.ndarray] = sedpack_rs.iterate_shard_py(str(file_path))
+        parsed: list[np.ndarray] = _sedpack_rs.iterate_shard_py(str(file_path))
         result: dict[str, np.ndarray] = {}
         for np_bytes, attribute in zip(
                 parsed, self.dataset_structure.saved_data_description):
