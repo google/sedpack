@@ -41,6 +41,31 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+          cache: 'pip'
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Build a virtualenv, but only if it doesn't already exist
+      - name: Populate pip cache
+        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -69,61 +94,20 @@ jobs:
           name: wheels-sdist
           path: dist
 
-  sedpackcache:
-    name: Sedpack pip cache
-    runs-on: ${{ matrix.platform.runner }}
-    strategy:
-      matrix:
-        platform:
-          - runner: ubuntu-latest
-            target: x86_64
-    needs: [linux, sdist]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-      - name: Get pip cache directory
-        id: pip-cache
-        shell: bash
-        run: |
-          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-      - name: Use cached venv or create it
-        uses: actions/cache/restore@v4
-        id: cache
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      # Build a virtualenv, but only if it doesn't already exist
-      - name: Populate pip cache
-        run: python -m pip install --require-hashes --no-deps -r requirements.txt
-      - name: Save cache
-        id: cache-save
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ steps.cache.outputs.cache-primary-key }}
-
   pytest:
     name: Pytest
+    needs: [linux, sdist]
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
         platform:
           - runner: ubuntu-latest
             target: x86_64
-    needs: [sedpackcache]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: 3.x
           cache: 'pip'
       - name: Get pip cache directory
         id: pip-cache
@@ -139,11 +123,14 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - name: Installing test requirements and sedpack
-        # Start by "installing" sedpack to be sure all dependencies are listed
+      - name: Fail if cache not found
+        run: exit 1
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/download-artifact@v4
+      - name: Fail if cache not found
+        run: python -m pip install wheels-*/*
+      - name: pytest
+        shell: bash
         run: |
-          pip install -r test_requirements.txt
-          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
-      - name: Running unit tests
-        run: |
-          python -m pytest
+          pip install pytest
+          pytest
