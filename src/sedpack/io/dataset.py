@@ -694,10 +694,7 @@ class Dataset:
         )
 
         # Decode the files.
-        supported_file_types: list[ShardFileTypeT] = [
-            "npz",
-            "fb",
-        ]
+        supported_file_types: list[ShardFileTypeT] = ["npz", "fb"]
         if self.dataset_structure.shard_file_type not in supported_file_types:
             raise ValueError(f"The method as_numpy_iterator_async supports "
                              f"only {supported_file_types} but not "

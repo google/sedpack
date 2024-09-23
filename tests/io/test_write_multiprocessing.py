@@ -88,9 +88,9 @@ def test_write_multiprocessing(tmpdir: Union[str, Path]) -> None:
         },
     ]
 
-    results = dataset.write_multiprocessing(feed_writer,
-                                            custom_arguments,
-                                            custom_kwarguments,
+    results = dataset.write_multiprocessing(feed_writer=feed_writer,
+                                            custom_arguments=custom_arguments,
+                                            custom_kwarguments=custom_kwarguments,
                                             single_process=True)
 
     assert results == [
