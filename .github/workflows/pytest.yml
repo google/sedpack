@@ -57,11 +57,6 @@ jobs:
         run: |
           pip install -r test_requirements.txt
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
-      - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          target: x86_64
-          args: --release --out dist --find-interpreter
       - name: Running unit tests
         run: |
           python -m pytest
