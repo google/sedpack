@@ -356,6 +356,7 @@ class Dataset:
     def as_tfdataset(  # pylint: disable=too-many-arguments
             self,
             split: SplitT,
+            *,
             process_record: Optional[Callable[[ExampleT], T]] = None,
             shards: Optional[int] = None,
             shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
@@ -536,6 +537,7 @@ class Dataset:
 
     def write_multiprocessing(  # pylint: disable=too-many-arguments
             self,
+            *,
             feed_writer: Callable[..., Any],
             custom_arguments: List[Any],
             custom_kwarguments: Optional[List[Dict[str, Any]]] = None,
@@ -645,6 +647,7 @@ class Dataset:
 
     async def as_numpy_iterator_async(  # pylint: disable=too-many-arguments
         self,
+        *,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
         shards: Optional[int] = None,
@@ -741,6 +744,7 @@ class Dataset:
 
     def _as_numpy_common(  # pylint: disable=too-many-arguments
         self,
+        *,
         split: SplitT,
         shards: Optional[int] = None,
         shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
@@ -791,6 +795,7 @@ class Dataset:
 
     def as_numpy_iterator_concurrent(  # pylint: disable=too-many-arguments
         self,
+        *,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
         shards: Optional[int] = None,
@@ -893,6 +898,7 @@ class Dataset:
 
     def as_numpy_iterator(  # pylint: disable=too-many-arguments
         self,
+        *,
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
         shards: Optional[int] = None,
