@@ -100,6 +100,7 @@ jobs:
     needs: [linux, sdist]
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
@@ -129,7 +130,6 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
-      - uses: actions/download-artifact@v4
       - name: Installing test requirements and sedpack
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
