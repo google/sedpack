@@ -19,6 +19,7 @@ itemsize
 kwarguments
 ndarray
 newbyteorder
+perfcounters
 pickleable
 pyarray
 pyfunction
