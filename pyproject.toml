@@ -6,6 +6,7 @@ build-backend = "maturin"
 python-source = ["src"]
 module-name = "sedpack"
 manifest-path = "rust/Cargo.toml"
+features = ["pyo3/extension-module"]
 
 [project]
 name = "sedpack"
@@ -54,6 +55,3 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/google/sedpack"
 "Bug Tracker" = "https://github.com/google/sedpack"
-
-[tool.maturin]
-features = ["pyo3/extension-module"]
