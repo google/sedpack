@@ -1,9 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.maturin]
+python-source = ["src"]
+module-name = "sedpack"
+manifest-path = "rust/Cargo.toml"
 
 [project]
 name = "sedpack"
@@ -45,9 +47,6 @@ dependencies = [
     "tqdm",
 ]
 
-[tool.setuptools.dynamic]
-version = {attr = "sedpack.__version__"}
-
 [project.optional-dependencies]
 
 [project.scripts]
@@ -56,5 +55,5 @@ version = {attr = "sedpack.__version__"}
 "Homepage" = "https://github.com/google/sedpack"
 "Bug Tracker" = "https://github.com/google/sedpack"
 
-[tool.setuptools.package-data]
-sedpack = ["py.typed"]
+[tool.maturin]
+features = ["pyo3/extension-module"]
