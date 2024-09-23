@@ -128,7 +128,7 @@ class DatasetStructure(BaseModel):
     compression: CompressionT = "GZIP"
     examples_per_shard: int = 256
     shard_file_type: ShardFileTypeT = "tfrec"
-    hash_checksum_algorithms: tuple[HashChecksumT, ...] = ("sha256", )
+    hash_checksum_algorithms: tuple[HashChecksumT, ...] = ("sha256",)
 
 
 class DatasetInfo(BaseModel):

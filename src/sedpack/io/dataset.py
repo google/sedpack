@@ -266,8 +266,7 @@ class Dataset:
             shards_list = list(filter(shard_filter, shards_list))
 
             kept_metadata: set[str] = {
-                str(s.custom_metadata)
-                for s in shards_list
+                str(s.custom_metadata) for s in shards_list
             }
             self._logger.info(
                 "Filtered shards with custom metadata: %s from split: %s",
@@ -606,8 +605,7 @@ class Dataset:
         else:
             # Fill writers and collect results.
             with Pool(len(custom_arguments)) as pool:
-                wrapper_outputs = list(pool.imap(_wrapper_func,
-                                                 wrapper_inputs))
+                wrapper_outputs = list(pool.imap(_wrapper_func, wrapper_inputs))
 
         # Retrieve filled dataset_fillers and feed_writer results.
         dataset_fillers = [
@@ -733,8 +731,7 @@ class Dataset:
 
         # Process each record if requested.
         if process_record:
-            example_iterator = asyncstdlib.map(process_record,
-                                               example_iterator)
+            example_iterator = asyncstdlib.map(process_record, example_iterator)
 
         async for example in example_iterator:
             yield example

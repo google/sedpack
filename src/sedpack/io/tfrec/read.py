@@ -54,8 +54,7 @@ class IterateShardTFRec(IterateShardBase[T]):
         # Read the shard.
         tf_dataset_records = tf.data.TFRecordDataset(
             str(file_path),
-            compression_type=self.dataset_structure.
-            compression,  # type: ignore
+            compression_type=self.dataset_structure.compression,  # type: ignore
         )
 
         # Decode examples.
