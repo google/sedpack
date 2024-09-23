@@ -39,7 +39,7 @@ mod shard_generated;
 ///
 /// Returns: A vector of attributes where each attribute is a vector of bytes concatenated along
 /// all examples. Meaning that `result[i]` is the `i`-th attribute bytes concatenated across all
-/// examles. Then if there are `E` examples and the attribute `i` is (always) represented by `B`
+/// examples. Then if there are `E` examples and the attribute `i` is (always) represented by `B`
 /// bytes then `result[i][e * B: (e + 1) * B]` are the bytes of example `e` (numbered from zero).
 /// Thus NumPy can interpret `result[i]` as a c_contiguous array of shape `(E, *attribute.shape)`
 /// (no copy is needed for reshaping).

@@ -1,8 +1,14 @@
+Bursztein
 Elems
+Karel
+Král
 MNIST
+Picod
 SCAAML
 asyncstdlib
+bldr
 byteswap
+cdylib
 compresslevel
 crossentropy
 diutils
@@ -14,6 +20,9 @@ kwarguments
 ndarray
 newbyteorder
 pickleable
+pyarray
+pyfunction
+pymodule
 savez
 sedpack
 setaf
