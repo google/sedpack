@@ -51,6 +51,8 @@ jobs:
           pip install -r test_requirements.txt
           pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Try import
+        run: python -c "from sedpack import _sedpack_rs"
       - name: Running mypy
         env:
           MYPYPATH: mypy_stubs/
