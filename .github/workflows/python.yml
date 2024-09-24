@@ -126,5 +126,5 @@ jobs:
         shell: bash
         run: |
           source .venv/bin/activate
-          pip install pytest
+          pip install -r test_requirements.txt
           pytest
