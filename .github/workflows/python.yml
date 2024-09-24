@@ -121,7 +121,7 @@ jobs:
           path: .venv
           fail-on-cache-miss: true
 
-      # Pytest
+      # Pytest (TODO: pip install -e . should not be needed)
       - name: Run Pytest
         shell: bash
         run: |
@@ -155,6 +155,7 @@ jobs:
           fail-on-cache-miss: true
 
       # Coverage
+      # Pytest (TODO: pip install -e . should not be needed)
       - name: Source
         shell: bash
         run: |
