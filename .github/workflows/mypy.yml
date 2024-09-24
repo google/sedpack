@@ -51,6 +51,16 @@ jobs:
           pip install -r test_requirements.txt
           pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
+      # Build a virtualenv cache
+      - name: Get venv cache
+        uses: actions/cache/restore@v4
+        id: sedpack_venv_cache
+        with:
+          # The cache key depends on requirements.txt
+          key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+          path: .venv
+      - name: Source
+        run: source .venv/bin/activate
       - name: Build local package
         uses: PyO3/maturin-action@v1
         with:
