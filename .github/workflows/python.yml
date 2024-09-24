@@ -129,3 +129,48 @@ jobs:
           pip install -r test_requirements.txt
           python -m pip install --editable .
           pytest
+
+  coverage:
+    name: Coverage
+    needs: [local]
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64
+    steps:
+      # Restore venv
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+          cache: 'pip'
+      - name: Use cached venv with installed sedpack
+        uses: actions/cache/restore@v4
+        with:
+          # The cache key is the current commit sha
+          key: sedpackvenv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ github.event.pull_request.head.sha }}
+          path: .venv
+          fail-on-cache-miss: true
+
+      # Coverage
+      - name: Source
+        shell: bash
+        run: |
+          source .venv/bin/activate
+          pip install -r test_requirements.txt
+          python -m pip install --editable .
+      - name: Install workflow dependencies
+        run: pip install --upgrade pytest coverage
+      - name: Running unit tests with coverage
+        env:
+          DISABLE_AUTOGRAPH: 1
+        # TODO remove the -i (ignore errors)
+        run: |
+          coverage run -m pytest
+          coverage xml -i
+      - name: Upload results
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.xml
