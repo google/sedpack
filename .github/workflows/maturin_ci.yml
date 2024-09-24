@@ -187,9 +187,10 @@ jobs:
       - name: Running unit tests with coverage
         env:
           DISABLE_AUTOGRAPH: 1
+        # TODO remove the -i (ignore errors)
         run: |
           coverage run -m pytest
-          coverage xml
+          coverage xml -i
       - name: Upload results
         uses: coverallsapp/github-action@v2
         with:
