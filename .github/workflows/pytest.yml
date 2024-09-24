@@ -55,6 +55,9 @@ jobs:
       - name: Running unit tests
         run: |
           python -m pytest
+      - name: Mypy
+        run: |
+          python -m mypy
 
   coverage:
     runs-on: ubuntu-22.04
