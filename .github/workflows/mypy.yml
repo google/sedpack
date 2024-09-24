@@ -54,7 +54,6 @@ jobs:
       - name: Mypy
         run: |
           python -m pip install mypy
-          python -m mypy src
       - name: Running mypy
         env:
           MYPYPATH: mypy_stubs/
