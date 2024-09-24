@@ -115,7 +115,7 @@ fn iterate_shard_py<'py>(py: Python<'py>, shard_file: &Bound<'_, PyString>) -> P
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn _sedpack_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn sedpack_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(iterate_shard_py, m)?)?;
     Ok(())
 }
