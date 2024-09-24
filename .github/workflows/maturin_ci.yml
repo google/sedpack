@@ -80,6 +80,7 @@ jobs:
             pytest
 
   musllinux:
+    needs: [linux]
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -141,6 +142,7 @@ jobs:
             pytest
 
   windows:
+    needs: [musllinux]
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -178,6 +180,7 @@ jobs:
           pytest
 
   macos:
+    needs: [windows]
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
@@ -212,6 +215,7 @@ jobs:
           pytest
 
   emscripten:
+    needs: [macos]
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
