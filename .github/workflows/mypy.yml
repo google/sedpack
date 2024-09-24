@@ -67,6 +67,13 @@ jobs:
           command: develop
           args: --release
           sccache: 'true'
+      - name: Pre-work
+        env:
+          MYPYPATH: mypy_stubs/
+        # Start by "installing" sedpack to be sure all dependencies are listed
+        run: |
+          pip install -r test_requirements.txt
+          pip install --editable .
       - name: Try import
         run: python -c "from sedpack import _sedpack_rs"
       - name: Running mypy
