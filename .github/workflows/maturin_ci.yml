@@ -71,7 +71,6 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --require-hashes --no-deps -r requirements.txt
-          python -m pip install --editable .
       - name: Build Rust bindings
         uses: PyO3/maturin-action@v1
         with:
