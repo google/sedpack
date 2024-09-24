@@ -127,4 +127,5 @@ jobs:
         run: |
           source .venv/bin/activate
           pip install -r test_requirements.txt
+          python -m pip install --editable .
           pytest
