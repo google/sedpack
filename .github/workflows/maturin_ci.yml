@@ -71,12 +71,6 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --require-hashes --no-deps -r requirements.txt
-      - name: Build Rust bindings
-        uses: PyO3/maturin-action@v1
-        with:
-          command: develop
-          args: --release
-          sccache: 'true'
       - name: Save cache
         uses: actions/cache/save@v4
         with:
@@ -123,15 +117,15 @@ jobs:
       - name: Fail if cache not found
         run: exit 1
         if: steps.cache.outputs.cache-hit != 'true'
-        #- uses: actions/download-artifact@v4
-        #- name: List all wheels
-        #  run: ls wheels-*/*
-        #- name: Install wheel packages needed for wheel installation
-        #  run: python -m pip install wheel
-        #- name: Install the correct wheel
-        #  # Try installing all the wheels (one will be ok).
-        #  run: |
-        #    for W in wheels-*/* ; do python -m pip install $W || echo "" ; done
+      - uses: actions/download-artifact@v4
+      - name: List all wheels
+        run: ls wheels-*/*
+      - name: Install wheel packages needed for wheel installation
+        run: python -m pip install wheel
+      - name: Install the correct wheel
+        # Try installing all the wheels (one will be ok).
+        run: |
+          for W in wheels-*/* ; do python -m pip install $W || echo "" ; done
       - name: pytest
         shell: bash
         run: |
