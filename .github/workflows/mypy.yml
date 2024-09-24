@@ -43,14 +43,19 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
+      - name: Pre-work
+        env:
+          MYPYPATH: mypy_stubs/
+        # Start by "installing" sedpack to be sure all dependencies are listed
+        run: |
+          pip install -r test_requirements.txt
+          pip install --editable .
       - name: Running mypy
         env:
           MYPYPATH: mypy_stubs/
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
-          pip install -r test_requirements.txt
-          pip install --editable .
           mkdir -p .mypy_cache
           stubgen -o $MYPYPATH -p flatbuffers
           mypy --no-color-output --install-types --non-interactive src
