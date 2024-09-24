@@ -156,7 +156,7 @@ jobs:
           path: .venv
           fail-on-cache-miss: true
 
-      # Pytest
+      # Coverage
       - name: Install test requirements
         run: |
           source .venv/bin/activate
