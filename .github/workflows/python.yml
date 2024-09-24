@@ -105,6 +105,9 @@ jobs:
         with:
           python-version: 3.x
           cache: 'pip'
+      - name: Echo the cache key
+        shell: bash
+        run: echo ${{github.event.workflow_run.head_sha}}
       - name: Use cached venv with installed sedpack
         uses: actions/cache/restore@v4
         with:
