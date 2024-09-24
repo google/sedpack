@@ -61,4 +61,5 @@ jobs:
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
           mkdir -p .mypy_cache
           stubgen -o $MYPYPATH -p flatbuffers
-          python -m mypy --no-color-output --install-types --non-interactive src
+          python -c "from sedpack import _sedpack_rs"
+          mypy --no-color-output --install-types --non-interactive src
