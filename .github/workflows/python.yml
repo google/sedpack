@@ -1,5 +1,5 @@
 # Workflows which need Python cache
-name: PythonCI
+name: Python CI
 
 on:
   push:
@@ -116,12 +116,9 @@ jobs:
         if: steps.sedpack_venv_cache.outputs.cache-hit != 'true'
 
       # Pytest
-      - name: Install Pytest
+      - name: Run Pytest
         shell: bash
         run: |
           source .venv/bin/activate
           pip install pytest
-      - name: Run Pytest
-        shell: bash
-        run: |
           pytest
