@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '**/*.py'
+      - '**/*.rs'
       - 'pytest.ini'
   merge_group:
   pull_request:
