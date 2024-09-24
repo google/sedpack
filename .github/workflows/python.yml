@@ -85,7 +85,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           # The cache key is the current commit sha
-          key: ${GITHUB_SHA}
+          key: ${{github.event.workflow_run.head_sha}}
           path: .venv
 
   pytest:
@@ -109,7 +109,7 @@ jobs:
         id: sedpack_venv_cache
         with:
           # The cache key is the current commit sha
-          key: ${GITHUB_SHA}
+          key: ${{github.event.workflow_run.head_sha}}
           path: .venv
       - name: Fail if cache not found
         run: exit 1
