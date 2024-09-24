@@ -75,6 +75,7 @@ jobs:
           # The cache key depends on requirements.txt
           key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
           path: .venv
+          fail-on-cache-miss: true
       - name: Build local package
         uses: PyO3/maturin-action@v1
         with:
@@ -106,14 +107,11 @@ jobs:
           cache: 'pip'
       - name: Use cached venv with installed sedpack
         uses: actions/cache/restore@v4
-        id: sedpack_venv_cache
         with:
           # The cache key is the current commit sha
           key: ${{github.event.workflow_run.head_sha}}
           path: .venv
-      - name: Fail if cache not found
-        run: exit 1
-        if: steps.sedpack_venv_cache.outputs.cache-hit != 'true'
+          fail-on-cache-miss: true
 
       # Pytest
       - name: Run Pytest
