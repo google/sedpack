@@ -43,6 +43,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
+
       # Build wheels for pip
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -57,6 +58,7 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
+
       # Build a virtualenv cache
       - name: Get venv cache
         uses: actions/cache/restore@v4
@@ -126,9 +128,18 @@ jobs:
         # Try installing all the wheels (one will be ok).
         run: |
           for W in wheels-*/* ; do python -m pip install $W || echo "" ; done
-      - name: pytest
+      - name: Install Pytest
         shell: bash
         run: |
           source .venv/bin/activate
           pip install pytest
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          command: develop
+          args: --release
+          sccache: 'true'
+      - name: Run Pytest
+        shell: bash
+        run: |
           pytest
