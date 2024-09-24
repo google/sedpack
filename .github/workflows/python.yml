@@ -17,6 +17,7 @@ permissions:
   contents: read
 
 jobs:
+  # Build cache for pip package dependencies (low frequency)
   dependencies:
     name: Pip dependencies cache
     runs-on: ${{ matrix.platform.runner }}
@@ -53,6 +54,7 @@ jobs:
           path: .venv
         if: steps.sedpack_venv_dependencies.outputs.cache-hit != 'true'
 
+  # Build cache for current code (every commit)
   local:
     name: Local install
     needs: [dependencies]
@@ -88,6 +90,8 @@ jobs:
           # The cache key is the current commit sha
           key: sedpackvenv-${{ github.event.pull_request.head.sha }}
           path: .venv
+      - name: Try import
+        run: python -c "from sedpack import _sedpack_rs"
 
   pytest:
     name: Pytest
