@@ -105,11 +105,6 @@ jobs:
         with:
           python-version: 3.x
           cache: 'pip'
-      - name: Echo the cache key
-        shell: bash
-        run: |
-          echo ${{ github.event.pull_request.head.sha }}
-          echo "$(echo ${{github.event.pull_request.head.sha }})"
       - name: Use cached venv with installed sedpack
         uses: actions/cache/restore@v4
         with:
