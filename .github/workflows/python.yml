@@ -78,20 +78,22 @@ jobs:
           key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
           path: .venv
           fail-on-cache-miss: true
+      - name: Source venv
+        run: source .venv/bin/activate
       - name: Build local package
         uses: PyO3/maturin-action@v1
         with:
           command: develop
           args: --release
           sccache: 'true'
+      - name: Try import
+        run: python -c "from sedpack import _sedpack_rs"
       - name: Save cache
         uses: actions/cache/save@v4
         with:
           # The cache key is the current commit sha
           key: sedpackvenv-${{ github.event.pull_request.head.sha }}
           path: .venv
-      - name: Try import
-        run: python -c "from sedpack import _sedpack_rs"
 
   pytest:
     name: Pytest
