@@ -116,7 +116,7 @@ jobs:
           path: .venv
       - name: Fail if cache not found
         run: exit 1
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.sedpack_venv_cache.outputs.cache-hit != 'true'
       - uses: actions/download-artifact@v4
       - name: List all wheels
         run: ls wheels-*/*
