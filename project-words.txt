@@ -28,6 +28,7 @@ savez
 sedpack
 setaf
 shardfile
+subclassing
 tfdata
 tfdataset
 tfrec
