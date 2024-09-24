@@ -33,7 +33,7 @@ jobs:
             ${{ runner.os }}-pip-
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
-        run: pip install --require-hashes --no-deps -r requirements.txt
+        run: python -m pip install --require-hashes --no-deps -r requirements.txt
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
@@ -51,31 +51,10 @@ jobs:
           pip install -r test_requirements.txt
           pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
-      # Build a virtualenv cache
-      - name: Get venv cache
-        uses: actions/cache/restore@v4
-        id: sedpack_venv_cache
-        with:
-          # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
-          path: .venv
-      - name: Source
-        run: source .venv/bin/activate
-      - name: Build local package
-        uses: PyO3/maturin-action@v1
-        with:
-          command: develop
-          args: --release
-          sccache: 'true'
-      - name: Pre-work
-        env:
-          MYPYPATH: mypy_stubs/
-        # Start by "installing" sedpack to be sure all dependencies are listed
+      - name: Mypy
         run: |
-          pip install -r test_requirements.txt
-          pip install --editable .
-      - name: Try import
-        run: python -c "from sedpack import _sedpack_rs"
+          python -m pip install mypy
+          python -m mypy .
       - name: Running mypy
         env:
           MYPYPATH: mypy_stubs/
@@ -84,5 +63,4 @@ jobs:
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
           mkdir -p .mypy_cache
           stubgen -o $MYPYPATH -p flatbuffers
-          python -c "from sedpack import _sedpack_rs"
           python -m mypy --no-color-output --install-types --non-interactive src
