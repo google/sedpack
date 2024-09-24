@@ -21,7 +21,7 @@ from typing import Iterable, Callable
 
 import numpy as np
 
-from sedpack import _sedpack_rs
+from sedpack import _sedpack_rs  # type: ignore[attr-defined]
 from sedpack.io.flatbuffer.iterate import IterateShardFlatBuffer
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.types import ExampleT
