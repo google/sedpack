@@ -43,12 +43,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-
-      # Build wheels for pip
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
-          command: build
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
           sccache: 'true'
@@ -58,26 +55,31 @@ jobs:
         with:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
-
-      # Build a virtualenv cache
-      - name: Get venv cache
-        uses: actions/cache/restore@v4
-        id: sedpack_venv_cache
-        with:
-          # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
-          path: .venv
-      # Build a virtualenv, but only if it doesn't already exist
-      - name: Populate pip cache
+      - name: pytest
+        if: ${{ startsWith(matrix.platform.target, 'x86_64') }}
+        shell: bash
         run: |
-          python -m venv .venv
+          set -e
+          python3 -m venv .venv
           source .venv/bin/activate
-          python -m pip install --require-hashes --no-deps -r requirements.txt
-      - name: Save cache
-        uses: actions/cache/save@v4
+          pip install sedpack --find-links dist --force-reinstall
+          pip install pytest
+          pytest
+      - name: pytest
+        if: ${{ !startsWith(matrix.platform.target, 'x86') && matrix.platform.target != 'ppc64' }}
+        uses: uraimo/run-on-arch-action@v2
         with:
-          key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
-          path: .venv
+          arch: ${{ matrix.platform.target }}
+          distro: ubuntu22.04
+          githubToken: ${{ github.token }}
+          install: |
+            apt-get update
+            apt-get install -y --no-install-recommends python3 python3-pip
+            pip3 install -U pip pytest
+          run: |
+            set -e
+            pip3 install sedpack --find-links dist --force-reinstall
+            pytest
 
   sdist:
     runs-on: ubuntu-latest
@@ -94,52 +96,17 @@ jobs:
           name: wheels-sdist
           path: dist
 
-  pytest:
-    name: Pytest
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/')"
     needs: [linux, sdist]
-    runs-on: ${{ matrix.platform.runner }}
-    strategy:
-      matrix:
-        platform:
-          - runner: ubuntu-latest
-            target: x86_64
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-          cache: 'pip'
-      - name: Use cached venv
-        uses: actions/cache/restore@v4
-        id: sedpack_venv_cache
-        with:
-          # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('**/requirements*.txt') }}
-          path: .venv
-      - name: Fail if cache not found
-        run: exit 1
-        if: steps.sedpack_venv_cache.outputs.cache-hit != 'true'
       - uses: actions/download-artifact@v4
-      - name: List all wheels
-        run: ls wheels-*/*
-      - name: Install wheel packages needed for wheel installation
-        run: python -m pip install wheel
-      - name: Install the correct wheel
-        # Try installing all the wheels (one will be ok).
-        run: |
-          for W in wheels-*/* ; do python -m pip install $W || echo "" ; done
-      - name: Install Pytest
-        shell: bash
-        run: |
-          source .venv/bin/activate
-          pip install pytest
-      - name: Build local package
+      - name: Publish to PyPI
         uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
-          command: develop
-          args: --release
-          sccache: 'true'
-      - name: Run Pytest
-        shell: bash
-        run: |
-          pytest
+          command: upload
+          args: --non-interactive --skip-existing wheels-*/*
