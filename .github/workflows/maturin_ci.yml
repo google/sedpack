@@ -3,17 +3,18 @@
 #
 #    maturin generate-ci github --pytest --platform all
 #
-name: CI
-
+name: Maturin CI
 on:
   push:
-    branches:
-      - main
-      - master
-    tags:
-      - '*'
+    paths:
+      - '**/*.py'
+      - '**/*.rs'
+      - 'pytest.ini'
+  merge_group:
   pull_request:
-  workflow_dispatch:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
 
 permissions:
   contents: read
