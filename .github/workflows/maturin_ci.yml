@@ -13,8 +13,6 @@ on:
   merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
-  schedule:
-    - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
 
 permissions:
   contents: read
