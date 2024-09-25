@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '**/*.py'
+      - '**/*.rs'
       - 'pytest.ini'
   merge_group:
   pull_request:
@@ -49,6 +50,7 @@ jobs:
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
           pip install -r test_requirements.txt
+          pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Running unit tests
         run: |
@@ -91,6 +93,7 @@ jobs:
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
           pip install -r test_requirements.txt
+          pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage
