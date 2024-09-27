@@ -29,7 +29,7 @@ from sedpack.io.metadata import DatasetStructure
 
 if TYPE_CHECKING:
     # Avoid cyclical import.
-    from sedpack.io import Dataset
+    from sedpack.io.dataset_writing import DatasetWriting
 
 
 @dataclasses.dataclass
@@ -207,7 +207,7 @@ class DatasetFiller:
     group_number.
 
     Example use:
-    # Standalone use, prefer using sedpack.io.Dataset.filler instead.
+    # Standalone use, prefer using sedpack.io.DatasetWriting.filler instead.
     # Context manager properly opens and closes shards.
     with DatasetFiller(
         dataset=dataset,
@@ -218,15 +218,15 @@ class DatasetFiller:
     """
 
     def __init__(self,
-                 dataset: Dataset,
+                 dataset: DatasetWriting,
                  relative_path_from_split: Path = Path("."),
                  auto_update_dataset: bool = True) -> None:
         """Context manager for writing examples into a dataset.
 
         Args:
 
-          dataset (Dataset): Dataset object representing the dataset we are
-          filling.
+          dataset (DatasetWriting): Dataset object representing the dataset we
+          are filling.
 
           relative_path_from_split (Path): New shards are created inside
           `dataset_root_path / split / relative_path_from_split` or children.
@@ -247,7 +247,7 @@ class DatasetFiller:
             relative_path_from_split=relative_path_from_split,
         )
         self._auto_update_dataset: bool = auto_update_dataset
-        self._dataset: Dataset = dataset
+        self._dataset: DatasetWriting = dataset
         self._updated_infos: list[ShardListInfo] = []
 
     def __enter__(self) -> _DatasetFillerContext:
