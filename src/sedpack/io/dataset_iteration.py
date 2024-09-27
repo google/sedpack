@@ -116,11 +116,13 @@ class DatasetIteration(DatasetBase):
 
         Returns: tf.data.Dataset containing decoded examples.
         """
-        # If the cycle_length is None it is determined automatically and we do
-        # not need determinism. See documentation
+        # If the cycle_length is None it is determined automatically but we do
+        # use determinism. See documentation
         # https://www.tensorflow.org/api_docs/python/tf/data/Dataset#interleave
         deterministic: Optional[bool] = True
         if isinstance(cycle_length, int):
+            # Use tf.data.Options.deterministic to decide `deterministic` if
+            # cycle_length is <= 1.
             deterministic = False if cycle_length > 1 else None
         elif cycle_length is None:
             deterministic = True
@@ -128,7 +130,7 @@ class DatasetIteration(DatasetBase):
         # This is the tricky part, we are using the interleave function to
         # do the sampling as requested by the user. This is not the
         # standard use of the function or an obvious way to do it but
-        # its by far the faster and more compatible way to do so
+        # its by far the fastest and most compatible way to do so
         # we are favoring for once those factors over readability
         # deterministic=False is not an error, it is what allows us to
         # create random batch

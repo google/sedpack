@@ -202,15 +202,13 @@ class DatasetWriting(DatasetBase):
             hashes=self.dataset_structure.hash_checksum_algorithms,
         )
 
-    def check(self, show_progressbar: bool = True) -> bool:
+    def check(self, show_progressbar: bool = True) -> None:
         """Check the dataset integrity.
 
         Args:
           show_progressbar: Use tqdm to show a progressbar for different checks.
 
         Raises: ValueError if the dataset is inconsistent.
-
-        Returns: True if all hashes match, raises a ValueError otherwise.
         """
         for split in self._dataset_info.splits:
             for shard_info in tqdm(list(self.shard_info_iterator(split)),
@@ -225,7 +223,6 @@ class DatasetWriting(DatasetBase):
                         raise ValueError(
                             f"Hash checksum miss-match in {file_info.file_path}"
                         )
-        return True
 
 
 # We want to get results back.
