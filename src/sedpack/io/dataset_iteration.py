@@ -19,7 +19,6 @@ from typing import (
     AsyncIterator,
     Callable,
     Iterable,
-    Iterator,
     Optional,
 )
 import os
@@ -27,53 +26,22 @@ import os
 import asyncstdlib
 import tensorflow as tf
 
+from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
 from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
 from sedpack.io.npz import IterateShardNP
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
-from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
+from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
-
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
 
 
-class DatasetIteration:
+class DatasetIteration(DatasetBase):
     """Mixin for sedpack.io.Dataset to do iteration.
     """
-
-    def _shard_info_iterator(
-            self, shard_list_info: ShardListInfo) -> Iterator[ShardInfo]:
-        """Recursively yield `ShardInfo` from the whole directory tree.
-        """
-        shard_list: ShardsList = ShardsList.model_validate_json(
-            (self.path /
-             shard_list_info.shard_list_info_file.file_path).read_text())
-
-        yield from shard_list.shard_files
-
-        for child in shard_list.children_shard_lists:
-            yield from self._shard_info_iterator(child)
-
-    def shard_info_iterator(self, split: SplitT) -> Iterator[ShardInfo]:
-        """Iterate all `ShardInfo` in the split.
-
-        Args:
-
-          split (SplitT): Which split to iterate shard information from.
-
-        Raises: ValueError when the split is not present. A split not being
-        present is different from there not being any shard.
-        """
-        if split not in self._dataset_info.splits:
-            # Split not present.
-            raise ValueError(f"There is no shard in {split}.")
-
-        shard_list_info: ShardListInfo = self._dataset_info.splits[split]
-
-        yield from self._shard_info_iterator(shard_list_info)
 
     def shard_paths_dataset(
         self,

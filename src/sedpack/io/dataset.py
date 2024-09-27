@@ -13,10 +13,10 @@
 # limitations under the License.
 """Build and load tensorFlow dataset Record wrapper"""
 
-import logging
 from pathlib import Path
 from typing import Union
 
+from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.dataset_iteration import DatasetIteration
 from sedpack.io.dataset_writing import DatasetWriting
 from sedpack.io.errors import DatasetExistsError
@@ -52,28 +52,15 @@ class Dataset(
             FileNotFoundError if `create_dataset` is False and the
             `dataset_info.json` file does not exist.
         """
-        # Ensure pathlib Path.
-        self.path: Path = Path(path)
-        try:
-            # Expand user directory.
-            self.path = self.path.expanduser()
-        except RuntimeError:
-            # Expansion failed we assume that the path was not supposed to be
-            # expanded.
-            pass
-
-        # Resolve the dataset root path to avoid problems when checking if
-        # another path is relative to it.
-        self.path = self.path.resolve()
-
-        # Default DatasetInfo.
-        self._dataset_info = DatasetInfo()
-
-        if not create_dataset:
+        dataset_info: DatasetInfo
+        if create_dataset:
+            # Default DatasetInfo.
+            dataset_info = DatasetInfo()
+        else:
             # Load the information.
-            self._dataset_info = Dataset._load(self.path)
+            dataset_info = DatasetBase._load(Path(path))
 
-        self._logger = logging.getLogger("sedpack.io.Dataset")
+        super().__init__(path=path, dataset_info=dataset_info)
 
     @staticmethod
     def create(
@@ -98,7 +85,7 @@ class Dataset(
         corresponding config file.
         """
         # Create a new object.
-        dataset = Dataset(path=path, create_dataset=True)
+        dataset = Dataset(path=Path(path), create_dataset=True)
 
         # Do not overwrite an existing dataset.
         if Dataset._get_config_path(dataset.path).is_file():
@@ -115,25 +102,3 @@ class Dataset(
         # Write empty config.
         dataset.write_config(updated_infos=[])
         return dataset
-
-    @property
-    def metadata(self) -> Metadata:
-        """Return the metadata of this dataset.
-        """
-        return self._dataset_info.metadata
-
-    @metadata.setter
-    def metadata(self, value: Metadata) -> None:
-        """Set the metadata of this dataset.
-        """
-        self._dataset_info.metadata = value
-
-    @property
-    def dataset_structure(self) -> DatasetStructure:
-        """Return the structure of this dataset.
-        """
-        return self._dataset_info.dataset_structure
-
-    @dataset_structure.setter
-    def dataset_structure(self, value: DatasetStructure) -> None:
-        self._dataset_info.dataset_structure = value

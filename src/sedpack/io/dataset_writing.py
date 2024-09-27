@@ -29,13 +29,12 @@ from typing import (
 import uuid
 
 from tqdm.auto import tqdm
-import semver
 import tensorflow as tf
 
 import sedpack
+from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.file_info import FileInfo
 from sedpack.io.merge_shard_infos import merge_shard_infos
-from sedpack.io.metadata import DatasetInfo
 from sedpack.io.shard_file_metadata import ShardListInfo
 
 from sedpack.io.types import SplitT
@@ -43,7 +42,7 @@ import sedpack.io.utils as diutils
 from sedpack.io.dataset_filler import DatasetFiller
 
 
-class DatasetWriting:
+class DatasetWriting(DatasetBase):
     """Mixin for sedpack.io.Dataset to do writing.
     """
 
@@ -227,55 +226,6 @@ class DatasetWriting:
                             f"Hash checksum miss-match in {file_info.file_path}"
                         )
         return True
-
-    @staticmethod
-    def _get_config_path(path: Path, relative: bool = False) -> Path:
-        """Get the dataset config path.
-
-        Args:
-
-          path (Path): The dataset path.
-
-          relative (bool): Return only relative to `path`. Defaults to False.
-
-        Returns: A path to the config.
-        """
-        relative_path: Path = Path("dataset_info.json")
-        if relative:
-            return relative_path
-        return path / relative_path
-
-    @staticmethod
-    def _load(path: Path) -> DatasetInfo:
-        """Load a dataset from a config file.
-
-        Args:
-
-            path (Path): The path to the dataset.
-
-        Raises:
-
-            ValueError if the dataset was created using a newer version of the
-            sedpack than the one trying to load it. See
-            sedpack.__version__ docstring.
-
-            FileNotFoundError if the `dataset_info.json` file does not exist.
-
-        Returns: A DatasetInfo object representing the dataset metadata.
-        """
-        dataset_info = DatasetInfo.model_validate_json(
-            DatasetWriting._get_config_path(path).read_text(encoding="utf-8"))
-
-        # Check that the library version (version of this software) is not
-        # lower than what was used to capture the dataset.
-        if semver.Version.parse(dataset_info.metadata.sedpack_version).compare(
-                sedpack.__version__) > 0:
-            raise ValueError(f"Dataset-lib module is outdated, "
-                             f"sedpack_version: {sedpack.__version__}, "
-                             f"but dataset was created using: "
-                             f"{dataset_info.metadata.sedpack_version}")
-
-        return dataset_info
 
 
 # We want to get results back.
