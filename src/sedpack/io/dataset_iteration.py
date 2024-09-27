@@ -26,6 +26,7 @@ import os
 import asyncstdlib
 import tensorflow as tf
 
+import sedpack
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
@@ -37,6 +38,8 @@ from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
+
+from sedpack import _sedpack_rs
 
 
 class DatasetIteration(DatasetBase):
@@ -591,3 +594,76 @@ class DatasetIteration(DatasetBase):
                 buffer_size=shuffle)
 
         yield from example_iterator
+
+    def as_numpy_iterator_rust(  # pylint: disable=too-many-arguments
+        self,
+        *,
+        split: SplitT,
+        process_record: Optional[Callable[[ExampleT], T]] = None,
+        shards: Optional[int] = None,
+        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        repeat: bool = True,
+        file_parallelism: int = os.cpu_count() or 1,
+        shuffle: int = 1_000,
+    ) -> Iterable[ExampleT] | Iterable[T]:
+        """"Dataset as a numpy iterator (no batching). Experimental
+        implementation using the Rust code.
+
+        Args:
+
+            split (SplitT): Split, see SplitT.
+
+            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            function that processes a single record.
+
+            shards (Optional[int]): If specified limits the dataset to the
+            first `shards` shards.
+
+            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            this is a function taking the ShardInfo and returning True if the
+            shard shall be used for traversal and False otherwise.
+
+            repeat (bool): Whether to repeat examples and thus create infinite
+            dataset.
+
+            file_parallelism (int): IO parallelism. Defaults to `os.cpu_count()
+            or 1`.
+
+            shuffle (int): How many examples should be shuffled across shards.
+            When set to 0 the iteration is deterministic. It might be faster to
+            iterate over shuffled dataset.
+
+        Returns: An iterator over numpy examples (unless the parameter
+        `process_record` returns something else). No batching is done.
+        """
+        if self.dataset_structure.shard_file_type != "fb":
+            raise ValueError("This method is implemented only for FlatBuffers.")
+
+        shard_paths: list[str] = list(
+            self._as_numpy_common(
+                split=split,
+                shards=shards,
+                shard_filter=shard_filter,
+                repeat=False,
+                shuffle=shuffle,
+            ))
+
+        def to_dict(example):
+            result: dict[str, np.ndarray] = {}
+            for np_bytes, attribute in zip(
+                    example, self.dataset_structure.saved_data_description):
+                result[attribute.name] = IterateShardFlatBuffer.decode_array(
+                    np_bytes=np_bytes,
+                    attribute=attribute,
+                    batch_size=0,
+                )
+            return result
+
+        with _sedpack_rs.RustIter(files=shard_paths,
+                                  repeat=False,
+                                  threads=file_parallelism) as rust_iter:
+            example_iterator = map(to_dict, iter(rust_iter))
+            if process_record:
+                yield from map(process_record, example_iterator)
+            else:
+                yield from example_iterator

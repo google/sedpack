@@ -22,3 +22,5 @@ crate-type = ["cdylib"]
 flatbuffers = "24.3"
 numpy = "0.21"
 pyo3 = "0.21"
+rand = "0.8"
+yoke = { version = "0.7", features = ["derive"] }
