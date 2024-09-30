@@ -26,7 +26,6 @@ import os
 import asyncstdlib
 import tensorflow as tf
 
-import sedpack
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
@@ -39,7 +38,7 @@ from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
 
-from sedpack import _sedpack_rs
+from sedpack import _sedpack_rs  # type: ignore[attr-defined]
 
 
 class DatasetIteration(DatasetBase):
@@ -649,7 +648,7 @@ class DatasetIteration(DatasetBase):
             ))
 
         def to_dict(example):
-            result: dict[str, np.ndarray] = {}
+            result = {}
             for np_bytes, attribute in zip(
                     example, self.dataset_structure.saved_data_description):
                 result[attribute.name] = IterateShardFlatBuffer.decode_array(
@@ -660,7 +659,7 @@ class DatasetIteration(DatasetBase):
             return result
 
         with _sedpack_rs.RustIter(files=shard_paths,
-                                  repeat=False,
+                                  repeat=repeat,
                                   threads=file_parallelism) as rust_iter:
             example_iterator = map(to_dict, iter(rust_iter))
             if process_record:

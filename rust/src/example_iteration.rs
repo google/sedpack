@@ -28,7 +28,10 @@ pub struct ExampleIterator {
 }
 
 impl ExampleIterator {
-    pub fn new(files: Vec<String>, _repeat: bool, threads: usize) -> Self {
+    pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
+        if repeat {
+            panic!("Not implemented yet: repeat=true");
+        }
         let example_iterator =
             parallel_map(get_shard_progress, files.into_iter(), threads).flatten();
         ExampleIterator { example_iterator }
