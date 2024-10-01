@@ -98,15 +98,7 @@ fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
     // TODO the byte vectors should be pre-allocated to ensure alignment of larger types. Usually
     // the alignment is at least 8 bytes and moreover NumPy can deal with unaligned arrays (it is
     // a slowdown).
-    let mut result = vec![Vec::new(); attributes.len()];
-
-    // Parse and save examples.
-    for (attribute_id, result_attribute) in result.iter_mut().enumerate() {
-        // This is a memory copy. Thus `result` outlives `shard_progress`.
-        let attribute_bytes = attributes.get(attribute_id).attribute_bytes().unwrap();
-        result_attribute.extend(attribute_bytes);
-    }
-    result
+    attributes.iter().map(|x| x.attribute_bytes().unwrap().iter().collect()).collect()
 }
 
 impl Iterator for ShardProgress {
