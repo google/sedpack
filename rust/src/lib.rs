@@ -80,19 +80,15 @@ mod static_iter {
                 );
                 return None;
             }
-            let mut static_var = STATIC_ITERATORS.lock().unwrap();
-            match &mut *static_var {
+            match &mut *STATIC_ITERATORS.lock().unwrap() {
                 None => {
-                    println!("The static_index was not found among the STATIC_ITERATORS.");
-                    None
+                    // A single thread is touching STATIC_ITERATORS.
+                    unreachable!("STATIC_ITERATORS mutex was poisoned.")
                 }
                 Some(hash_map) => match hash_map.get_mut(&self.static_index) {
                     None => {
-                        println!(
-                            "Could not acquire the mutex, this should be accessed from a single \
-                             thread."
-                        );
-                        None
+                        // Not finding the static_index indicates a big bug in mod static_iter.
+                        unreachable!("The static_index was not found among the STATIC_ITERATORS.")
                     }
                     Some(iter) => iter.next(),
                 },
