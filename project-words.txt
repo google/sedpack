@@ -27,6 +27,7 @@ pyclass
 pyfunction
 pymethods
 pymodule
+rlib
 savez
 sedpack
 setaf
