@@ -99,7 +99,8 @@ where
 ///
 /// Example
 /// ```
-/// let s: i64 = parallel_map(|x| 2 * x, (1 .. 6).into_iter(), 15).sum();
+/// use sedpack_rs::parallel_map;
+/// let s: i64 = parallel_map::parallel_map(|x| 2 * x, (1 .. 6).into_iter(), 15).sum();
 /// assert_eq!(s, 30);
 /// ```
 pub fn parallel_map<I, T>(fun: fn(I::Item) -> T, mut iter: I, threads: usize) -> ParallelMap<I, T>
@@ -171,12 +172,6 @@ mod tests {
     fn sleepy_add_one(x: i32) -> i32 {
         std::thread::sleep(std::time::Duration::from_millis(10));
         x + 1
-    }
-
-    #[test]
-    fn test_doc() {
-        let s: i64 = parallel_map(|x| 2 * x, (1 .. 6).into_iter(), 15).sum();
-        assert_eq!(s, 30);
     }
 
     #[test]
