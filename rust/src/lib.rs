@@ -86,7 +86,7 @@ mod static_iter {
                     println!("The static_index was not found among the STATIC_ITERATORS.");
                     None
                 }
-                Some(ref mut hash_map) => match hash_map.get_mut(&self.static_index) {
+                Some(hash_map) => match hash_map.get_mut(&self.static_index) {
                     None => {
                         println!(
                             "Could not acquire the mutex, this should be accessed from a single \
@@ -94,7 +94,7 @@ mod static_iter {
                         );
                         None
                     }
-                    Some(&mut ref mut iter) => iter.next(),
+                    Some(iter) => iter.next(),
                 },
             }
         }
@@ -113,7 +113,7 @@ mod static_iter {
 
             let static_index = rand::random();
             match &mut *static_var {
-                None => panic!("This should never happen"),
+                None => unreachable!(),
                 Some(ref mut hash_map) => {
                     hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
                 }
@@ -161,10 +161,7 @@ mod static_iter {
                         "The static_index was not found among the STATIC_ITERATORS. Cannot drop."
                     );
                 }
-                Some(ref mut hash_map) => {
-                    // Drop the ExampleIterator.
-                    let _ = hash_map.remove(&slf.static_index);
-                }
+                Some(hash_map) => drop(hash_map.remove(&slf.static_index)),
             }
         }
     }

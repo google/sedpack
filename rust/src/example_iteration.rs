@@ -29,9 +29,7 @@ pub struct ExampleIterator {
 
 impl ExampleIterator {
     pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
-        if repeat {
-            panic!("Not implemented yet: repeat=true");
-        }
+        assert!(!repeat, "Not implemented yet: repeat=true");
         let example_iterator =
             parallel_map(get_shard_progress, files.into_iter(), threads).flatten();
         ExampleIterator { example_iterator }
@@ -54,14 +52,11 @@ struct ShardProgress {
 }
 
 /// Get ShardProgress.
-fn get_shard_progress(file_path: String) -> ShardProgress {
+fn get_shard_progress(file_path: &str) -> ShardProgress {
     // TODO compressed file support.
-    let mut file = match std::fs::File::open(file_path) {
-        Ok(f) => f,
-        Err(_e) => panic!("panic"), // No file no shard.
-    };
+    let mut file = std::fs::File::open(file_path).unwrap();
     let mut file_bytes = Vec::new();
-    let _ = file.read_to_end(&mut file_bytes);
+    let _ = file.read_to_end(&mut file_bytes).unwrap();
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
     // An example is vector of attributes (the same number of attributes in each example of each
@@ -72,9 +67,9 @@ fn get_shard_progress(file_path: String) -> ShardProgress {
     // If parsing fails at any time it fails.
     let shard: LoadedShard = Yoke::attach_to_cart(file_bytes, |x| root_as_shard(x).unwrap());
     // Number of examples might be different in different shards.
-    let examples = shard.get().examples().unwrap();
+    let total_examples = shard.get().examples().unwrap().len();
 
-    ShardProgress { total_examples: examples.len(), used_examples: 0, shard }
+    ShardProgress { total_examples, used_examples: 0, shard }
 }
 
 /// Get single example out of a ShardProgress.
@@ -89,8 +84,7 @@ fn get_shard_progress(file_path: String) -> ShardProgress {
 ///
 /// # Examples
 fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
-    assert!(id >= shard_progress.used_examples);
-    assert!(id < shard_progress.total_examples);
+    assert!((shard_progress.used_examples..shard_progress.total_examples).contains(&id));
 
     let shard = shard_progress.shard.get();
     let examples = shard.examples().unwrap();
@@ -102,16 +96,9 @@ fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
     // TODO the byte vectors should be pre-allocated to ensure alignment of larger types.
     // Usually the alignment is at least 8 bytes and moreover NumPy can deal with
     // unaligned arrays (it is a slowdown).
-    let mut result = Vec::new();
-    result.resize(attributes.len(), Vec::new());
+    let mut result = vec![Vec::new(); attributes.len()];
 
-    // Parse and save examples.
-    for (attribute_id, result_attribute) in result.iter_mut().enumerate() {
-        let attribute_bytes = attributes.get(attribute_id).attribute_bytes().unwrap();
-
-        // This is a memory copy. Thus `result` outlives `shard_progress`.
-        result_attribute.extend(attribute_bytes);
-    }
+    attributes.iter().map(|x| x.attribute_bytes().unwrap().to_vec()).collect()
 
     result
 }
