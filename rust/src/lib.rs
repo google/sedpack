@@ -52,8 +52,9 @@ mod static_iter {
     /// - Python does not guarantee that __del__ is called right away (or at all). Thus RustIter
     ///   also implements a context manager which is guaranteed to call __exit__ and drop memory
     ///   owned by the corresponding ExampleIterator.
-    static STATIC_ITERATORS: std::sync::Mutex<Option<HashMap<usize, ExampleIterator>>> =
-        std::sync::Mutex::new(None);
+    static STATIC_ITERATORS: std::sync::LazyLock<
+        std::sync::Mutex<HashMap<usize, ExampleIterator>>,
+    > = std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
 
     #[pyclass]
     pub struct RustIter {
@@ -80,19 +81,11 @@ mod static_iter {
                 );
                 return None;
             }
-            match &mut *STATIC_ITERATORS.lock().unwrap() {
-                None => {
-                    // A single thread is touching STATIC_ITERATORS.
-                    unreachable!("STATIC_ITERATORS mutex was poisoned.")
-                }
-                Some(hash_map) => match hash_map.get_mut(&self.static_index) {
-                    None => {
-                        // Not finding the static_index indicates a big bug in mod static_iter.
-                        unreachable!("The static_index was not found among the STATIC_ITERATORS.")
-                    }
-                    Some(iter) => iter.next(),
-                },
-            }
+            let mut hash_map = STATIC_ITERATORS.lock().unwrap();
+            let iter = hash_map
+                .get_mut(&self.static_index)
+                .expect("The static_index was not found among the STATIC_ITERATORS.");
+            iter.next()
         }
     }
 
@@ -100,20 +93,9 @@ mod static_iter {
     impl RustIter {
         #[new]
         fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
-            let mut static_var = STATIC_ITERATORS.lock().unwrap();
-
-            // Create the HashMap if needed (could not be created in static context).
-            if static_var.is_none() {
-                *static_var = Some(HashMap::new());
-            }
-
             let static_index = rand::random();
-            match &mut *static_var {
-                None => unreachable!(),
-                Some(hash_map) => {
-                    hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
-                }
-            }
+            let mut hash_map = STATIC_ITERATORS.lock().unwrap();
+            hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
 
             RustIter { static_index, can_iterate: false }
         }
@@ -150,15 +132,8 @@ mod static_iter {
         ) {
             slf.can_iterate = false;
             // Drop from STATIC_ITERATORS.
-            let mut static_var = STATIC_ITERATORS.lock().unwrap();
-            match &mut *static_var {
-                None => {
-                    println!(
-                        "The static_index was not found among the STATIC_ITERATORS. Cannot drop."
-                    );
-                }
-                Some(hash_map) => drop(hash_map.remove(&slf.static_index)),
-            }
+            let mut hash_map = STATIC_ITERATORS.lock().unwrap();
+            drop(hash_map.remove(&slf.static_index));
         }
     }
 }
