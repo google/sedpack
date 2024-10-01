@@ -23,7 +23,7 @@ type LoadedShard = Yoke<Shard<'static>, Vec<u8>>;
 /// Iterate all examples in given shard files.
 pub struct ExampleIterator {
     example_iterator:
-        std::iter::Flatten<ParallelMap<<Vec<String> as IntoIterator>::IntoIter, ShardProgress>>,
+        Box<dyn Iterator<Item = String>>,
 }
 
 impl ExampleIterator {
