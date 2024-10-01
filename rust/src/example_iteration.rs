@@ -30,9 +30,9 @@ pub struct ExampleIterator {
 impl ExampleIterator {
     /// Takes a vector of file names of shards and creates an ExampleIterator over those. We assume
     /// that all shard file names fit in memory. Alternatives to be re-evaluated:
-    /// - Take an iterator passed from Python. That might require ackquiring GIL and require
+    /// - Take an iterator passed from Python. That might require acquiring GIL and require
     ///   buffering.
-    /// - Iterate over the shards in Rust. This would reauire having the shard filtering being
+    /// - Iterate over the shards in Rust. This would require having the shard filtering being
     ///   allowed to be called from Rust. But then we could pass an iterator of the following form:
     ///   `files: impl Iterator<Item = &str>`.
     pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
