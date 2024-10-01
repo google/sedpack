@@ -98,7 +98,7 @@ where
 /// Iterator.
 ///
 /// Example
-/// ```rust
+/// ```
 /// let s: i64 = parallel_map(|x| 2 * x, (1 .. 6).into_iter(), 15).sum();
 /// assert_eq!(s, 30);
 /// ```
