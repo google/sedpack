@@ -37,7 +37,7 @@ impl ExampleIterator {
     pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
         assert!(!repeat, "Not implemented yet: repeat=true");
         let example_iterator =
-            parallel_map(get_shard_progress, files.into_iter(), threads).flatten();
+            parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten();
         ExampleIterator { example_iterator }
     }
 }
@@ -58,7 +58,7 @@ struct ShardProgress {
 }
 
 /// Get ShardProgress.
-fn get_shard_progress(file_path: String) -> ShardProgress {
+fn get_shard_progress(file_path: &str) -> ShardProgress {
     // TODO compressed file support.
     let file_bytes = std::fs::read(file_path).unwrap();
 
