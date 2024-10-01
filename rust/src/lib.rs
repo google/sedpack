@@ -114,7 +114,7 @@ mod static_iter {
             let static_index = rand::random();
             match &mut *static_var {
                 None => unreachable!(),
-                Some(ref mut hash_map) => {
+                Some(hash_map) => {
                     hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
                 }
             }
