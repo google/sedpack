@@ -28,6 +28,13 @@ pub struct ExampleIterator {
 }
 
 impl ExampleIterator {
+    /// Takes a vector of file names of shards and creates an ExampleIterator over those. We assume
+    /// that all shard file names fit in memory. Alternatives to be re-evaluated:
+    /// - Take an iterator passed from Python. That might require ackquiring GIL and require
+    ///   buffering.
+    /// - Iterate over the shards in Rust. This would reauire having the shard filtering being
+    ///   allowed to be called from Rust. But then we could pass an iterator of the following form:
+    ///   `files: impl Iterator<Item = &str>`.
     pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
         assert!(!repeat, "Not implemented yet: repeat=true");
         let example_iterator =
@@ -52,7 +59,7 @@ struct ShardProgress {
 }
 
 /// Get ShardProgress.
-fn get_shard_progress(file_path: &str) -> ShardProgress {
+fn get_shard_progress(file_path: String) -> ShardProgress {
     // TODO compressed file support.
     let mut file = std::fs::File::open(file_path).unwrap();
     let mut file_bytes = Vec::new();
@@ -81,10 +88,8 @@ fn get_shard_progress(file_path: &str) -> ShardProgress {
 ///
 /// * `shard_progress` - The shard file information to be used. A copy from this memory happens.
 ///   Also the `shard_progress.used_examples` is not modified to allow multiple threads to access.
-///
-/// # Examples
 fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
-    assert!((shard_progress.used_examples..shard_progress.total_examples).contains(&id));
+    assert!((shard_progress.used_examples .. shard_progress.total_examples).contains(&id));
 
     let shard = shard_progress.shard.get();
     let examples = shard.examples().unwrap();
@@ -93,13 +98,17 @@ fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
     assert!(!examples.is_empty());
 
     let attributes = examples.get(id).attributes().unwrap();
-    // TODO the byte vectors should be pre-allocated to ensure alignment of larger types.
-    // Usually the alignment is at least 8 bytes and moreover NumPy can deal with
-    // unaligned arrays (it is a slowdown).
+    // TODO the byte vectors should be pre-allocated to ensure alignment of larger types. Usually
+    // the alignment is at least 8 bytes and moreover NumPy can deal with unaligned arrays (it is
+    // a slowdown).
     let mut result = vec![Vec::new(); attributes.len()];
 
-    attributes.iter().map(|x| x.attribute_bytes().unwrap().to_vec()).collect()
-
+    // Parse and save examples.
+    for (attribute_id, result_attribute) in result.iter_mut().enumerate() {
+        // This is a memory copy. Thus `result` outlives `shard_progress`.
+        let attribute_bytes = attributes.get(attribute_id).attribute_bytes().unwrap();
+        result_attribute.extend(attribute_bytes);
+    }
     result
 }
 
