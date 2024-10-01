@@ -125,14 +125,11 @@ where
         // Create the thread.
         let (par_map, thread) = ThreadCommunication::<I::Item, T>::new_pair();
         communication.push(par_map);
-        let handle = std::thread::spawn(move || loop {
+        let handle = std::thread::spawn(move || {
             while let Ok(Some(task)) = thread.receive.recv() {
-                match optional_task {
-                    None => return,
-                    Some(task) => match thread.send.send(Some((fun)(task))) {
-                        Ok(()) => (),
-                        Err(_) => return,
-                    },
+                match thread.send.send(Some((fun)(task))) {
+                    Ok(()) => (),
+                    Err(_) => return,
                 }
             }
         });
