@@ -46,7 +46,7 @@ mod static_iter {
     ///   train and validation split are being read in an interleaved manner. To support this each
     ///   RustIter instance keeps a `static_index` determining which `ExampleIterator` it is using
     ///   (dispatch done using a HashMap).
-    /// - Since a `HashMap` cannot be instantiated static we use an Option<HashMap>.
+    /// - Since a `HashMap` cannot be instantiated static we use an LazyLock<Mutex<HashMap>>>.
     /// - Using a mutex to avoid the need to use unsafe for a static mutable variable. The overhead
     ///   should be negligible since only a single thread is expected to access this.
     /// - Python does not guarantee that __del__ is called right away (or at all). Thus RustIter

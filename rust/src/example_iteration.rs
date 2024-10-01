@@ -14,7 +14,7 @@
 
 use yoke::Yoke;
 
-pub use super::parallel_map::{parallel_map, ParallelMap};
+pub use super::parallel_map::parallel_map;
 pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{root_as_shard, Shard};
 
 pub type Example = Vec<Vec<u8>>;
@@ -22,8 +22,7 @@ type LoadedShard = Yoke<Shard<'static>, Vec<u8>>;
 
 /// Iterate all examples in given shard files.
 pub struct ExampleIterator {
-    example_iterator:
-        Box<dyn Iterator<Item = String>>,
+    example_iterator: Box<dyn Iterator<Item = Example> + Send>,
 }
 
 impl ExampleIterator {
@@ -36,8 +35,9 @@ impl ExampleIterator {
     ///   `files: impl Iterator<Item = &str>`.
     pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
         assert!(!repeat, "Not implemented yet: repeat=true");
-        let example_iterator =
-            parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten();
+        let example_iterator = Box::new(
+            parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten(),
+        );
         ExampleIterator { example_iterator }
     }
 }
