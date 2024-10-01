@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use std::io::Read;
 
 use yoke::Yoke;
 
@@ -61,9 +60,7 @@ struct ShardProgress {
 /// Get ShardProgress.
 fn get_shard_progress(file_path: String) -> ShardProgress {
     // TODO compressed file support.
-    let mut file = std::fs::File::open(file_path).unwrap();
-    let mut file_bytes = Vec::new();
-    let _ = file.read_to_end(&mut file_bytes).unwrap();
+    let file_bytes = std::fs::read(file_path).unwrap();
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
     // An example is vector of attributes (the same number of attributes in each example of each
