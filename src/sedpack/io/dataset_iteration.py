@@ -259,7 +259,7 @@ class DatasetIteration(DatasetBase):
 
         return tf_dataset
 
-    async def as_numpy_iterator_async(  # pylint: disable=too-many-arguments
+    async def as_numpy_iterator_async(
         self,
         *,
         split: SplitT,
@@ -352,7 +352,7 @@ class DatasetIteration(DatasetBase):
         async for example in example_iterator:
             yield example
 
-    def _as_numpy_common(  # pylint: disable=too-many-arguments
+    def _as_numpy_common(
         self,
         *,
         split: SplitT,
@@ -403,7 +403,7 @@ class DatasetIteration(DatasetBase):
                 buffer_size=len(shard_paths))
         return shard_paths_iterator
 
-    def as_numpy_iterator_concurrent(  # pylint: disable=too-many-arguments
+    def as_numpy_iterator_concurrent(
         self,
         *,
         split: SplitT,
@@ -506,7 +506,7 @@ class DatasetIteration(DatasetBase):
                             itertools.islice(shard_paths_iterator,
                                              file_parallelism))
 
-    def as_numpy_iterator(  # pylint: disable=too-many-arguments
+    def as_numpy_iterator(
         self,
         *,
         split: SplitT,
