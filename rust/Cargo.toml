@@ -16,9 +16,11 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "sedpack_rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 flatbuffers = "24.3"
 numpy = "0.21"
 pyo3 = "0.21"
+rand = "0.8"
+yoke = { version = "0.7", features = ["derive"] }

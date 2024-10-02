@@ -5,6 +5,7 @@ Král
 MNIST
 Picod
 SCAAML
+Yokeable
 asyncstdlib
 bldr
 byteswap
@@ -22,8 +23,11 @@ newbyteorder
 perfcounters
 pickleable
 pyarray
+pyclass
 pyfunction
+pymethods
 pymodule
+rlib
 savez
 sedpack
 setaf
