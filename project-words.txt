@@ -8,6 +8,8 @@ SCAAML
 Yokeable
 asyncstdlib
 bldr
+booktitle
+burszteindc
 byteswap
 cdylib
 compresslevel
@@ -16,6 +18,8 @@ diutils
 fbapi
 flatbuffer
 frombuffer
+howpublished
+inproceedings
 itemsize
 kwarguments
 ndarray
@@ -37,5 +41,6 @@ tfdata
 tfdataset
 tfrec
 tfrecord
+tinyaes
 tobytes
 uoffset
