@@ -1,3 +1,16 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Side channel attack tutorial.
 
 https://github.com/google/scaaml/tree/main/scaaml_intro
@@ -14,8 +27,7 @@ from tqdm import tqdm
 from sedpack.io import Dataset, DatasetFiller, Metadata, DatasetStructure, Attribute
 
 
-def add_shard(shard_file: Path,
-              dataset_filler: DatasetFiller,
+def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
               split: str) -> None:
     # Reading these one by one is slow.
     shard = np.load(shard_file)
@@ -27,7 +39,7 @@ def add_shard(shard_file: Path,
     plaintexts = np.transpose(shard["pts"])
 
     for i in range(256):
-        values={
+        values = {
             "trace": traces[i],
             "key": keys[i],
             "ct": cts[i],
@@ -41,7 +53,7 @@ def add_shard(shard_file: Path,
             custom_metadata={
                 # For performance reasons it is better to group
                 # write_example calls with the same metadata.
-                "key": shard["keys"][:,i].tolist(),
+                "key": shard["keys"][:, i].tolist(),
             },
         )
 
@@ -65,9 +77,12 @@ def create_dataset(dataset_path: Path, original_files: Path) -> None:
         description="SCAAML AES side-channel attacks tutorial",
         dataset_license="Apache License 2.0",
         custom_metadata={
-            "purpose": "For educational and demo purpose only",
-            "implementation": "TinyAES",
-            "cite": """
+            "purpose":
+                "For educational and demo purpose only",
+            "implementation":
+                "TinyAES",
+            "cite":
+                """
             @inproceedings{burszteindc27,
             title={A Hacker Guide To Deep Learning Based Side Channel Attacks},
             author={Elie Bursztein and Jean-Michel Picod},
@@ -77,7 +92,8 @@ def create_dataset(dataset_path: Path, original_files: Path) -> None:
             editor={DEF CON}
             }
             """,
-            "original from": "https://github.com/google/scaaml/tree/main/scaaml_intro",
+            "original from":
+                "https://github.com/google/scaaml/tree/main/scaaml_intro",
         },
     )
 
@@ -129,8 +145,7 @@ def train(dataset_path: Path) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="")
+    parser = argparse.ArgumentParser(description="")
     parser.add_argument("--dataset_path",
                         "-d",
                         help="Where to save the dataset",
