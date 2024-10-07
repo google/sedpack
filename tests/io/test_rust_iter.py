@@ -89,3 +89,12 @@ def test_end2end_as_numpy_iterator_fb(tmpdir: Union[str, Path]) -> None:
         shard_file_type="fb",
         compression="",
     )
+
+
+def test_end2end_as_numpy_iterator_fb_lz4(tmpdir: Union[str, Path]) -> None:
+    end2end(
+        tmpdir=tmpdir,
+        dtype="float32",
+        shard_file_type="fb",
+        compression="LZ4",
+    )

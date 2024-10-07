@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::io::Read;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
@@ -25,6 +26,18 @@ pub struct ExampleIterator {
     example_iterator: Box<dyn Iterator<Item = Example> + Send>,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum CompressionType {
+    Uncompressed,
+    LZ4,
+}
+
+#[derive(Clone, Debug)]
+pub struct ShardInfo {
+    pub file_path: String,
+    pub compression_type: CompressionType,
+}
+
 impl ExampleIterator {
     /// Takes a vector of file names of shards and creates an ExampleIterator over those. We assume
     /// that all shard file names fit in memory. Alternatives to be re-evaluated:
@@ -33,7 +46,7 @@ impl ExampleIterator {
     /// - Iterate over the shards in Rust. This would require having the shard filtering being
     ///   allowed to be called from Rust. But then we could pass an iterator of the following form:
     ///   `files: impl Iterator<Item = &str>`.
-    pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
+    pub fn new(files: Vec<ShardInfo>, repeat: bool, threads: usize) -> Self {
         assert!(!repeat, "Not implemented yet: repeat=true");
         let example_iterator = Box::new(
             parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten(),
@@ -57,10 +70,28 @@ struct ShardProgress {
     shard: LoadedShard,
 }
 
+/// Return a vector of bytes with the file content.
+fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
+    match shard_info.compression_type {
+        CompressionType::Uncompressed => std::fs::read(&shard_info.file_path).unwrap(),
+        CompressionType::LZ4 => {
+            let mut file_bytes = Vec::new();
+            let read_result = lz4_flex::frame::FrameDecoder::new(
+                std::fs::File::open(&shard_info.file_path).unwrap(),
+            )
+            .read_to_end(&mut file_bytes);
+            match read_result {
+                Err(err) => panic!("{}", err),
+                Ok(_bytes_read) => {}
+            };
+            file_bytes
+        }
+    }
+}
+
 /// Get ShardProgress.
-fn get_shard_progress(file_path: &str) -> ShardProgress {
-    // TODO compressed file support.
-    let file_bytes = std::fs::read(file_path).unwrap();
+fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
+    let file_bytes = get_file_bytes(shard_info);
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
     // An example is vector of attributes (the same number of attributes in each example of each
@@ -86,7 +117,7 @@ fn get_shard_progress(file_path: &str) -> ShardProgress {
 /// * `shard_progress` - The shard file information to be used. A copy from this memory happens.
 ///   Also the `shard_progress.used_examples` is not modified to allow multiple threads to access.
 fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
-    assert!((shard_progress.used_examples .. shard_progress.total_examples).contains(&id));
+    assert!((shard_progress.used_examples..shard_progress.total_examples).contains(&id));
 
     let shard = shard_progress.shard.get();
     let examples = shard.examples().unwrap();

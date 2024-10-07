@@ -36,7 +36,9 @@ mod static_iter {
     use pyo3::prelude::*;
     use pyo3::{pyclass, pymethods, PyRefMut};
 
+    use super::example_iteration::CompressionType;
     use super::example_iteration::ExampleIterator;
+    use super::example_iteration::ShardInfo;
 
     /// Implementation details: The goal is to own the ExampleIterator in Rust and only send
     /// examples to Python. This helps with concurrent reading and parsing of shard files.
@@ -92,10 +94,19 @@ mod static_iter {
     #[pymethods]
     impl RustIter {
         #[new]
-        fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
+        fn new(files: Vec<String>, repeat: bool, threads: usize, compression: String) -> Self {
             let static_index = rand::random();
             let mut hash_map = STATIC_ITERATORS.lock().unwrap();
-            hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
+            let compression_type = match compression.as_str() {
+                "" => CompressionType::Uncompressed,
+                "LZ4" => CompressionType::LZ4,
+                &_ => panic!("Not implemented: {}", compression),
+            };
+            let shard_infos = files
+                .into_iter()
+                .map(|file_path| ShardInfo { file_path: file_path.clone(), compression_type })
+                .collect();
+            hash_map.insert(static_index, ExampleIterator::new(shard_infos, repeat, threads));
 
             RustIter { static_index, can_iterate: false }
         }
