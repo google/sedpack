@@ -22,7 +22,6 @@ from typing import (
     Optional,
 )
 import os
-import random
 
 import asyncstdlib
 import tensorflow as tf
