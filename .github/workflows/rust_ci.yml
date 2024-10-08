@@ -20,8 +20,10 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt
-      - name: Rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
+          toolchain: nightly
+      - name: fmt
+        run: cargo +nightly fmt -- --check
+        working-directory: ./rust
   clippy:
     runs-on: ubuntu-latest
     steps:
@@ -32,6 +34,6 @@ jobs:
         with:
           components: clippy
           toolchain: nightly
-      - name: Clippy
+      - name: clippy
         run: cargo +nightly clippy
         working-directory: ./rust
