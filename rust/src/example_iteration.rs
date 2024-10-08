@@ -79,11 +79,8 @@ fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
             let read_result = lz4_flex::frame::FrameDecoder::new(
                 std::fs::File::open(&shard_info.file_path).unwrap(),
             )
-            .read_to_end(&mut file_bytes);
-            match read_result {
-                Err(err) => panic!("{}", err),
-                Ok(_bytes_read) => {}
-            };
+            .read_to_end(&mut file_bytes)
+            .unwrap();
             file_bytes
         }
     }
