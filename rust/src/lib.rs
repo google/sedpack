@@ -93,7 +93,9 @@ mod static_iter {
     impl RustIter {
         #[new]
         fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
-            let static_index = rand::random(); let mut hash_map = STATIC_ITERATORS.lock().unwrap(); hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
+            let static_index = rand::random();
+            let mut hash_map = STATIC_ITERATORS.lock().unwrap();
+            hash_map.insert(static_index, ExampleIterator::new(files, repeat, threads));
 
             RustIter { static_index, can_iterate: false }
         }
