@@ -141,7 +141,7 @@ class DatasetBase:
         for child in shard_list.children_shard_lists:
             yield from self._shard_info_iterator(child)
 
-    def shard_info_iterator(self, split: SplitT) -> Iterator[ShardInfo]:
+    def shard_info_iterator(self, split: SplitT | None) -> Iterator[ShardInfo]:
         """Iterate all `ShardInfo` in the split.
 
         Args:
@@ -151,10 +151,14 @@ class DatasetBase:
         Raises: ValueError when the split is not present. A split not being
         present is different from there not being any shard.
         """
-        if split not in self._dataset_info.splits:
-            # Split not present.
-            raise ValueError(f"There is no shard in {split}.")
+        if split:
+            if split not in self._dataset_info.splits:
+                # Split not present.
+                raise ValueError(f"There is no shard in {split}.")
 
-        shard_list_info: ShardListInfo = self._dataset_info.splits[split]
+            shard_list_info: ShardListInfo = self._dataset_info.splits[split]
 
-        yield from self._shard_info_iterator(shard_list_info)
+            yield from self._shard_info_iterator(shard_list_info)
+        else:
+            for shard_list_info in self._dataset_info.splits.values():
+                yield from self._shard_info_iterator(shard_list_info)

@@ -658,9 +658,12 @@ class DatasetIteration(DatasetBase):
                 )
             return result
 
-        with _sedpack_rs.RustIter(files=shard_paths,
-                                  repeat=repeat,
-                                  threads=file_parallelism) as rust_iter:
+        with _sedpack_rs.RustIter(
+                files=shard_paths,
+                repeat=repeat,
+                threads=file_parallelism,
+                compression=self.dataset_structure.compression,
+        ) as rust_iter:
             example_iterator = map(to_dict, iter(rust_iter))
             if process_record:
                 yield from map(process_record, example_iterator)
