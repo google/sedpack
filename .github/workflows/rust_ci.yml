@@ -24,10 +24,13 @@ jobs:
         with:
           components: rustfmt
           toolchain: nightly
-      - name: fmt
-        run: cargo +nightly fmt -- --check
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
   clippy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
