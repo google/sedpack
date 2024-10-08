@@ -24,10 +24,9 @@ jobs:
         with:
           components: rustfmt
           toolchain: nightly
+          matcher: true
       - name: Rustfmt Check
         uses: actions-rust-lang/rustfmt@v1
-        toolchain: nightly
-        matcher: true
   clippy:
     runs-on: ubuntu-latest
     defaults:
