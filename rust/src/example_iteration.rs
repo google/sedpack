@@ -32,6 +32,18 @@ pub enum CompressionType {
     LZ4,
 }
 
+impl std::str::FromStr for CompressionType {
+    type Err = String;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        match input {
+            "" => Ok(CompressionType::Uncompressed),
+            "LZ4" => Ok(CompressionType::LZ4),
+            _ => Err("{input} unimplemented".to_string()),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ShardInfo {
     pub file_path: String,

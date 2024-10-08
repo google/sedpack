@@ -31,6 +31,7 @@ mod shard_generated;
 /// Python wrappers around `example_iteration`.
 mod static_iter {
     use std::collections::HashMap;
+    use std::str::FromStr;
 
     use numpy::IntoPyArray;
     use pyo3::prelude::*;
@@ -97,11 +98,7 @@ mod static_iter {
         fn new(files: Vec<String>, repeat: bool, threads: usize, compression: String) -> Self {
             let static_index = rand::random();
             let mut hash_map = STATIC_ITERATORS.lock().unwrap();
-            let compression_type = match compression.as_str() {
-                "" => CompressionType::Uncompressed,
-                "LZ4" => CompressionType::LZ4,
-                _ => unimplemented!("{compression}"),
-            };
+            let compression_type = CompressionType::from_str(&compression).unwrap();
             let shard_infos = files
                 .into_iter()
                 .map(|file_path| ShardInfo { file_path: file_path.clone(), compression_type })
