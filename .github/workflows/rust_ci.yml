@@ -13,6 +13,9 @@ permissions:
 jobs:
   fmt:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,13 +23,15 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt
-          rustflags: "--manifest-path rust/Cargo.toml"
           toolchain: nightly
           matcher: true
-      - name: Rustfmt Check
-        uses: actions-rust-lang/rustfmt@v1
+      - name: fmt
+        run: cargo +nightly fmt -- --check
   clippy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,7 +39,6 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: clippy
-          rustflags: "--manifest-path rust/Cargo.toml"
           toolchain: nightly
       - name: clippy
         run: cargo +nightly clippy
