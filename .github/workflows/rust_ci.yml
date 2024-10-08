@@ -1,0 +1,30 @@
+name: Rust CI
+on:
+  push:
+    paths:
+      - '**/*.rs'
+  merge_group:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: clippy, rustfmt
+      - name: Run fmt
+        run: cargo +nightly fmt -- --check
+        working-directory: ./rust
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
+        working-directory: ./rust
