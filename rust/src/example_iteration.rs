@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::io::Read;
+
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
@@ -124,7 +125,7 @@ fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
 /// * `shard_progress` - The shard file information to be used. A copy from this memory happens.
 ///   Also the `shard_progress.used_examples` is not modified to allow multiple threads to access.
 fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
-    assert!((shard_progress.used_examples..shard_progress.total_examples).contains(&id));
+    assert!((shard_progress.used_examples .. shard_progress.total_examples).contains(&id));
 
     let shard = shard_progress.shard.get();
     let examples = shard.examples().unwrap();

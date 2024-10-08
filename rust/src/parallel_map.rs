@@ -115,7 +115,7 @@ where
     // Start the threads and send an item to each of them.
     let mut communication = Vec::new();
     let mut handles = Vec::new();
-    for t in 0..threads {
+    for t in 0 .. threads {
         // Next task for the thread.
         let next_task = match iter.next() {
             None => break, // Not creating a thread for nothing.
@@ -152,10 +152,10 @@ mod tests {
 
     #[test]
     fn plus_one() {
-        for iterator_length in 0..50 {
-            for threads in 1..20 {
+        for iterator_length in 0 .. 50 {
+            for threads in 1 .. 20 {
                 let mut iterations = 0;
-                for (i, res) in parallel_map(add_one, 0..iterator_length, threads).enumerate() {
+                for (i, res) in parallel_map(add_one, 0 .. iterator_length, threads).enumerate() {
                     // The value is correct and deterministic.
                     assert_eq!((i + 1) as i32, res);
                     iterations += 1;
@@ -173,12 +173,12 @@ mod tests {
 
     #[test]
     fn sleepy_plus_one() {
-        for iterator_length in 0..10 {
-            for threads in 1..10 {
+        for iterator_length in 0 .. 10 {
+            for threads in 1 .. 10 {
                 let mut iterations = 0;
                 let now = std::time::Instant::now();
                 for (i, res) in
-                    parallel_map(sleepy_add_one, 0..iterator_length, threads).enumerate()
+                    parallel_map(sleepy_add_one, 0 .. iterator_length, threads).enumerate()
                 {
                     // The value is correct and deterministic.
                     assert_eq!((i + 1) as i32, res);

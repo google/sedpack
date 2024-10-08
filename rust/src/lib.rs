@@ -37,9 +37,7 @@ mod static_iter {
     use pyo3::prelude::*;
     use pyo3::{pyclass, pymethods, PyRefMut};
 
-    use super::example_iteration::CompressionType;
-    use super::example_iteration::ExampleIterator;
-    use super::example_iteration::ShardInfo;
+    use super::example_iteration::{CompressionType, ExampleIterator, ShardInfo};
 
     /// Implementation details: The goal is to own the ExampleIterator in Rust and only send
     /// examples to Python. This helps with concurrent reading and parsing of shard files.
