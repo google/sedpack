@@ -13,6 +13,9 @@ permissions:
 jobs:
   formatting:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +26,6 @@ jobs:
           toolchain: nightly
       - name: fmt
         run: cargo +nightly fmt -- --check
-        working-directory: ./rust
   clippy:
     runs-on: ubuntu-latest
     steps:
@@ -36,4 +38,3 @@ jobs:
           toolchain: nightly
       - name: clippy
         run: cargo +nightly clippy
-        working-directory: ./rust
