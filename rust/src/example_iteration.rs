@@ -76,11 +76,9 @@ fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
         CompressionType::Uncompressed => std::fs::read(&shard_info.file_path).unwrap(),
         CompressionType::LZ4 => {
             let mut file_bytes = Vec::new();
-            let read_result = lz4_flex::frame::FrameDecoder::new(
-                std::fs::File::open(&shard_info.file_path).unwrap(),
-            )
-            .read_to_end(&mut file_bytes)
-            .unwrap();
+            lz4_flex::frame::FrameDecoder::new(std::fs::File::open(&shard_info.file_path).unwrap())
+                .read_to_end(&mut file_bytes)
+                .unwrap();
             file_bytes
         }
     }

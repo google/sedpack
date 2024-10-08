@@ -100,7 +100,7 @@ mod static_iter {
             let compression_type = match compression.as_str() {
                 "" => CompressionType::Uncompressed,
                 "LZ4" => CompressionType::LZ4,
-                &_ => panic!("Not implemented: {}", compression),
+                _ => unimplemented!("{compression}"),
             };
             let shard_infos = files
                 .into_iter()
