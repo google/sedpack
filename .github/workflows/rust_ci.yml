@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  formatting:
+  fmt:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,6 +26,8 @@ jobs:
           toolchain: nightly
       - name: Rustfmt Check
         uses: actions-rust-lang/rustfmt@v1
+        toolchain: nightly
+        matcher: true
   clippy:
     runs-on: ubuntu-latest
     defaults:
