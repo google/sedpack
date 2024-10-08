@@ -11,20 +11,29 @@ permissions:
   contents: read
 
 jobs:
-  linux:
+  formatting:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      # Ensure rustfmt is installed and setup problem matcher
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
-          toolchain: nightly
-          components: clippy, rustfmt
-      - name: Run fmt
-        run: cargo +nightly fmt -- --check
+          components: rustfmt
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
         working-directory: ./rust
-      - name: Run clippy
-        run: cargo +nightly clippy -- -D warnings
+        toolchain: nightly
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      # Ensure clippy is installed and setup problem matcher
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+      - name: Clippy
+        uses: actions-rust-lang/clippy@v1
         working-directory: ./rust
+        toolchain: nightly
