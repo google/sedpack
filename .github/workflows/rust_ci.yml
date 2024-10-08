@@ -22,7 +22,6 @@ jobs:
           components: rustfmt
       - name: Rustfmt Check
         uses: actions-rust-lang/rustfmt@v1
-        working-directory: ./rust
         toolchain: nightly
   clippy:
     runs-on: ubuntu-latest
@@ -34,6 +33,6 @@ jobs:
         with:
           components: clippy
       - name: Clippy
-        uses: actions-rust-lang/clippy@v1
+        run: cargo +nightly clippy
         working-directory: ./rust
         toolchain: nightly
