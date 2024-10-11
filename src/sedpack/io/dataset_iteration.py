@@ -13,6 +13,7 @@
 # limitations under the License.
 """Mixin for sedpack.io.Dataset to do iteration."""
 from concurrent.futures import ThreadPoolExecutor
+import contextlib
 import itertools
 from typing import (
     Any,
@@ -219,11 +220,36 @@ class DatasetIteration(DatasetBase):
             shard_filter=shard_filter,
         )
 
+        # The user requested a tf.data.Dataset use as_numpy_iterator_concurrent
+        # to provide.
         if self.dataset_structure.shard_file_type != "tfrec":
-            raise ValueError(f"The method as_tfdataset is only supported for "
-                             f"tfrec but "
-                             f"{self.dataset_structure.shard_file_type} was "
-                             f"provided.")
+            example_iterator = self.as_numpy_iterator_concurrent(
+                split=split,
+                process_record=None,  # otherwise unknown tensorspec
+                shards=shards,
+                shard_filter=shard_filter,
+                repeat=repeat,
+                file_parallelism=file_parallelism,
+                shuffle=shuffle,
+            )
+            output_signature = {
+                attribute.name:
+                    tf.TensorSpec(shape=attribute.shape, dtype=attribute.dtype)
+                for attribute in self.dataset_structure.saved_data_description
+            }
+            tf_dataset = tf.data.Dataset.from_generator(
+                lambda: example_iterator,
+                output_signature=output_signature,
+            )
+            if process_record:
+                tf_dataset = tf_dataset.map(process_record,
+                                            num_parallel_calls=parallelism)
+            if shuffle:
+                tf_dataset = tf_dataset.shuffle(shuffle)
+            if batch_size > 0:
+                # Batch
+                tf_dataset = tf_dataset.batch(batch_size)
+            return tf_dataset
 
         # Dataset creation
         tf_dataset = tf.data.Dataset.from_tensor_slices(shard_paths)
@@ -479,7 +505,13 @@ class DatasetIteration(DatasetBase):
                 raise ValueError("Unsupported shard_file_type "
                                  f"{self.dataset_structure.shard_file_type}")
 
-        with tf.device("CPU"):
+        # Do not use GPU with tfrecords to avoid allocating whole GPU memory by
+        # each thread.
+        if self.dataset_structure.shard_file_type == "tfrec":
+            context = tf.device("CPU")
+        else:
+            context = contextlib.nullcontext()
+        with context:
             if shuffle:
                 with LazyPool(file_parallelism) as pool:
                     yield from round_robin(
