@@ -229,7 +229,7 @@ class DatasetIteration(DatasetBase):
                 shards=shards,
                 shard_filter=shard_filter,
                 repeat=repeat,
-                file_parallelism=file_parallelism,
+                file_parallelism=file_parallelism or 1,
                 shuffle=shuffle,
             )
             output_signature = {
@@ -242,8 +242,10 @@ class DatasetIteration(DatasetBase):
                 output_signature=output_signature,
             )
             if process_record:
-                tf_dataset = tf_dataset.map(process_record,
-                                            num_parallel_calls=parallelism)
+                tf_dataset = tf_dataset.map(
+                    process_record,  # type: ignore[arg-type]
+                    num_parallel_calls=parallelism,
+                )
             if shuffle:
                 tf_dataset = tf_dataset.shuffle(shuffle)
             if batch_size > 0:
@@ -271,8 +273,10 @@ class DatasetIteration(DatasetBase):
 
         # Process each record if requested
         if process_record:
-            tf_dataset = tf_dataset.map(process_record,
-                                        num_parallel_calls=parallelism)
+            tf_dataset = tf_dataset.map(
+                process_record,  # type: ignore[arg-type]
+                num_parallel_calls=parallelism,
+            )
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
@@ -364,14 +368,16 @@ class DatasetIteration(DatasetBase):
             example_iterator = round_robin_async(
                 asyncstdlib.map(
                     shard_iterator.iterate_shard_async,  # type: ignore
-                    shard_paths_iterator),
+                    shard_paths_iterator,
+                ),
                 buffer_size=file_parallelism,
             )
         else:
             example_iterator = asyncstdlib.chain.from_iterable(
                 asyncstdlib.map(
                     shard_iterator.iterate_shard_async,  # type: ignore
-                    shard_paths_iterator))
+                    shard_paths_iterator,
+                ))
 
         # Process each record if requested.
         if process_record:
