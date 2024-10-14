@@ -58,12 +58,12 @@ def main() -> None:
         Attribute(
             name="input",
             shape=(28, 28),
-            dtype="float16",
+            dtype="float32",
         ),
         Attribute(
             name="digit",
             shape=(),
-            dtype="int8",
+            dtype="uint8",
         ),
     ])
 
