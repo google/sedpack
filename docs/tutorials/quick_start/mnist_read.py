@@ -124,7 +124,7 @@ def main() -> None:
 
     evaluated: int = 0
     ascii_shades = " .-/X0#"
-    for example in dataset.as_numpy_iterator("holdout",
+    for example in dataset.as_numpy_iterator(split="holdout",
                                              process_record=process_record):
         # Stop after a few evaluations.
         evaluated += 1
