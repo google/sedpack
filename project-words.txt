@@ -33,9 +33,11 @@ sedpack
 setaf
 shardfile
 subclassing
+tensorspec
 tfdata
 tfdataset
 tfrec
 tfrecord
+tfrecords
 tobytes
 uoffset
