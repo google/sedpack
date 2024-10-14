@@ -1,10 +1,12 @@
 Bursztein
+Corinna
 Elems
 Karel
 Král
 MNIST
 Picod
 SCAAML
+Yann
 Yokeable
 asyncstdlib
 bldr
