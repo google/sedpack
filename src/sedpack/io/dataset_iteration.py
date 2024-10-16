@@ -223,22 +223,21 @@ class DatasetIteration(DatasetBase):
         # The user requested a tf.data.Dataset use as_numpy_iterator_concurrent
         # to provide.
         if self.dataset_structure.shard_file_type != "tfrec":
-            example_iterator = self.as_numpy_iterator_concurrent(
-                split=split,
-                process_record=None,  # otherwise unknown tensorspec
-                shards=shards,
-                shard_filter=shard_filter,
-                repeat=repeat,
-                file_parallelism=file_parallelism or 1,
-                shuffle=shuffle,
-            )
             output_signature = {
                 attribute.name:
                     tf.TensorSpec(shape=attribute.shape, dtype=attribute.dtype)
                 for attribute in self.dataset_structure.saved_data_description
             }
             tf_dataset = tf.data.Dataset.from_generator(
-                lambda: example_iterator,
+                lambda: self.as_numpy_iterator_concurrent(
+                    split=split,
+                    process_record=None,  # otherwise unknown tensorspec
+                    shards=shards,
+                    shard_filter=shard_filter,
+                    repeat=repeat,
+                    file_parallelism=file_parallelism or 1,
+                    shuffle=shuffle,
+                ),
                 output_signature=output_signature,
             )
             if process_record:
