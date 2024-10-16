@@ -235,7 +235,7 @@ class DatasetIteration(DatasetBase):
                     shards=shards,
                     shard_filter=shard_filter,
                     repeat=repeat,
-                    file_parallelism=file_parallelism,
+                    file_parallelism=file_parallelism or 1,
                     shuffle=shuffle,
                 ),
                 output_signature=output_signature,
