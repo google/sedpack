@@ -672,8 +672,16 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
+        # Only FlatBuffers are supported.
         if self.dataset_structure.shard_file_type != "fb":
             raise ValueError("This method is implemented only for FlatBuffers.")
+
+        # Check if the compression type is supported by Rust.
+        supported_compressions = _sedpack_rs.RustIter.supported_compressions()
+        if self.dataset_structure.compression not in supported_compressions:
+            raise ValueError(
+                f"The compression {self.dataset_structure.compression} is not "
+                "among the supported compressions: {supported_compressions}")
 
         shard_paths: list[str] = list(
             self._as_numpy_common(

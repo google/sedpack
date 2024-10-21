@@ -14,6 +14,8 @@
 
 use std::io::Read;
 
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
@@ -27,10 +29,25 @@ pub struct ExampleIterator {
     example_iterator: Box<dyn Iterator<Item = Example> + Send>,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, EnumIter)]
 pub enum CompressionType {
     Uncompressed,
     LZ4,
+}
+
+impl CompressionType {
+    pub fn supported_compressions() -> Vec<String> {
+        CompressionType::iter().map(|x| format!("{x}")).collect()
+    }
+}
+
+impl std::fmt::Display for CompressionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            CompressionType::Uncompressed => write!(f, ""),
+            CompressionType::LZ4 => write!(f, "LZ4"),
+        }
+    }
 }
 
 impl std::str::FromStr for CompressionType {
@@ -41,6 +58,21 @@ impl std::str::FromStr for CompressionType {
             "" => Ok(CompressionType::Uncompressed),
             "LZ4" => Ok(CompressionType::LZ4),
             _ => Err("{input} unimplemented".to_string()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn from_str_to_str_eq() {
+        for supported_compression in CompressionType::supported_compressions() {
+            let parsed = CompressionType::from_str(&supported_compression).unwrap();
+            assert_eq!(format!("{parsed}"), supported_compression);
         }
     }
 }

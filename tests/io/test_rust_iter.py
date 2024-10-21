@@ -17,12 +17,15 @@ from typing import Any, Union
 
 import numpy as np
 import numpy.typing as npt
+import pytest
 
 import sedpack
 from sedpack.io import Dataset
 from sedpack.io import Metadata, DatasetStructure, Attribute
 from sedpack.io.flatbuffer.iterate import IterateShardFlatBuffer
 from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
+
+from sedpack import _sedpack_rs  # type: ignore[attr-defined]
 
 
 def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike,
@@ -82,19 +85,13 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike,
         0], "Not all examples have been iterated"
 
 
-def test_end2end_as_numpy_iterator_fb(tmpdir: Union[str, Path]) -> None:
+@pytest.mark.parametrize("compression",
+                         list(_sedpack_rs.RustIter.supported_compressions()))
+def test_end2end_as_numpy_iterator_fb(compression: str,
+                                      tmpdir: Union[str, Path]) -> None:
     end2end(
         tmpdir=tmpdir,
         dtype="float32",
         shard_file_type="fb",
-        compression="",
-    )
-
-
-def test_end2end_as_numpy_iterator_fb_lz4(tmpdir: Union[str, Path]) -> None:
-    end2end(
-        tmpdir=tmpdir,
-        dtype="float32",
-        shard_file_type="fb",
-        compression="LZ4",
+        compression=compression,
     )
