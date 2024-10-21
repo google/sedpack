@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, get_args, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -95,3 +95,8 @@ def test_end2end_as_numpy_iterator_fb(compression: str,
         shard_file_type="fb",
         compression=compression,
     )
+
+
+def test_correct_compressions():
+    for compression in _sedpack_rs.RustIter.supported_compressions():
+        assert compression in set(get_args(CompressionT))
