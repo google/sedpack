@@ -106,6 +106,11 @@ mod static_iter {
             RustIter { static_index, can_iterate: false }
         }
 
+        #[staticmethod]
+        fn supported_compressions() -> Vec<String> {
+            CompressionType::supported_compressions()
+        }
+
         fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
             slf
         }
