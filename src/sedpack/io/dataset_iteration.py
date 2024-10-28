@@ -332,7 +332,7 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self._as_numpy_common(
+        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
             split=split,
             shards=shards,
             shard_filter=shard_filter,
@@ -387,7 +387,7 @@ class DatasetIteration(DatasetBase):
         async for example in example_iterator:
             yield example
 
-    def _as_numpy_common(
+    def as_numpy_common(
         self,
         *,
         split: SplitT,
@@ -479,7 +479,7 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self._as_numpy_common(
+        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
             split=split,
             shards=shards,
             shard_filter=shard_filter,
@@ -584,7 +584,7 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self._as_numpy_common(
+        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
             split=split,
             shards=shards,
             shard_filter=shard_filter,
@@ -761,7 +761,8 @@ class RustGenerator:
         self._to_dict = to_dict
 
     def __enter__(self):
-        """Enter the context manager (takes care of freeing memory held by Rust).
+        """Enter the context manager (takes care of freeing memory held by
+        Rust).
         """
         return self
 
@@ -772,7 +773,7 @@ class RustGenerator:
         future examples.
         """
         if self._rust_iter is not None:
-            self._rust_iter.__exit__(exc_type, exc_val, exc_tb)
+            self._rust_iter.__exit__(exc_type, exc_value, exc_tb)
 
     def __call__(self) -> Iterable[ExampleT] | Iterable[T]:
         """Return an iterable.
@@ -786,7 +787,7 @@ class RustGenerator:
         """
         if self._rust_iter is None:
             shard_paths: list[str] = list(
-                self._dataset._as_numpy_common(
+                self._dataset.as_numpy_common(
                     split=self._split,
                     shards=self._shards,
                     shard_filter=self._shard_filter,
@@ -800,13 +801,13 @@ class RustGenerator:
                 threads=self._file_parallelism,
                 compression=self._dataset.dataset_structure.compression,
             )
-            self._rust_iter.__enter__()
+            self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
         elif not self._rust_iter.can_iterate:
-            self._rust_iter.__enter__()
+            self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
 
         example_iterator = map(self._to_dict, iter(self._rust_iter))
         if self._process_record:
-            yield from map(process_record, example_iterator)
+            yield from map(self._process_record, example_iterator)
         else:
             yield from example_iterator
 
