@@ -15,12 +15,14 @@
 from concurrent.futures import ThreadPoolExecutor
 import contextlib
 import itertools
+from types import TracebackType
 from typing import (
     Any,
     AsyncIterator,
     Callable,
     Iterable,
     Optional,
+    Type,
 )
 import os
 
@@ -683,19 +685,72 @@ class DatasetIteration(DatasetBase):
                 f"The compression {self.dataset_structure.compression} is not "
                 "among the supported compressions: {supported_compressions}")
 
-        shard_paths: list[str] = list(
-            self._as_numpy_common(
+        with RustGenerator(
+                dataset=self,
                 split=split,
+                process_record=process_record,
                 shards=shards,
                 shard_filter=shard_filter,
-                repeat=False,
+                repeat=repeat,
+                file_parallelism=file_parallelism,
                 shuffle=shuffle,
-            ))
+        ) as rust_generator:
+            yield from rust_generator()
+
+
+class RustGenerator:
+    """A generator for tf.data.Dataset.from_generator which is reentrant (even
+    when the iteration did not finished, which can happen when using
+    tf.data.Dataset.from_generator).
+    """
+
+    def __init__(self,
+                 *,
+                 dataset: DatasetIteration,
+                 split: SplitT,
+                 process_record: None | Callable[[ExampleT], T] = None,
+                 shards: None | int = None,
+                 shard_filter: None | Callable[[ShardInfo], bool] = None,
+                 repeat: bool = True,
+                 file_parallelism: int = os.cpu_count() or 1,
+                 shuffle: int = 1_000) -> None:
+        """A reentrant generator.
+
+        Args:
+
+          dataset (DatasetIteration): The dataset being iterated.
+
+          split (SplitT): The split to be iterated.
+
+          process_record (None | Callable[[ExampleT], T]): Optional
+          transformation of each example.
+
+          shards (None | int): Optional limit on the number of used shards.
+
+          shard_filter (None | Callable[[ShardInfo], bool]): Optional predicate
+          returning True for each shard which should be iterated.
+
+          repeat (bool): Cycle infinitely.
+
+          file_parallelism (int): How many files to read in parallel.
+
+          shuffle (int): Size of the shuffle buffer.
+        """
+        self._rust_iter: None | _sedpack_rs.RustIter = None
+
+        self._dataset: DatasetIteration = dataset
+        self._split: SplitT = split
+        self._process_record: None | Callable[[ExampleT], T] = process_record
+        self._shards: None | int = shards
+        self._shard_filter: None | Callable[[ShardInfo], bool] = shard_filter
+        self._repeat: bool = repeat
+        self._file_parallelism: int = file_parallelism
+        self._shuffle: int = shuffle
 
         def to_dict(example):
             result = {}
             for np_bytes, attribute in zip(
-                    example, self.dataset_structure.saved_data_description):
+                    example, dataset.dataset_structure.saved_data_description):
                 result[attribute.name] = IterateShardFlatBuffer.decode_array(
                     np_bytes=np_bytes,
                     attribute=attribute,
@@ -703,14 +758,57 @@ class DatasetIteration(DatasetBase):
                 )
             return result
 
-        with _sedpack_rs.RustIter(
+        self._to_dict = to_dict
+
+    def __enter__(self):
+        """Enter the context manager (takes care of freeing memory held by Rust).
+        """
+        return self
+
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_value: Optional[BaseException],
+                 exc_tb: Optional[TracebackType]) -> None:
+        """Drop the rust datastructure holding content of open files and future
+        examples.
+        """
+        if self._rust_iter is not None:
+            self._rust_iter.__exit__(exc_type, exc_val, exc_tb)
+
+    def __call__(self) -> Iterable[ExampleT] | Iterable[T]:
+        """Return an iterable.
+        """
+        yield from self._single_iter()
+        while self._repeat:
+            yield from self._single_iter()
+
+    def _single_iter(self) -> Iterable[ExampleT] | Iterable[T]:
+        """Iterate the dataset once.
+        """
+        if self._rust_iter is None:
+            shard_paths: list[str] = list(
+                self._dataset._as_numpy_common(
+                    split=self._split,
+                    shards=self._shards,
+                    shard_filter=self._shard_filter,
+                    repeat=False,
+                    shuffle=self._shuffle,
+                ))
+
+            self._rust_iter = _sedpack_rs.RustIter(
                 files=shard_paths,
-                repeat=repeat,
-                threads=file_parallelism,
-                compression=self.dataset_structure.compression,
-        ) as rust_iter:
-            example_iterator = map(to_dict, iter(rust_iter))
-            if process_record:
-                yield from map(process_record, example_iterator)
-            else:
-                yield from example_iterator
+                repeat=False,
+                threads=self._file_parallelism,
+                compression=self._dataset.dataset_structure.compression,
+            )
+            self._rust_iter.__enter__()
+        elif not self._rust_iter.can_iterate:
+            self._rust_iter.__enter__()
+
+        example_iterator = map(self._to_dict, iter(self._rust_iter))
+        if self._process_record:
+            yield from map(process_record, example_iterator)
+        else:
+            yield from example_iterator
+
+        self._rust_iter.__exit__(None, None, None)
+        self._rust_iter = None
