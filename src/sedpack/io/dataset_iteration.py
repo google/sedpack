@@ -768,8 +768,8 @@ class RustGenerator:
     def __exit__(self, exc_type: Optional[Type[BaseException]],
                  exc_value: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> None:
-        """Drop the rust datastructure holding content of open files and future
-        examples.
+        """Drop the rust data structure holding content of open files and
+        future examples.
         """
         if self._rust_iter is not None:
             self._rust_iter.__exit__(exc_type, exc_val, exc_tb)
