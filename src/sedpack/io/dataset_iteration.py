@@ -708,9 +708,9 @@ class RustGenerator:
                  *,
                  dataset: DatasetIteration,
                  split: SplitT,
-                 process_record: None | Callable[[ExampleT], T] = None,
-                 shards: None | int = None,
-                 shard_filter: None | Callable[[ShardInfo], bool] = None,
+                 process_record: Callable[[ExampleT], T] | None = None,
+                 shards: int | None = None,
+                 shard_filter: Callable[[ShardInfo], bool] | None = None,
                  repeat: bool = True,
                  file_parallelism: int = os.cpu_count() or 1,
                  shuffle: int = 1_000) -> None:
@@ -722,12 +722,12 @@ class RustGenerator:
 
           split (SplitT): The split to be iterated.
 
-          process_record (None | Callable[[ExampleT], T]): Optional
+          process_record (Callable[[ExampleT], T] | None): Optional
           transformation of each example.
 
-          shards (None | int): Optional limit on the number of used shards.
+          shards (int | None): Optional limit on the number of used shards.
 
-          shard_filter (None | Callable[[ShardInfo], bool]): Optional predicate
+          shard_filter (Callable[[ShardInfo], bool] | None): Optional predicate
           returning True for each shard which should be iterated.
 
           repeat (bool): Cycle infinitely.
@@ -736,13 +736,13 @@ class RustGenerator:
 
           shuffle (int): Size of the shuffle buffer.
         """
-        self._rust_iter: None | _sedpack_rs.RustIter = None
+        self._rust_iter: _sedpack_rs.RustIter | None = None
 
         self._dataset: DatasetIteration = dataset
         self._split: SplitT = split
-        self._process_record: None | Callable[[ExampleT], T] = process_record
-        self._shards: None | int = shards
-        self._shard_filter: None | Callable[[ShardInfo], bool] = shard_filter
+        self._process_record: Callable[[ExampleT], T] | None = process_record
+        self._shards: int | None = shards
+        self._shard_filter: Callable[[ShardInfo], bool] | None = shard_filter
         self._repeat: bool = repeat
         self._file_parallelism: int = file_parallelism
         self._shuffle: int = shuffle
