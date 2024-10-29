@@ -17,6 +17,7 @@ crossentropy
 diutils
 fbapi
 flatbuffer
+flate
 frombuffer
 itemsize
 kwarguments

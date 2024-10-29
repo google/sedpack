@@ -33,6 +33,8 @@ pub struct ExampleIterator {
 pub enum CompressionType {
     Uncompressed,
     LZ4,
+    Gzip,
+    Zlib,
 }
 
 impl CompressionType {
@@ -46,6 +48,8 @@ impl std::fmt::Display for CompressionType {
         match self {
             CompressionType::Uncompressed => write!(f, ""),
             CompressionType::LZ4 => write!(f, "LZ4"),
+            CompressionType::Gzip => write!(f, "GZIP"),
+            CompressionType::Zlib => write!(f, "ZLIB"),
         }
     }
 }
@@ -57,6 +61,8 @@ impl std::str::FromStr for CompressionType {
         match input {
             "" => Ok(CompressionType::Uncompressed),
             "LZ4" => Ok(CompressionType::LZ4),
+            "GZIP" => Ok(CompressionType::Gzip),
+            "ZLIB" => Ok(CompressionType::Zlib),
             _ => Err("{input} unimplemented".to_string()),
         }
     }
@@ -117,16 +123,21 @@ struct ShardProgress {
 
 /// Return a vector of bytes with the file content.
 fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
+    let mut file_bytes = Vec::new();
     match shard_info.compression_type {
-        CompressionType::Uncompressed => std::fs::read(&shard_info.file_path).unwrap(),
+        CompressionType::Uncompressed => return std::fs::read(&shard_info.file_path).unwrap(),
         CompressionType::LZ4 => {
-            let mut file_bytes = Vec::new();
             lz4_flex::frame::FrameDecoder::new(std::fs::File::open(&shard_info.file_path).unwrap())
                 .read_to_end(&mut file_bytes)
                 .unwrap();
-            file_bytes
         }
-    }
+        CompressionType::Gzip | CompressionType::Zlib => {
+            flate2::read::GzDecoder::new(std::fs::File::open(&shard_info.file_path).unwrap())
+                .read_to_end(&mut file_bytes)
+                .unwrap();
+        }
+    };
+    file_bytes
 }
 
 /// Get ShardProgress.
