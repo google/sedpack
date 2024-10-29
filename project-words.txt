@@ -18,6 +18,7 @@ diutils
 dunder
 fbapi
 flatbuffer
+flate
 frombuffer
 itemsize
 kwarguments
