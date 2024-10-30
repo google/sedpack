@@ -103,7 +103,7 @@ class DatasetIteration(DatasetBase):
         # Only use a limited amount of shards for each setting of
         # custom_metadata.
         if custom_metadata_type_limit:
-            counts: dict[tuple[tuple[str, Any]], int] = {}
+            counts: dict[tuple[tuple[str, Any], ...], int] = {}
             old_shards_list = shards_list
             shards_list = []
             for shard_info in old_shards_list:
