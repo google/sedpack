@@ -136,7 +136,7 @@ fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
                 .read_to_end(&mut file_bytes)
                 .unwrap();
         }
-    };
+    }
     file_bytes
 }
 
