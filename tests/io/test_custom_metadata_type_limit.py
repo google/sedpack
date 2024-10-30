@@ -29,7 +29,8 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
     examples_per_shard: int = 256
     array_of_values = np.random.random((examples_per_shard * 5, 138))
     array_of_values = array_of_values.astype(dtype)
-    custom_metadata_type_limit: int = array_of_values.shape[0] // examples_per_shard
+    custom_metadata_type_limit: int = array_of_values.shape[
+        0] // examples_per_shard
 
     tiny_experiment_path: Path = Path(tmpdir) / "e2e_experiment"
 
@@ -65,14 +66,20 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
             filler.write_example(
                 values={"attribute_name": attribute_value},
                 split=TRAIN_SPLIT,
-                custom_metadata={"take": "me", "some_number": 0},
+                custom_metadata={
+                    "take": "me",
+                    "some_number": 0
+                },
             )
 
         for attribute_value in array_of_values:
             filler.write_example(
                 values={"attribute_name": attribute_value},
                 split=TRAIN_SPLIT,
-                custom_metadata={"some_number": 0, "take": "me"},  # same, so ignored
+                custom_metadata={
+                    "some_number": 0,
+                    "take": "me"
+                },  # same, so ignored
             )
 
     # Check the data is correct
