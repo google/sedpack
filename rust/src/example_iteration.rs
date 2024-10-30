@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::io::Read;
-
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use yoke::Yoke;
@@ -123,21 +121,21 @@ struct ShardProgress {
 
 /// Return a vector of bytes with the file content.
 fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
-    let mut file_bytes = Vec::new();
+    let open_file = std::fs::File::open(&shard_info.file_path).unwrap();
     match shard_info.compression_type {
-        CompressionType::Uncompressed => return std::fs::read(&shard_info.file_path).unwrap(),
-        CompressionType::LZ4 => {
-            lz4_flex::frame::FrameDecoder::new(std::fs::File::open(&shard_info.file_path).unwrap())
-                .read_to_end(&mut file_bytes)
-                .unwrap();
-        }
+        CompressionType::Uncompressed => read_to_end(open_file),
+        CompressionType::LZ4 => read_to_end(lz4_flex::frame::FrameDecoder::new(open_file)),
         CompressionType::Gzip | CompressionType::Zlib => {
-            flate2::read::GzDecoder::new(std::fs::File::open(&shard_info.file_path).unwrap())
-                .read_to_end(&mut file_bytes)
-                .unwrap();
+            read_to_end(flate2::read::GzDecoder::new(open_file))
         }
     }
-    file_bytes
+}
+
+/// Helper reader for compressed or uncompressed shard files.
+fn read_to_end(mut reader: impl std::io::Read) -> Vec<u8> {
+    let mut result = Vec::new();
+    let _bytes_read = reader.read_to_end(&mut result).unwrap();
+    result
 }
 
 /// Get ShardProgress.
