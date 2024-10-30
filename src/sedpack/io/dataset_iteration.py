@@ -478,6 +478,7 @@ class DatasetIteration(DatasetBase):
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
         shards: Optional[int] = None,
+        custom_metadata_type_limit: int | None = None,
         shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 1,
@@ -495,6 +496,12 @@ class DatasetIteration(DatasetBase):
 
             shards (Optional[int]): If specified limits the dataset to the
             first `shards` shards.
+
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
 
             shard_filter (Optional[Callable[[ShardInfo], bool]): If present
             this is a function taking the ShardInfo and returning True if the
@@ -516,6 +523,7 @@ class DatasetIteration(DatasetBase):
         shard_paths_iterator: Iterable[str] = self._as_numpy_common(
             split=split,
             shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
             shard_filter=shard_filter,
             repeat=repeat,
             shuffle=shuffle,
@@ -587,6 +595,7 @@ class DatasetIteration(DatasetBase):
         split: SplitT,
         process_record: Optional[Callable[[ExampleT], T]] = None,
         shards: Optional[int] = None,
+        custom_metadata_type_limit: int | None = None,
         shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
         repeat: bool = True,
         shuffle: int = 1_000,
@@ -603,6 +612,12 @@ class DatasetIteration(DatasetBase):
 
             shards (Optional[int]): If specified limits the dataset to the
             first `shards` shards.
+
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
 
             shard_filter (Optional[Callable[[ShardInfo], bool]): If present
             this is a function taking the ShardInfo and returning True if the
@@ -621,6 +636,7 @@ class DatasetIteration(DatasetBase):
         shard_paths_iterator: Iterable[str] = self._as_numpy_common(
             split=split,
             shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
             shard_filter=shard_filter,
             repeat=repeat,
             shuffle=shuffle,
