@@ -134,6 +134,8 @@ mod static_iter {
             }
         }
 
+        /// The implementation is reentrant. If changing also change
+        /// `sedpack.io.dataset_iteration.RustGenerator`.
         fn __enter__(mut slf: PyRefMut<'_, Self>) -> PyRefMut<'_, Self> {
             slf.can_iterate = true;
             slf

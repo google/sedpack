@@ -754,6 +754,50 @@ class RustGenerator:
     """A generator for tf.data.Dataset.from_generator which is reentrant (even
     when the iteration did not finished, which can happen when using
     tf.data.Dataset.from_generator).
+
+    `_sedpack_rs.RustIter` is a Rust data structure which holds data unknown to
+    Python reference counting (will be dropped at _sedpack_rs.RustIter.__exit__
+    call (it could also implement droppable).
+
+    `tf.data.Dataset.from_generator` expects a callable which returns an
+    iterable. The problem is that it does call it even without exhausting the
+    previous iterable. We need to prevent leaking data by creating multiple
+    instances of `_sedpack_rs.RustIter`.
+
+    The current implementation manages manually the context manager of
+    `_sedpack_rs.RustIter` by calling __enter__ and __exit__. The current Rust
+    implementation of `_sedpack_rs.RustIter` is reentrant.
+
+    Possible solutions / alternatives:
+
+    -   Wrap context manager similar to RustGenerator like follows:
+        ```
+        with RustGenerator(...) as gen:
+          tf.data.Dataset.from_generator(gen, ...)
+        ```
+
+        The downside is that this is not very handy API (for training the user
+        creates two datasets -> two indentation levels).
+
+        The good part is that we are guaranteed to clean up.
+
+    -   Depend on __del__ being called. With CPython this would be fine. But we
+        would need to depend on TF dropping the reference (it should, not
+        tested, but it should) which is not documented anywhere. The good part
+        is nice API.
+
+    -   Changing RustGenerator.__call__ into:
+
+        ```
+        def __call__(self):
+          with _sedpack_rs.RustIter() as rust_iter:
+            yield from rust_iter
+        ```
+        This should eventually clean all instances.
+
+        The downside is that it is not obvious (implementation dependent) what
+        happens when TF calls again (possibly from a different thread or
+        process).
     """
 
     def __init__(self,
@@ -853,6 +897,7 @@ class RustGenerator:
                 threads=self._file_parallelism,
                 compression=self._dataset.dataset_structure.compression,
             )
+            # Manually calling __enter__ and __exit__ -- see class docstring.
             self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
         elif not self._rust_iter.can_iterate:
             self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
