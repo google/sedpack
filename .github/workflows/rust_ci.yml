@@ -1,0 +1,44 @@
+name: Rust CI
+on:
+  push:
+    paths:
+      - '**/*.rs'
+  merge_group:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      # Ensure rustfmt is installed and setup problem matcher
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+          toolchain: nightly
+          matcher: true
+      - name: fmt
+        run: cargo +nightly fmt -- --check
+  clippy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      # Ensure clippy is installed and setup problem matcher
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy
+          toolchain: nightly
+      - name: clippy
+        run: cargo +nightly clippy

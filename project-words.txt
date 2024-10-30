@@ -1,10 +1,12 @@
 Bursztein
+Corinna
 Elems
 Karel
 Král
 MNIST
 Picod
 SCAAML
+Yann
 Yokeable
 asyncstdlib
 bldr
@@ -37,10 +39,12 @@ sedpack
 setaf
 shardfile
 subclassing
+tensorspec
 tfdata
 tfdataset
 tfrec
 tfrecord
 tinyaes
+tfrecords
 tobytes
 uoffset

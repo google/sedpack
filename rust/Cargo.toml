@@ -20,7 +20,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 flatbuffers = "24.3"
+lz4_flex = { version = "0.11.3", default-features = false , features = ["frame"] }
 numpy = "0.21"
 pyo3 = "0.21"
 rand = "0.8"
+strum = "0.26.3"
+strum_macros = "0.26.4"
 yoke = { version = "0.7", features = ["derive"] }

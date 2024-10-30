@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::io::Read;
+
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
@@ -25,6 +29,60 @@ pub struct ExampleIterator {
     example_iterator: Box<dyn Iterator<Item = Example> + Send>,
 }
 
+#[derive(Clone, Copy, Debug, EnumIter)]
+pub enum CompressionType {
+    Uncompressed,
+    LZ4,
+}
+
+impl CompressionType {
+    pub fn supported_compressions() -> Vec<String> {
+        CompressionType::iter().map(|x| format!("{x}")).collect()
+    }
+}
+
+impl std::fmt::Display for CompressionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            CompressionType::Uncompressed => write!(f, ""),
+            CompressionType::LZ4 => write!(f, "LZ4"),
+        }
+    }
+}
+
+impl std::str::FromStr for CompressionType {
+    type Err = String;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        match input {
+            "" => Ok(CompressionType::Uncompressed),
+            "LZ4" => Ok(CompressionType::LZ4),
+            _ => Err("{input} unimplemented".to_string()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn from_str_to_str_eq() {
+        for supported_compression in CompressionType::supported_compressions() {
+            let parsed = CompressionType::from_str(&supported_compression).unwrap();
+            assert_eq!(format!("{parsed}"), supported_compression);
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ShardInfo {
+    pub file_path: String,
+    pub compression_type: CompressionType,
+}
+
 impl ExampleIterator {
     /// Takes a vector of file names of shards and creates an ExampleIterator over those. We assume
     /// that all shard file names fit in memory. Alternatives to be re-evaluated:
@@ -33,7 +91,7 @@ impl ExampleIterator {
     /// - Iterate over the shards in Rust. This would require having the shard filtering being
     ///   allowed to be called from Rust. But then we could pass an iterator of the following form:
     ///   `files: impl Iterator<Item = &str>`.
-    pub fn new(files: Vec<String>, repeat: bool, threads: usize) -> Self {
+    pub fn new(files: Vec<ShardInfo>, repeat: bool, threads: usize) -> Self {
         assert!(!repeat, "Not implemented yet: repeat=true");
         let example_iterator = Box::new(
             parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten(),
@@ -57,10 +115,23 @@ struct ShardProgress {
     shard: LoadedShard,
 }
 
+/// Return a vector of bytes with the file content.
+fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
+    match shard_info.compression_type {
+        CompressionType::Uncompressed => std::fs::read(&shard_info.file_path).unwrap(),
+        CompressionType::LZ4 => {
+            let mut file_bytes = Vec::new();
+            lz4_flex::frame::FrameDecoder::new(std::fs::File::open(&shard_info.file_path).unwrap())
+                .read_to_end(&mut file_bytes)
+                .unwrap();
+            file_bytes
+        }
+    }
+}
+
 /// Get ShardProgress.
-fn get_shard_progress(file_path: &str) -> ShardProgress {
-    // TODO compressed file support.
-    let file_bytes = std::fs::read(file_path).unwrap();
+fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
+    let file_bytes = get_file_bytes(shard_info);
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
     // An example is vector of attributes (the same number of attributes in each example of each
