@@ -146,7 +146,8 @@ class DatasetBase:
 
         Args:
 
-          split (SplitT): Which split to iterate shard information from.
+          split (SplitT | None): Which split to iterate shard information from.
+          If None then all splits are iterated.
 
         Raises: ValueError when the split is not present. A split not being
         present is different from there not being any shard.
