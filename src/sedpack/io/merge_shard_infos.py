@@ -39,7 +39,7 @@ def merge_shard_infos(updates: list[ShardListInfo], dataset_root: Path,
       thus one should set `common=1`. It is not guaranteed to update
       `shards_list.json` files all the way to the split when `common>1`.
 
-      hashes (tuple[HashChecksumT, ...]): List of hash checksum algorithms.
+      hashes (tuple[HashChecksumT, ...]): list of hash checksum algorithms.
     """
     assert updates, "Nothing to update."
 

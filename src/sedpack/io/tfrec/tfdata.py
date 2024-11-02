@@ -17,7 +17,7 @@ For information how to read and write TFRecord files see
 https://www.tensorflow.org/tutorials/load_data/tfrecord
 """
 
-from typing import Any, Callable, cast, Dict, List, Tuple
+from typing import Any, Callable, cast
 
 import numpy as np
 import tensorflow as tf
@@ -57,7 +57,7 @@ def int64_feature(value: Any) -> Any:
 
 
 def get_from_tfrecord(
-        saved_data_description: List[Attribute]) -> Callable[[Any], Any]:
+        saved_data_description: list[Attribute]) -> Callable[[Any], Any]:
     """Construct the from_tfrecord function.
     """
 
@@ -81,7 +81,7 @@ def get_from_tfrecord(
             "float64": tf.float64,
         }[attribute.dtype]
 
-        shape: Tuple[int, ...] = attribute.shape
+        shape: tuple[int, ...] = attribute.shape
         if attribute.dtype == "float16":
             # We parse from bytes so no shape
             shape = ()
@@ -103,16 +103,16 @@ def get_from_tfrecord(
     return from_tfrecord
 
 
-def to_tfrecord(saved_data_description: List[Attribute],
-                values: Dict[str, Any]) -> bytes:
+def to_tfrecord(saved_data_description: list[Attribute],
+                values: dict[str, Any]) -> bytes:
     """Convert example data into a tfrecord example
 
     Args:
 
-      saved_data_description (List[Attribute]): Descriptions of all saved
+      saved_data_description (list[Attribute]): Descriptions of all saved
       data.
 
-      values (Dict): The name and value to be saved (corresponding to
+      values (dict): The name and value to be saved (corresponding to
       saved_data_description).
 
     Returns: TF.train.Example
