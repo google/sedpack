@@ -120,7 +120,6 @@ class DatasetIteration(DatasetBase):
         return shard_paths
 
     def read_and_decode(self, tf_dataset: TFDatasetT, cycle_length: int | None,
-                        cycle_length: int | None,
                         num_parallel_calls: int | None,
                         parallelism: int | None) -> TFDatasetT:
         """Read the shard files and decode them.
