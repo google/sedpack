@@ -15,7 +15,6 @@
 """
 
 from pathlib import Path
-from typing import Optional
 
 import sedpack
 from sedpack.io.metadata import DatasetStructure
