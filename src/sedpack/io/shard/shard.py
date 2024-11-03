@@ -15,7 +15,6 @@
 """
 
 from pathlib import Path
-from typing import Optional
 
 import sedpack
 from sedpack.io.metadata import DatasetStructure
@@ -47,7 +46,7 @@ class Shard():
         self.dataset_structure: DatasetStructure = dataset_structure
         self._dataset_path: Path = dataset_root_path
 
-        self._shard_writer: Optional[ShardWriterBase] = get_shard_writer(
+        self._shard_writer: ShardWriterBase | None = get_shard_writer(
             dataset_structure=dataset_structure,
             shard_file=self._get_full_path(),
         )
