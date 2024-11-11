@@ -59,7 +59,7 @@ mod static_iter {
 
     #[pyclass]
     pub struct RustIter {
-        /// Which ExampleIterator are we interacting with.
+        /// Which ExampleIterator are we interacting with (unique id).
         static_index: usize,
         /// Read only value. For iteration we use this object as a context manager which allows us
         /// to free resources in STATIC_ITERATORS on the call of __exit__.
@@ -114,6 +114,7 @@ mod static_iter {
         fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
             slf
         }
+
         fn __next__<'py>(mut slf: PyRefMut<'py, Self>) -> Option<PyObject> {
             match slf.next() {
                 None => None,
@@ -133,10 +134,13 @@ mod static_iter {
             }
         }
 
+        /// The implementation is reentrant. If changing also change
+        /// `sedpack.io.dataset_iteration.RustGenerator`.
         fn __enter__(mut slf: PyRefMut<'_, Self>) -> PyRefMut<'_, Self> {
             slf.can_iterate = true;
             slf
         }
+
         fn __exit__(
             mut slf: PyRefMut<'_, Self>, _exc_type: &Bound<'_, PyAny>, _exc_val: &Bound<'_, PyAny>,
             _exc_tb: &Bound<'_, PyAny>,
