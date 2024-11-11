@@ -15,16 +15,16 @@
 from concurrent.futures import ThreadPoolExecutor
 import contextlib
 import itertools
+import os
 from types import TracebackType
 from typing import (
     Any,
     AsyncIterator,
     Callable,
     Iterable,
-    Self,
     Type,
 )
-import os
+from typing_extensions import Self
 
 import asyncstdlib
 import numpy as np
@@ -843,7 +843,9 @@ class RustGenerator:
         self._file_parallelism: int = file_parallelism
         self._shuffle: int = shuffle
 
-        def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> dict[str, ExampleT]:
+        def to_dict(
+                example: list[np.typing.NDArray[np.uint8]]
+        ) -> dict[str, ExampleT]:
             result = {}
             for np_bytes, attribute in zip(
                     example, dataset.dataset_structure.saved_data_description):
