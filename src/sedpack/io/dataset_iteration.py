@@ -843,10 +843,8 @@ class RustGenerator:
         self._file_parallelism: int = file_parallelism
         self._shuffle: int = shuffle
 
-        def to_dict(
-                example: list[np.typing.NDArray[np.uint8]]
-        ) -> dict[str, ExampleT]:
-            result = {}
+        def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> ExampleT:
+            result: ExampleT = {}
             for np_bytes, attribute in zip(
                     example, dataset.dataset_structure.saved_data_description):
                 result[attribute.name] = IterateShardFlatBuffer.decode_array(
