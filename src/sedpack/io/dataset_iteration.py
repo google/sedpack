@@ -21,8 +21,6 @@ from typing import (
     AsyncIterator,
     Callable,
     Iterable,
-    Optional,
-    Type,
 )
 import os
 
@@ -51,9 +49,9 @@ class DatasetIteration(DatasetBase):
     def shard_paths_dataset(
         self,
         split: SplitT,
-        shards: Optional[int] = None,
+        shards: int | None = None,
         custom_metadata_type_limit: int | None = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
     ) -> list[str]:
         """Return a list of shard filenames.
 
@@ -61,7 +59,7 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
             custom_metadata_type_limit (int | None): Ignored when None. If
@@ -70,7 +68,7 @@ class DatasetIteration(DatasetBase):
             shards with the concrete `custom_metadata`. This is best effort for
             different `custom_metadata` (hashed as a tuple of sorted items).
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -122,10 +120,9 @@ class DatasetIteration(DatasetBase):
 
         return shard_paths
 
-    def read_and_decode(self, tf_dataset: TFDatasetT,
-                        cycle_length: Optional[int],
-                        num_parallel_calls: Optional[int],
-                        parallelism: Optional[int]) -> TFDatasetT:
+    def read_and_decode(self, tf_dataset: TFDatasetT, cycle_length: int | None,
+                        num_parallel_calls: int | None,
+                        parallelism: int | None) -> TFDatasetT:
         """Read the shard files and decode them.
 
         Args:
@@ -133,18 +130,18 @@ class DatasetIteration(DatasetBase):
           tf_dataset (tf.data.Dataset): Dataset containing shard paths as
           strings.
 
-          cycle_length (Optional[int]): How many files to read at once.
+          cycle_length (int | None): How many files to read at once.
 
-          num_parallel_calls (Optional[int]): Number of parallel reading calls.
+          num_parallel_calls (int | None): Number of parallel reading calls.
 
-          parallelism (Optional[int]): Decoding parallelism.
+          parallelism (int | None): Decoding parallelism.
 
         Returns: tf.data.Dataset containing decoded examples.
         """
         # If the cycle_length is None it is determined automatically but we do
         # use determinism. See documentation
         # https://www.tensorflow.org/api_docs/python/tf/data/Dataset#interleave
-        deterministic: Optional[bool] = True
+        deterministic: bool | None = True
         if isinstance(cycle_length, int):
             # Use tf.data.Options.deterministic to decide `deterministic` if
             # cycle_length is <= 1.
@@ -190,15 +187,15 @@ class DatasetIteration(DatasetBase):
             self,
             split: SplitT,
             *,
-            process_record: Optional[Callable[[ExampleT], T]] = None,
-            shards: Optional[int] = None,
+            process_record: Callable[[ExampleT], T] | None = None,
+            shards: int | None = None,
             custom_metadata_type_limit: int | None = None,
-            shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+            shard_filter: Callable[[ShardInfo], bool] | None = None,
             repeat: bool = True,
             batch_size: int = 32,
             prefetch: int = 2,
-            file_parallelism: Optional[int] = os.cpu_count(),
-            parallelism: Optional[int] = os.cpu_count(),
+            file_parallelism: int | None = os.cpu_count(),
+            parallelism: int | None = os.cpu_count(),
             shuffle: int = 1_000) -> TFDatasetT:
         """"Dataset as tfdataset
 
@@ -206,10 +203,10 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
             custom_metadata_type_limit (int | None): Ignored when None. If
@@ -218,7 +215,7 @@ class DatasetIteration(DatasetBase):
             shards with the concrete `custom_metadata`. This is best effort for
             different `custom_metadata` (hashed as a tuple of sorted items).
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -230,9 +227,9 @@ class DatasetIteration(DatasetBase):
 
             prefetch (int): Prefetch this many batches.
 
-            file_parallelism (Optional[int]): IO parallelism.
+            file_parallelism (int | None): IO parallelism.
 
-            parallelism (Optional[int]): Parallelism of trace decoding and
+            parallelism (int | None): Parallelism of trace decoding and
             processing (ignored if shuffle is zero).
 
             shuffle (int): How many examples should be shuffled across shards.
@@ -324,9 +321,9 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 4,
         shuffle: int = 1_000,
@@ -338,13 +335,13 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -419,9 +416,9 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        shards: Optional[int] = None,
+        shards: int | None = None,
         custom_metadata_type_limit: int | None = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         shuffle: int = 1_000,
     ) -> Iterable[str]:
@@ -431,7 +428,7 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
             custom_metadata_type_limit (int | None): Ignored when None. If
@@ -440,7 +437,7 @@ class DatasetIteration(DatasetBase):
             shards with the concrete `custom_metadata`. This is best effort for
             different `custom_metadata` (hashed as a tuple of sorted items).
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -478,10 +475,10 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
         custom_metadata_type_limit: int | None = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
@@ -493,10 +490,10 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
             custom_metadata_type_limit (int | None): Ignored when None. If
@@ -505,7 +502,7 @@ class DatasetIteration(DatasetBase):
             shards with the concrete `custom_metadata`. This is best effort for
             different `custom_metadata` (hashed as a tuple of sorted items).
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -595,10 +592,10 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
         custom_metadata_type_limit: int | None = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         shuffle: int = 1_000,
     ) -> Iterable[ExampleT] | Iterable[T]:
@@ -609,10 +606,10 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
             custom_metadata_type_limit (int | None): Ignored when None. If
@@ -621,7 +618,7 @@ class DatasetIteration(DatasetBase):
             shards with the concrete `custom_metadata`. This is best effort for
             different `custom_metadata` (hashed as a tuple of sorted items).
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -689,9 +686,9 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
@@ -703,13 +700,13 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 

@@ -19,11 +19,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Mapping,
-    Optional,
-    Tuple,
     get_args,
 )
 import uuid
@@ -50,10 +46,10 @@ class DatasetWriting(DatasetBase):
             self,
             *,
             feed_writer: Callable[..., Any],
-            custom_arguments: List[Any],
-            custom_kwarguments: Optional[List[Dict[str, Any]]] = None,
+            custom_arguments: list[Any],
+            custom_kwarguments: list[dict[str, Any]] | None = None,
             consistency_check: bool = True,
-            single_process: bool = False) -> List[Any]:
+            single_process: bool = False) -> list[Any]:
         """Multiprocessing write support. Spawn `len(custom_arguments)`
         processes to write examples in parallel. Note that all computation is
         run on the CPU (using `tf.device("CPU")`) in order to prevent each
@@ -68,11 +64,11 @@ class DatasetWriting(DatasetBase):
             `custom_kwarguments` are provided (defaults to no keyword
             arguments).
 
-            custom_arguments (List[Any]): A list of arguments which are passed
+            custom_arguments (list[Any]): A list of arguments which are passed
             to `feed_writer` instances. A pool of `len(custom_kwarguments)`
             processes is being created to do this.
 
-            custom_kwarguments (Optional[List[Dict[str, Any]]]): A list of
+            custom_kwarguments (list[dict[str, Any]] | None): A list of
             keyword arguments which are passed to `feed_writer` instances.
             Defaults to no keyword arguments. Needs to have the same length as
             `custom_arguments`.
@@ -227,10 +223,10 @@ class DatasetWriting(DatasetBase):
 
 # We want to get results back.
 def _wrapper_func(
-    feed_writer_dataset_filler_args_kwargs: Tuple[Callable[...,
+    feed_writer_dataset_filler_args_kwargs: tuple[Callable[...,
                                                            Any], DatasetFiller,
                                                   Any, Mapping[str, Any]]
-) -> Tuple[DatasetFiller, Any]:
+) -> tuple[DatasetFiller, Any]:
     """Helper function for write_multiprocessing. Needs to be pickleable.
     """
     # Prevent each process from hoarding the whole GPU memory.

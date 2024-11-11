@@ -18,7 +18,7 @@ from __future__ import annotations
 import dataclasses
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Optional, Type, TYPE_CHECKING
+from typing import Any, Type, TYPE_CHECKING
 import uuid
 
 from sedpack.io.file_info import FileInfo
@@ -121,7 +121,7 @@ class _DatasetFillerContext:
     def write_example(self,
                       values: ExampleT,
                       split: SplitT,
-                      custom_metadata: Optional[dict[str, Any]] = None) -> None:
+                      custom_metadata: dict[str, Any] | None = None) -> None:
         """Write an example. Opens a new shard if necessary.
 
         Args:
@@ -130,7 +130,7 @@ class _DatasetFillerContext:
 
             split (SplitT): Which split to write this example into.
 
-            custom_metadata (Optional[dict[str, Any]]): Optional metadata saved
+            custom_metadata (dict[str, Any] | None): Optional metadata saved
             with in the shard info. The shards then can be filtered using these
             metadata. When a value is changed a new shard is open and the
             current shard is closed. TODO there is no check if a shard with the
@@ -255,20 +255,20 @@ class DatasetFiller:
         assert not self._updated_infos
         return self._dataset_filler_context
 
-    def __exit__(self, exc_type: Optional[Type[BaseException]],
-                 exc_value: Optional[BaseException],
-                 exc_tb: Optional[TracebackType]) -> None:
+    def __exit__(self, exc_type: Type[BaseException] | None,
+                 exc_value: BaseException | None,
+                 exc_tb: TracebackType | None) -> None:
         """Make sure to close the last shard.
 
         Args:
 
-          exc_type (Optional[Type[BaseException]]): None if no exception,
+          exc_type (Type[BaseException] | None): None if no exception,
           otherwise the exception type.
 
-          exc_value (Optional[BaseException]): None if no exception, otherwise
+          exc_value (BaseException | None): None if no exception, otherwise
           the exception value.
 
-          exc_tb (Optional[TracebackType]): None if no exception, otherwise the
+          exc_tb (TracebackType | None): None if no exception, otherwise the
           traceback.
         """
         # Close the shard only if there was an example written.
