@@ -21,10 +21,13 @@ from typing import (
     AsyncIterator,
     Callable,
     Iterable,
+    Self,
+    Type,
 )
 import os
 
 import asyncstdlib
+import numpy as np
 import tensorflow as tf
 
 from sedpack.io.dataset_base import DatasetBase
@@ -840,7 +843,7 @@ class RustGenerator:
         self._file_parallelism: int = file_parallelism
         self._shuffle: int = shuffle
 
-        def to_dict(example):
+        def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> dict[str, ExampleT]:
             result = {}
             for np_bytes, attribute in zip(
                     example, dataset.dataset_structure.saved_data_description):
@@ -853,15 +856,15 @@ class RustGenerator:
 
         self._to_dict = to_dict
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Enter the context manager (takes care of freeing memory held by
         Rust).
         """
         return self
 
-    def __exit__(self, exc_type: Optional[Type[BaseException]],
-                 exc_value: Optional[BaseException],
-                 exc_tb: Optional[TracebackType]) -> None:
+    def __exit__(self, exc_type: Type[BaseException] | None,
+                 exc_value: BaseException | None,
+                 exc_tb: TracebackType | None) -> None:
         """Drop the rust data structure holding content of open files and
         future examples.
         """
