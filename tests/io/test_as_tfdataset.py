@@ -16,7 +16,7 @@
 
 import itertools
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Callable, Union
 
 import pytest
 import numpy as np
@@ -39,7 +39,7 @@ def end2end(
     dtype: npt.DTypeLike,
     shard_file_type: ShardFileTypeT,
     compression: CompressionT,
-    process_record: Optional[Callable[[ExampleT], T]],
+    process_record: Callable[[ExampleT], T] | None,
 ) -> None:
     array_of_values = np.random.random((1024, 138))
     array_of_values = array_of_values.astype(dtype)
@@ -150,7 +150,7 @@ def test_end2end_as_tfdataset(
     shard_file_type: str,
     compression: str,
     dtype: str,
-    process_record: Optional[Callable[[ExampleT], T]],
+    process_record: Callable[[ExampleT], T] | None,
     tmp_path: Union[str, Path],
 ) -> None:
     end2end(

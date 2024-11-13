@@ -17,8 +17,10 @@ cdylib
 compresslevel
 crossentropy
 diutils
+dunder
 fbapi
 flatbuffer
+flate
 frombuffer
 howpublished
 inproceedings

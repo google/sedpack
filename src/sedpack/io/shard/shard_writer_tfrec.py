@@ -18,7 +18,7 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 """
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import tensorflow as tf
 
@@ -52,7 +52,7 @@ class ShardWriterTFRec(ShardWriterBase):
 
         # Open the tf.io.TFRecordWriter only with the first `write` call. Make
         # it None immediately during a call to `close`.
-        self._tf_shard_writer: Optional[Any] = None
+        self._tf_shard_writer: Any | None = None
 
     def _write(self, values: ExampleT) -> None:
         """Write an example on disk. Writing may be buffered.

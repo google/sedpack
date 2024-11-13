@@ -15,16 +15,19 @@
 from concurrent.futures import ThreadPoolExecutor
 import contextlib
 import itertools
+import os
+from types import TracebackType
 from typing import (
     Any,
     AsyncIterator,
     Callable,
     Iterable,
-    Optional,
+    Type,
 )
-import os
+from typing_extensions import Self
 
 import asyncstdlib
+import numpy as np
 import tensorflow as tf
 
 from sedpack.io.dataset_base import DatasetBase
@@ -49,8 +52,9 @@ class DatasetIteration(DatasetBase):
     def shard_paths_dataset(
         self,
         split: SplitT,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        shards: int | None = None,
+        custom_metadata_type_limit: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
     ) -> list[str]:
         """Return a list of shard filenames.
 
@@ -58,10 +62,16 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
+
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -93,6 +103,19 @@ class DatasetIteration(DatasetBase):
         if shards:
             shards_list = shards_list[:shards]
 
+        # Only use a limited amount of shards for each setting of
+        # custom_metadata.
+        if custom_metadata_type_limit:
+            counts: dict[tuple[tuple[str, Any], ...], int] = {}
+            old_shards_list = shards_list
+            shards_list = []
+            for shard_info in old_shards_list:
+                k = tuple(sorted(shard_info.custom_metadata.items()))
+                counts[k] = counts.get(k, 0) + 1
+                if counts[k] <= custom_metadata_type_limit:
+                    shards_list.append(shard_info)
+            self._logger.info("Took %s shards total", len(shards_list))
+
         # Full shard file paths.
         shard_paths = [
             str(self.path / s.file_infos[0].file_path) for s in shards_list
@@ -100,10 +123,9 @@ class DatasetIteration(DatasetBase):
 
         return shard_paths
 
-    def read_and_decode(self, tf_dataset: TFDatasetT,
-                        cycle_length: Optional[int],
-                        num_parallel_calls: Optional[int],
-                        parallelism: Optional[int]) -> TFDatasetT:
+    def read_and_decode(self, tf_dataset: TFDatasetT, cycle_length: int | None,
+                        num_parallel_calls: int | None,
+                        parallelism: int | None) -> TFDatasetT:
         """Read the shard files and decode them.
 
         Args:
@@ -111,18 +133,18 @@ class DatasetIteration(DatasetBase):
           tf_dataset (tf.data.Dataset): Dataset containing shard paths as
           strings.
 
-          cycle_length (Optional[int]): How many files to read at once.
+          cycle_length (int | None): How many files to read at once.
 
-          num_parallel_calls (Optional[int]): Number of parallel reading calls.
+          num_parallel_calls (int | None): Number of parallel reading calls.
 
-          parallelism (Optional[int]): Decoding parallelism.
+          parallelism (int | None): Decoding parallelism.
 
         Returns: tf.data.Dataset containing decoded examples.
         """
         # If the cycle_length is None it is determined automatically but we do
         # use determinism. See documentation
         # https://www.tensorflow.org/api_docs/python/tf/data/Dataset#interleave
-        deterministic: Optional[bool] = True
+        deterministic: bool | None = True
         if isinstance(cycle_length, int):
             # Use tf.data.Options.deterministic to decide `deterministic` if
             # cycle_length is <= 1.
@@ -168,14 +190,15 @@ class DatasetIteration(DatasetBase):
             self,
             split: SplitT,
             *,
-            process_record: Optional[Callable[[ExampleT], T]] = None,
-            shards: Optional[int] = None,
-            shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+            process_record: Callable[[ExampleT], T] | None = None,
+            shards: int | None = None,
+            custom_metadata_type_limit: int | None = None,
+            shard_filter: Callable[[ShardInfo], bool] | None = None,
             repeat: bool = True,
             batch_size: int = 32,
             prefetch: int = 2,
-            file_parallelism: Optional[int] = os.cpu_count(),
-            parallelism: Optional[int] = os.cpu_count(),
+            file_parallelism: int | None = os.cpu_count(),
+            parallelism: int | None = os.cpu_count(),
             shuffle: int = 1_000) -> TFDatasetT:
         """"Dataset as tfdataset
 
@@ -183,13 +206,19 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
+
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -201,9 +230,9 @@ class DatasetIteration(DatasetBase):
 
             prefetch (int): Prefetch this many batches.
 
-            file_parallelism (Optional[int]): IO parallelism.
+            file_parallelism (int | None): IO parallelism.
 
-            parallelism (Optional[int]): Parallelism of trace decoding and
+            parallelism (int | None): Parallelism of trace decoding and
             processing (ignored if shuffle is zero).
 
             shuffle (int): How many examples should be shuffled across shards.
@@ -217,6 +246,7 @@ class DatasetIteration(DatasetBase):
         shard_paths: list[str] = self.shard_paths_dataset(
             split=split,
             shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
             shard_filter=shard_filter,
         )
 
@@ -294,9 +324,9 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 4,
         shuffle: int = 1_000,
@@ -308,13 +338,13 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -330,7 +360,7 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self._as_numpy_common(
+        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
             split=split,
             shards=shards,
             shard_filter=shard_filter,
@@ -385,12 +415,13 @@ class DatasetIteration(DatasetBase):
         async for example in example_iterator:
             yield example
 
-    def _as_numpy_common(
+    def as_numpy_common(
         self,
         *,
         split: SplitT,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        shards: int | None = None,
+        custom_metadata_type_limit: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         shuffle: int = 1_000,
     ) -> Iterable[str]:
@@ -400,10 +431,16 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
+
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -420,6 +457,7 @@ class DatasetIteration(DatasetBase):
         shard_paths: list[str] = self.shard_paths_dataset(
             split=split,
             shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
             shard_filter=shard_filter,
         )
 
@@ -440,9 +478,10 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
+        custom_metadata_type_limit: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
@@ -454,13 +493,19 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
+
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -477,9 +522,10 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self._as_numpy_common(
+        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
             split=split,
             shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
             shard_filter=shard_filter,
             repeat=repeat,
             shuffle=shuffle,
@@ -549,9 +595,10 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
+        custom_metadata_type_limit: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         shuffle: int = 1_000,
     ) -> Iterable[ExampleT] | Iterable[T]:
@@ -562,13 +609,19 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            custom_metadata_type_limit (int | None): Ignored when None. If
+            non-zero then limit the number of shards with different
+            `custom_metadata`. Take only the first `custom_metadata_type_limit`
+            shards with the concrete `custom_metadata`. This is best effort for
+            different `custom_metadata` (hashed as a tuple of sorted items).
+
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -582,9 +635,10 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self._as_numpy_common(
+        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
             split=split,
             shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
             shard_filter=shard_filter,
             repeat=repeat,
             shuffle=shuffle,
@@ -635,9 +689,9 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        process_record: Optional[Callable[[ExampleT], T]] = None,
-        shards: Optional[int] = None,
-        shard_filter: Optional[Callable[[ShardInfo], bool]] = None,
+        process_record: Callable[[ExampleT], T] | None = None,
+        shards: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
@@ -649,13 +703,13 @@ class DatasetIteration(DatasetBase):
 
             split (SplitT): Split, see SplitT.
 
-            process_record (Optional[Callable[[ExampleT], T]]): Optional
+            process_record (Callable[[ExampleT], T] | None): Optional
             function that processes a single record.
 
-            shards (Optional[int]): If specified limits the dataset to the
+            shards (int | None): If specified limits the dataset to the
             first `shards` shards.
 
-            shard_filter (Optional[Callable[[ShardInfo], bool]): If present
+            shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
             shard shall be used for traversal and False otherwise.
 
@@ -683,19 +737,116 @@ class DatasetIteration(DatasetBase):
                 f"The compression {self.dataset_structure.compression} is not "
                 "among the supported compressions: {supported_compressions}")
 
-        shard_paths: list[str] = list(
-            self._as_numpy_common(
+        with RustGenerator(
+                dataset=self,
                 split=split,
+                process_record=process_record,
                 shards=shards,
                 shard_filter=shard_filter,
-                repeat=False,
+                repeat=repeat,
+                file_parallelism=file_parallelism,
                 shuffle=shuffle,
-            ))
+        ) as rust_generator:
+            yield from rust_generator()
 
-        def to_dict(example):
-            result = {}
+
+class RustGenerator:
+    """A generator for tf.data.Dataset.from_generator which is reentrant (even
+    when the iteration did not finished, which can happen when using
+    tf.data.Dataset.from_generator).
+
+    `_sedpack_rs.RustIter` is a Rust data structure which holds data unknown to
+    Python reference counting (will be dropped at _sedpack_rs.RustIter.__exit__
+    call (it could also implement droppable).
+
+    `tf.data.Dataset.from_generator` expects a callable which returns an
+    iterable. The problem is that it does call it even without exhausting the
+    previous iterable. We need to prevent leaking data by creating multiple
+    instances of `_sedpack_rs.RustIter`.
+
+    The current implementation manages manually the context manager of
+    `_sedpack_rs.RustIter` by calling __enter__ and __exit__. The current Rust
+    implementation of `_sedpack_rs.RustIter` is reentrant.
+
+    Possible solutions / alternatives:
+
+    -   Wrap context manager similar to RustGenerator like follows:
+        ```
+        with RustGenerator(...) as gen:
+          tf.data.Dataset.from_generator(gen, ...)
+        ```
+
+        The downside is that this is not very handy API (for training the user
+        creates two datasets -> two indentation levels).
+
+        The good part is that we are guaranteed to clean up.
+
+    -   Depend on __del__ being called. With CPython this would be fine. But we
+        would need to depend on TF dropping the reference (it should, not
+        tested, but it should) which is not documented anywhere. The good part
+        is nice API.
+
+    -   Changing RustGenerator.__call__ into:
+
+        ```
+        def __call__(self):
+          with _sedpack_rs.RustIter() as rust_iter:
+            yield from rust_iter
+        ```
+        This should eventually clean all instances.
+
+        The downside is that it is not obvious (implementation dependent) what
+        happens when TF calls again (possibly from a different thread or
+        process).
+    """
+
+    def __init__(self,
+                 *,
+                 dataset: DatasetIteration,
+                 split: SplitT,
+                 process_record: Callable[[ExampleT], T] | None = None,
+                 shards: int | None = None,
+                 shard_filter: Callable[[ShardInfo], bool] | None = None,
+                 repeat: bool = True,
+                 file_parallelism: int = os.cpu_count() or 1,
+                 shuffle: int = 1_000) -> None:
+        """A reentrant generator.
+
+        Args:
+
+          dataset (DatasetIteration): The dataset being iterated.
+
+          split (SplitT): The split to be iterated.
+
+          process_record (Callable[[ExampleT], T] | None): Optional
+          transformation of each example.
+
+          shards (int | None): Optional limit on the number of used shards.
+
+          shard_filter (Callable[[ShardInfo], bool] | None): Optional predicate
+          returning True for each shard which should be iterated.
+
+          repeat (bool): Cycle infinitely.
+
+          file_parallelism (int): How many files to read in parallel.
+
+          shuffle (int): Size of the shuffle buffer.
+        """
+        self._rust_iter: _sedpack_rs.RustIter | None = None
+
+        self._dataset: DatasetIteration = dataset
+        self._split: SplitT = split
+        self._process_record: Callable[[ExampleT], T] | None = process_record
+        self._shards: int | None = shards
+        self._shard_filter: Callable[[ShardInfo], bool] | None = shard_filter
+        self._repeat: bool = repeat
+        self._file_parallelism: int = file_parallelism
+        self._shuffle: int = shuffle
+
+        def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> ExampleT:
+            result: ExampleT = {}
             for np_bytes, attribute in zip(
-                    example, self.dataset_structure.saved_data_description):
+                    example, dataset.dataset_structure.saved_data_description):
                 result[attribute.name] = IterateShardFlatBuffer.decode_array(
                     np_bytes=np_bytes,
                     attribute=attribute,
@@ -703,14 +854,59 @@ class DatasetIteration(DatasetBase):
                 )
             return result
 
-        with _sedpack_rs.RustIter(
+        self._to_dict = to_dict
+
+    def __enter__(self) -> Self:
+        """Enter the context manager (takes care of freeing memory held by
+        Rust).
+        """
+        return self
+
+    def __exit__(self, exc_type: Type[BaseException] | None,
+                 exc_value: BaseException | None,
+                 exc_tb: TracebackType | None) -> None:
+        """Drop the rust data structure holding content of open files and
+        future examples.
+        """
+        if self._rust_iter is not None:
+            self._rust_iter.__exit__(exc_type, exc_value, exc_tb)
+
+    def __call__(self) -> Iterable[ExampleT] | Iterable[T]:
+        """Return an iterable.
+        """
+        yield from self._single_iter()
+        while self._repeat:
+            yield from self._single_iter()
+
+    def _single_iter(self) -> Iterable[ExampleT] | Iterable[T]:
+        """Iterate the dataset once.
+        """
+        if self._rust_iter is None:
+            shard_paths: list[str] = list(
+                self._dataset.as_numpy_common(
+                    split=self._split,
+                    shards=self._shards,
+                    shard_filter=self._shard_filter,
+                    repeat=False,
+                    shuffle=self._shuffle,
+                ))
+
+            self._rust_iter = _sedpack_rs.RustIter(
                 files=shard_paths,
-                repeat=repeat,
-                threads=file_parallelism,
-                compression=self.dataset_structure.compression,
-        ) as rust_iter:
-            example_iterator = map(to_dict, iter(rust_iter))
-            if process_record:
-                yield from map(process_record, example_iterator)
-            else:
-                yield from example_iterator
+                repeat=False,
+                threads=self._file_parallelism,
+                compression=self._dataset.dataset_structure.compression,
+            )
+            # Manually calling __enter__ and __exit__ -- see class docstring.
+            self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
+        elif not self._rust_iter.can_iterate:
+            self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
+
+        example_iterator = map(self._to_dict, iter(self._rust_iter))
+        if self._process_record:
+            yield from map(self._process_record, example_iterator)
+        else:
+            yield from example_iterator
+
+        self._rust_iter.__exit__(None, None, None)
+        self._rust_iter = None
