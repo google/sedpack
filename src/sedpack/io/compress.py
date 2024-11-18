@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import IO
 
 import lz4.frame  # type: ignore
+import zstd
 
 from sedpack.io.types import CompressionT
 
@@ -44,63 +45,19 @@ class CompressedFile:
             raise NotImplementedError(f"Compression {compression_type} is not "
                                       f"supported yet by CompressedFile")
 
-    def open(self,
-             file: Path | str,
-             mode: str,
-             encoding: str | None = None) -> IO:
-        """Open function.
-
-        Args:
-
-          file (path-like object): The file to be opened.
-
-          mode (str): Opening mode see `open`. The mode argument can be any of
-          "r", "rb", "w", "wb", "x", "xb", "a" or "ab" for binary mode, or
-          "rt", "wt", "xt", or "at" for text mode. The default is "rb".
-
-          encoding (str | None): Encoding in case the file is not compressed
-          and one uses text mode. Defaults to None.
-
-        Example use (the expected use is opening in the binary mode):
-        ```
-        with CompressedFile("LZMA").open("my_file.txt", "w") as f:
-          f.write("hello compressed file")
-        ```
-        """
-        match self.compression_type:
-            case "":
-                # No compression.
-                return open(file=file, mode=mode, encoding=encoding)
-            case "GZIP" | "ZLIB":
-                return gzip.open(  # type: ignore
-                    filename=file,
-                    mode=mode,
-                    compresslevel=9,  # slow write, but large compression
-                )
-            case "BZ2":
-                return bz2.open(
-                    filename=file,
-                    mode=mode,
-                    compresslevel=9,
-                )
-            case "LZMA":
-                return lzma.open(
-                    filename=file,
-                    mode=mode,
-                    # 0-9, default=6 more compression, but more RAM
-                    # preset=None,
-                )
-            case "LZ4":
-                return lz4.frame.open(file, mode=mode)  # type: ignore
-            case _:
-                raise NotImplementedError(f"CompressedFile does not implement "
-                                          f"{self.compression_type} yet.")
-
     @staticmethod
     def supported_compressions() -> list[CompressionT]:
         """Return a list of supported compression types.
         """
-        return ["", "BZ2", "GZIP", "LZMA", "LZ4", "ZLIB"]
+        return [
+            "",
+            "BZ2",
+            "GZIP",
+            "LZMA",
+            "LZ4",
+            "ZLIB",
+            "ZSTD",
+        ]
 
     def compress(self, data: bytes) -> bytes:
         """Self-standing compression. This is useful for instance when writing
@@ -116,13 +73,15 @@ class CompressedFile:
             case "":
                 return data
             case "GZIP" | "ZLIB":
-                return gzip.compress(data)
+                return gzip.compress(data, compresslevel=9)
             case "BZ2":
-                return bz2.compress(data)
+                return bz2.compress(data, compresslevel=9)
             case "LZMA":
                 return lzma.compress(data)
             case "LZ4":
                 return lz4.frame.compress(data)
+            case "ZSTD":
+                return zstd.compress(data)
             case _:
                 raise NotImplementedError(f"CompressedFile does not implement "
                                           f"{self.compression_type} yet.")
@@ -148,6 +107,8 @@ class CompressedFile:
                 return lzma.decompress(data)
             case "LZ4":
                 return lz4.frame.decompress(data)
+            case "ZSTD":
+                return zstd.decompress(data)
             case _:
                 raise NotImplementedError(f"CompressedFile does not implement "
                                           f"{self.compression_type} yet.")

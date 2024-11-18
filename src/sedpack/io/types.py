@@ -43,6 +43,7 @@ CompressionT: TypeAlias = Literal[
     "LZ4",
     "ZIP",
     "ZLIB",
+    "ZSTD",
 ]
 
 # Hash checksums types (algorithms supported by hashlib).
