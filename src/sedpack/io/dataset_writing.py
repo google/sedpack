@@ -208,8 +208,7 @@ class DatasetWriting(DatasetBase):
             hashes=self.dataset_structure.hash_checksum_algorithms,
         )
         expected: tuple[
-            str,
-            ...] = shard_list_info.shard_list_info_file.hash_checksums
+            str, ...] = shard_list_info.shard_list_info_file.hash_checksums
         if real != expected:
             raise ValueError(
                 f"Hash checksum miss-match in {file_path} {real = } {expected = }"
@@ -220,7 +219,6 @@ class DatasetWriting(DatasetBase):
             (self.path / file_path).read_text())
         for child in shard_list.children_shard_lists:
             self._check_shard_list_info(child)
-
 
     def current_metadata_checksums(self) -> tuple[str, ...]:
         """Return the hash checksums of the current version of
