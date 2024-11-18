@@ -19,8 +19,32 @@ import time
 from typing import Callable, TypeVar
 import uuid
 
+import xxhash
+
 from sedpack.io.file_info import FileInfo
 from sedpack.io.types import HashChecksumT
+
+
+def _get_hash_function(name: HashChecksumT) -> hashlib._hashlib.HASH | xxhash.xxh32 | xxhash.xxh64 | xxhash.xxh3_128:
+    """Get a hash function by name.
+
+    Args:
+
+      name (HashChecksumT): Name of the hash function (string literal).
+
+    Returns: The hash function object which supports `update` and `hexdigest`
+    methods.
+    """
+    match name:
+        case "xxh32":
+            return xxhash.xxh32()
+        case "xxh64":
+            return xxhash.xxh64()
+        case "xxh128":
+            return xxhash.xxh128()
+        case _:
+            # No other hashes are supported yet.
+            return hashlib.new(name)
 
 
 def hash_checksums(file_path: Path, hashes: tuple[HashChecksumT,
@@ -38,7 +62,8 @@ def hash_checksums(file_path: Path, hashes: tuple[HashChecksumT,
     `hashes`.
     """
     # Actual hash functions, same order as hashes.
-    hash_functions = tuple(hashlib.new(hash_name) for hash_name in hashes)
+    hash_functions = tuple(_get_hash_function(hash_name) for hash_name in hashes)
+
     memory_view = memoryview(bytearray(128 * 1024))
     with open(file_path, "rb", buffering=0) as hashed_file:
         # Read as long as we read something.
