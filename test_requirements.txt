@@ -1,9 +1,11 @@
-mypy==1.13.0
+flake8
+mypy
+perfCounters
+psutil
 pydantic
 pytest
 pytest-cov
-flake8
 twine
-perfCounters
-psutil
+types-aiofiles
 types-tensorflow
+types-tqdm
