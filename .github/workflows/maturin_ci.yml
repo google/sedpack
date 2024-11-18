@@ -68,6 +68,7 @@ jobs:
           run: |
             set -e
             pip3 install sedpack --find-links dist --force-reinstall
+            pip3 install xxhash  # TODO workaround
             pytest
 
   sdist:
