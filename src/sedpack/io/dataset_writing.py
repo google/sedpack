@@ -210,9 +210,8 @@ class DatasetWriting(DatasetBase):
         expected: tuple[
             str, ...] = shard_list_info.shard_list_info_file.hash_checksums
         if real != expected:
-            raise ValueError(
-                f"Hash checksum miss-match in {file_path} {real = } {expected = }"
-            )
+            raise ValueError(f"Hash checksum miss-match in {file_path} "
+                             f"{real = } {expected = }")
 
         # Check children.
         shard_list: ShardsList = ShardsList.model_validate_json(
