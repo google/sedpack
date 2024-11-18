@@ -19,7 +19,7 @@ import gzip
 import lzma
 
 import lz4.frame  # type: ignore
-import zstd
+import zstd  # type: ignore
 
 from sedpack.io.types import CompressionT
 
@@ -78,7 +78,7 @@ class CompressedFile:
             case "LZ4":
                 return lz4.frame.compress(data)
             case "ZSTD":
-                return zstd.compress(data)
+                return zstd.compress(data)  # type: ignore
             case _:
                 raise NotImplementedError(f"CompressedFile does not implement "
                                           f"{self.compression_type} yet.")
@@ -104,7 +104,7 @@ class CompressedFile:
             case "LZ4":
                 return lz4.frame.decompress(data)
             case "ZSTD":
-                return zstd.decompress(data)
+                return zstd.decompress(data)  # type: ignore
             case _:
                 raise NotImplementedError(f"CompressedFile does not implement "
                                           f"{self.compression_type} yet.")
