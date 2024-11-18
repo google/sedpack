@@ -14,4 +14,4 @@ tensorflow
 termcolor
 tqdm
 xxhash
-zstd
+zstandard
