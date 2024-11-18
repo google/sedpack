@@ -52,7 +52,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install sedpack --find-links dist --force-reinstall
-          pip3 install xxhash  # TODO workaround
+          pip3 install --require-hashes --no-deps -r requirements.txt # TODO workaround
           pip install pytest
           pytest
       - name: pytest
@@ -69,7 +69,7 @@ jobs:
           run: |
             set -e
             pip3 install sedpack --find-links dist --force-reinstall
-            pip3 install xxhash  # TODO workaround
+            pip3 install --require-hashes --no-deps -r requirements.txt # TODO workaround
             pytest
 
   sdist:
