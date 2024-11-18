@@ -31,7 +31,7 @@ import sedpack
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.file_info import FileInfo
 from sedpack.io.merge_shard_infos import merge_shard_infos
-from sedpack.io.shard_file_metadata import ShardListInfo
+from sedpack.io.shard_file_metadata import ShardsList, ShardListInfo
 
 from sedpack.io.types import SplitT
 import sedpack.io.utils as diutils
@@ -198,14 +198,69 @@ class DatasetWriting(DatasetBase):
             hashes=self.dataset_structure.hash_checksum_algorithms,
         )
 
-    def check(self, show_progressbar: bool = True) -> None:
+    def _check_shard_list_info(self, shard_list_info: ShardListInfo) -> None:
+        """Check consistency of metadata files.
+        """
+        # Check the current file.
+        file_path: str = shard_list_info.shard_list_info_file.file_path
+        real: tuple[str, ...] = sedpack.io.utils.hash_checksums(
+            file_path=self.path / file_path,
+            hashes=self.dataset_structure.hash_checksum_algorithms,
+        )
+        expected: tuple[
+            str,
+            ...] = shard_list_info.shard_list_info_file.hash_checksums
+        if real != expected:
+            raise ValueError(
+                f"Hash checksum miss-match in {file_path} {real = } {expected = }"
+            )
+
+        # Check children.
+        shard_list: ShardsList = ShardsList.model_validate_json(
+            (self.path / file_path).read_text())
+        for child in shard_list.children_shard_lists:
+            self._check_shard_list_info(child)
+
+
+    def current_metadata_checksums(self) -> tuple[str, ...]:
+        """Return the hash checksums of the current version of
+        `dataset_info.json`. Make sure to save using `write_config` before
+        making a note of these values.
+        """
+        file_path: Path = self._get_config_path(self.path)
+        return sedpack.io.utils.hash_checksums(
+            file_path=file_path,
+            hashes=self.dataset_structure.hash_checksum_algorithms,
+        )
+
+    def check(
+        self,
+        show_progressbar: bool = True,
+        hash_checksums_values: tuple[str, ...] = ()
+    ) -> None:
         """Check the dataset integrity.
 
         Args:
+
           show_progressbar: Use tqdm to show a progressbar for different checks.
+
+          hash_checksums_values (tuple[str, ...]): Expected hash sum values of
+          the main metadata file.
 
         Raises: ValueError if the dataset is inconsistent.
         """
+        # Check the main metadata file.
+        if hash_checksums_values:
+            real: tuple[str, ...] = self.current_metadata_checksums()
+            if real != hash_checksums_values:
+                file_path: Path = self._get_config_path(self.path)
+                raise ValueError(f"Hash checksum miss-match in {file_path}")
+
+        # Check metadata consistency.
+        for shard_list_info in self._dataset_info.splits.values():
+            self._check_shard_list_info(shard_list_info)
+
+        # Check shards consistency.
         for split in self._dataset_info.splits:
             for shard_info in tqdm(list(self.shard_info_iterator(split)),
                                    desc=f"Validating checksums for {split}",

@@ -125,4 +125,61 @@ def test_hash_checksums_changed_shard(
 
     with pytest.raises(ValueError) as err:
         dataset.check()
-        assert str(file_path) in str(err.value)
+    assert str(file_path) in str(err.value)
+
+
+@pytest.mark.parametrize("hash_checksums", list(get_hash_checksums_tuples()))
+def test_hash_checksums_changed_shards_list(
+    hash_checksums: tuple[HashChecksumT, ...],
+    tmp_path: Union[str, Path],
+) -> None:
+    dataset = get_dataset(
+        tmp_path=tmp_path,
+        shard_file_type="fb",  # this is independent
+        compression="LZ4",  # should be independent
+        hash_checksums=hash_checksums,
+    )
+
+    if hash_checksums == ():
+        # Not able to check anyway => not raising.
+        dataset.check()
+        return
+
+    # Append newline to a shards_list file.
+    file_path: Path = next(iter(
+        dataset._dataset_info.splits.values())).shard_list_info_file.file_path
+    with open(dataset.path / file_path, "a") as f:
+        f.write("\n")
+
+    with pytest.raises(ValueError) as err:
+        dataset.check()
+    assert str(file_path) in str(err.value)
+
+
+@pytest.mark.parametrize("hash_checksums", list(get_hash_checksums_tuples()))
+def test_hash_checksums_changed_dataset_info(
+    hash_checksums: tuple[HashChecksumT, ...],
+    tmp_path: Union[str, Path],
+) -> None:
+    dataset = get_dataset(
+        tmp_path=tmp_path,
+        shard_file_type="fb",  # this is independent
+        compression="LZ4",  # should be independent
+        hash_checksums=hash_checksums,
+    )
+
+    if hash_checksums == ():
+        # Not able to check anyway => not raising.
+        dataset.check()
+        return
+
+    expected = dataset.current_metadata_checksums()
+
+    # Append newline to a shards_list file.
+    file_path: Path = dataset._get_config_path(dataset.path)
+    with open(file_path, "a") as f:
+        f.write("\n")
+
+    with pytest.raises(ValueError) as err:
+        dataset.check(hash_checksums_values=expected)
+    assert str(file_path) in str(err.value)
