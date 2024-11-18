@@ -17,9 +17,9 @@ To use this library you need to have a working version of [TensorFlow
 
 Development dependencies:
 
-- cmake for Rust flate2 with zlib-ng https://docs.rs/flate2/latest/flate2/
+-   cmake for Rust flate2 with zlib-ng https://docs.rs/flate2/latest/flate2/
 
-- python-dev and gcc for xxhash https://pypi.org/project/xxhash/
+-   python-dev and gcc for xxhash https://pypi.org/project/xxhash/
 
 ### Dataset install
 

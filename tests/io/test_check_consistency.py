@@ -25,8 +25,7 @@ from sedpack.io import Metadata, DatasetStructure, Attribute
 from sedpack.io.types import CompressionT, HashChecksumT, ShardFileTypeT, TRAIN_SPLIT
 
 
-def get_dataset(tmp_path: Union[str, Path],
-                shard_file_type: ShardFileTypeT,
+def get_dataset(tmp_path: Union[str, Path], shard_file_type: ShardFileTypeT,
                 compression: CompressionT,
                 hash_checksums: tuple[HashChecksumT, ...]) -> Dataset:
     dtype: str = "float32"
@@ -81,7 +80,7 @@ def get_hash_checksums_tuples():
 
     # Available checksums one by one.
     for single_hash_sum in get_args(HashChecksumT):
-        yield (single_hash_sum, )
+        yield (single_hash_sum,)
 
     # No checksum.
     yield ()

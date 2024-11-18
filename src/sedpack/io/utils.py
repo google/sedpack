@@ -25,7 +25,9 @@ from sedpack.io.file_info import FileInfo
 from sedpack.io.types import HashChecksumT
 
 
-def _get_hash_function(name: HashChecksumT) -> hashlib._hashlib.HASH | xxhash.xxh32 | xxhash.xxh64 | xxhash.xxh3_128:
+def _get_hash_function(
+    name: HashChecksumT
+) -> hashlib._hashlib.HASH | xxhash.xxh32 | xxhash.xxh64 | xxhash.xxh3_128:
     """Get a hash function by name.
 
     Args:
@@ -62,7 +64,8 @@ def hash_checksums(file_path: Path, hashes: tuple[HashChecksumT,
     `hashes`.
     """
     # Actual hash functions, same order as hashes.
-    hash_functions = tuple(_get_hash_function(hash_name) for hash_name in hashes)
+    hash_functions = tuple(
+        _get_hash_function(hash_name) for hash_name in hashes)
 
     memory_view = memoryview(bytearray(128 * 1024))
     with open(file_path, "rb", buffering=0) as hashed_file:
