@@ -53,5 +53,5 @@ jobs:
           mkdir -p .mypy_cache
           mypy --version
           stubgen --version
-          stubgen -o $MYPYPATH -p flatbuffers
+          # stubgen -o $MYPYPATH -p flatbuffers
           mypy --no-color-output --install-types --non-interactive src
