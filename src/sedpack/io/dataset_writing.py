@@ -202,7 +202,7 @@ class DatasetWriting(DatasetBase):
         """Check consistency of metadata files.
         """
         # Check the current file.
-        file_path: str = shard_list_info.shard_list_info_file.file_path
+        file_path: Path = shard_list_info.shard_list_info_file.file_path
         real: tuple[str, ...] = sedpack.io.utils.hash_checksums(
             file_path=self.path / file_path,
             hashes=self.dataset_structure.hash_checksum_algorithms,
