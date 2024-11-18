@@ -1,4 +1,4 @@
-mypy==1.12.1
+mypy
 pydantic
 pytest
 pytest-cov
