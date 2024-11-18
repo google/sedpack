@@ -44,14 +44,10 @@ jobs:
       - name: Register matcher
         run: echo ::add-matcher::./.github/python_matcher.json
       - name: Running mypy
-        env:
-          MYPYPATH: mypy_stubs/
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
           mypy --version
-          stubgen --version
-          # stubgen -o $MYPYPATH -p flatbuffers
           mypy --no-color-output --install-types --non-interactive src
