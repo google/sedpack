@@ -17,8 +17,6 @@
 import bz2
 import gzip
 import lzma
-from pathlib import Path
-from typing import IO
 
 import lz4.frame  # type: ignore
 import zstd
@@ -60,8 +58,7 @@ class CompressedFile:
         ]
 
     def compress(self, data: bytes) -> bytes:
-        """Self-standing compression. This is useful for instance when writing
-        files using async IO.
+        """Compression.
 
         Args:
 
@@ -87,8 +84,7 @@ class CompressedFile:
                                           f"{self.compression_type} yet.")
 
     def decompress(self, data: bytes) -> bytes:
-        """Self-standing decompression. This is useful for instance when
-        reading files using async IO.
+        """Decompression.
 
         Args:
 
