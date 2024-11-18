@@ -16,7 +16,7 @@
 import hashlib
 from pathlib import Path
 import time
-from typing import Callable, TypeVar
+from typing import Callable, Protocol, TypeVar
 import uuid
 
 import xxhash
@@ -25,17 +25,28 @@ from sedpack.io.file_info import FileInfo
 from sedpack.io.types import HashChecksumT
 
 
-def _get_hash_function(
-    name: HashChecksumT
-) -> hashlib._hashlib.HASH | xxhash.xxh32 | xxhash.xxh64 | xxhash.xxh3_128:
+class HashProtocol(Protocol):
+    """Represent a hash function protocol.
+    """
+
+    def update(self, buffer: bytes) -> None:
+        ...
+
+    def digest(self) -> bytes:
+        ...
+
+    def hexdigest(self) -> str:
+        ...
+
+
+def _get_hash_function(name: HashChecksumT) -> HashProtocol:
     """Get a hash function by name.
 
     Args:
 
       name (HashChecksumT): Name of the hash function (string literal).
 
-    Returns: The hash function object which supports `update` and `hexdigest`
-    methods.
+    Returns: An instance of HashProtocol.
     """
     match name:
         case "xxh32":
