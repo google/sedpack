@@ -31,23 +31,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dynamic = ["version"]
-dependencies = [
-    "aiofiles",
-    "asyncstdlib",
-    "flatbuffers",
-    "lz4",
-    "numpy",
-    "perfcounters",
-    "pydantic",
-    "pytest",
-    "pytest-asyncio",
-    "schema",
-    "semver",
-    "tabulate",
-    "tensorflow",
-    "termcolor",
-    "tqdm",
-]
+dependencies = {file = ["requirements.txt"]}
 
 [project.optional-dependencies]
 

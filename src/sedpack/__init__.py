@@ -16,4 +16,4 @@
 Format: MAJOR.MINOR.PATCH (see https://pypi.org/project/semver/ for more
   possibilities)
 """
-__version__ = "0.0.6"
+# The version of this package is defined by rust/Cargo.toml
