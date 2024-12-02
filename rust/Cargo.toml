@@ -1,6 +1,6 @@
 [package]
 name = "sedpack_rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Rust bindings for sedpack a general ML dataset package"
 authors = [
@@ -22,8 +22,8 @@ crate-type = ["cdylib", "rlib"]
 flatbuffers = "24.3"
 flate2 = { version = "1.0.17", features = ["zlib-ng"], default-features = false }
 lz4_flex = { version = "0.11.3", default-features = false , features = ["frame"] }
-numpy = "0.21"
-pyo3 = "0.21"
+numpy = "0.23"
+pyo3 = "0.23"
 rand = "0.8"
 strum = "0.26.3"
 strum_macros = "0.26.4"

@@ -15,6 +15,12 @@ Mainly refactored from the [SCAAML](https://github.com/google/scaaml) project.
 To use this library you need to have a working version of [TensorFlow
 2.x](https://www.tensorflow.org/install).
 
+Development dependencies:
+
+-   cmake for Rust flate2 with [zlib-ng](https://docs.rs/flate2/latest/flate2/)
+
+-   python-dev and gcc for [xxhash](https://pypi.org/project/xxhash/)
+
 ### Dataset install
 
 #### Development install
@@ -39,7 +45,7 @@ activated the virtual environment.
 
 Install requirements: `pip install --require-hashes -r base-tooling-requirements.txt`
 
-Update: `pip-compile requirements.in --generate-hashes --upgrade` and commit requirements.txt.
+Update: `pip-compile pyproject.toml --generate-hashes --upgrade` and commit requirements.txt.
 
 #### Package install
 

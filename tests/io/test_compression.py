@@ -16,10 +16,12 @@ import gzip
 from pathlib import Path
 from typing import Any, Union
 
+import pytest
 import numpy as np
 import numpy.typing as npt
 
 from sedpack.io.compress import CompressedFile
+from sedpack.io.types import CompressionT
 
 
 def test_compress_gzip_write(tmpdir: str | Path) -> None:
@@ -30,8 +32,8 @@ def test_compress_gzip_write(tmpdir: str | Path) -> None:
     with gzip.open(file_name, "wb") as f:
         f.write(payload)
 
-    with CompressedFile("GZIP").open(file_name, "rb") as f:
-        assert f.read() == payload
+    with open(file_name, "rb") as f:
+        assert CompressedFile("GZIP").decompress(f.read()) == payload
 
 
 def test_compress_gzip_read(tmpdir: str | Path) -> None:
@@ -39,8 +41,8 @@ def test_compress_gzip_read(tmpdir: str | Path) -> None:
     payload = bytes(x % 13 for x in range(10 * (1024**2)))  # 10MB
 
     # Write is readable by gzip
-    with CompressedFile("GZIP").open(file_name, "wb") as f:
-        f.write(payload)
+    with open(file_name, "wb") as f:
+        f.write(CompressedFile("GZIP").compress(payload))
 
     with gzip.open(file_name, "rb") as f:
         assert f.read() == payload
@@ -51,11 +53,11 @@ def test_compress_decompress_file(tmpdir: str | Path) -> None:
     payload = bytes(x % 13 for x in range(10 * (1024**2)))  # 10MB
 
     for algorithm in CompressedFile.supported_compressions():
-        with CompressedFile(algorithm).open(file_name, "wb") as f:
-            f.write(payload)
+        with open(file_name, "wb") as f:
+            f.write(CompressedFile(algorithm).compress(payload))
 
-        with CompressedFile(algorithm).open(file_name, "rb") as f:
-            assert f.read() == payload
+        with open(file_name, "rb") as f:
+            assert CompressedFile(algorithm).decompress(f.read()) == payload
 
 
 def test_compress_decompress_in_memory() -> None:
@@ -72,3 +74,18 @@ def test_compresses() -> None:
     payload = bytes(x % 13 for x in range(10 * (1024**2)))  # 10MB
 
     assert len(CompressedFile("GZIP").compress(payload)) < len(payload)
+
+
+@pytest.mark.parametrize("compression", CompressedFile.supported_compressions())
+def test_compression_works(compression: CompressionT,
+                           tmpdir: Union[str, Path]) -> None:
+    file_name = tmpdir / "compressed_file"
+    payload = bytes(x % 13 for x in range(10 * (1024**2)))  # 10MB
+
+    # Write is readable by gzip
+    with open(file_name, "wb") as f:
+        compressor = CompressedFile(compression)
+        f.write(compressor.compress(payload))
+
+    with open(file_name, "rb") as f:
+        assert CompressedFile(compression).decompress(f.read()) == payload
