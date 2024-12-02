@@ -59,6 +59,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install sedpack --find-links dist --force-reinstall
+          pip install --require-hashes --no-deps -r requirements.txt # TODO workaround
           pip install pytest
           pytest
       - name: pytest
@@ -74,6 +75,7 @@ jobs:
             pip3 install -U pip pytest
           run: |
             set -e
+            pip3 install --require-hashes --no-deps -r requirements.txt # TODO workaround
             pip3 install sedpack --find-links dist --force-reinstall
             pytest
 
