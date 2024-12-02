@@ -126,7 +126,7 @@ mod static_iter {
                     let np_result: Vec<Bound<'py, numpy::PyArray<u8, numpy::Ix1>>> = result
                         .into_iter()
                         .map(numpy::ndarray::Array::from_vec)
-                        .map(|x| x.into_pyarray_bound(slf.py()))
+                        .map(|x| x.into_pyarray(slf.py()))
                         .collect();
 
                     Some(np_result.to_object(slf.py()))
@@ -234,7 +234,7 @@ fn iterate_shard_py<'py>(py: Python<'py>, shard_file: &Bound<'_, PyString>) -> P
     let np_result: Vec<Bound<'py, numpy::PyArray<u8, numpy::Ix1>>> = result
         .into_iter()
         .map(numpy::ndarray::Array::from_vec)
-        .map(|x| x.into_pyarray_bound(py))
+        .map(|x| x.into_pyarray(py))
         .collect();
 
     Ok(np_result.to_object(py))
