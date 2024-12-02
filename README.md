@@ -45,7 +45,7 @@ activated the virtual environment.
 
 Install requirements: `pip install --require-hashes -r base-tooling-requirements.txt`
 
-Update: `pip-compile requirements.in --generate-hashes --upgrade` and commit requirements.txt.
+Update: `pip-compile pyproject.toml --generate-hashes --upgrade` and commit requirements.txt.
 
 #### Package install
 
