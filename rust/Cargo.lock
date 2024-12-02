@@ -372,7 +372,7 @@ checksum = "0e819f2bc632f285be6d7cd36e25940d45b2391dd6d9b939e79de557f7014248"
 
 [[package]]
 name = "sedpack_rs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "flatbuffers",
  "flate2",
