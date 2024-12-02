@@ -111,7 +111,9 @@ mod static_iter {
             slf
         }
 
-        fn __next__<'py>(mut slf: PyRefMut<'py, Self>) -> Option<Vec<Bound<'py, numpy::PyArray<u8, numpy::Ix1>>>> {
+        fn __next__<'py>(
+            mut slf: PyRefMut<'py, Self>
+        ) -> Option<Vec<Bound<'py, numpy::PyArray<u8, numpy::Ix1>>>> {
             match slf.next() {
                 None => None,
                 Some(result) => {
