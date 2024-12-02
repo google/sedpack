@@ -1,5 +1,6 @@
 flake8
 mypy
+numpy
 perfCounters
 psutil
 pydantic
