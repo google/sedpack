@@ -225,9 +225,9 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         self._builder.Finish(shard)
 
         # Write the buffer into a file.
-        with CompressedFile(self.dataset_structure.compression).open(
-                self._shard_file, "wb") as file:
-            file.write(self._builder.Output())
+        with open(self._shard_file, "wb") as file:
+            compressor = CompressedFile(self.dataset_structure.compression)
+            file.write(compressor.compress(bytes(self._builder.Output())))
 
         self._builder = None
         assert self._shard_file.is_file()

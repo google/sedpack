@@ -47,6 +47,8 @@ dependencies = [
     "tensorflow",
     "termcolor",
     "tqdm",
+    "xxhash",
+    "zstandard",
 ]
 
 [project.optional-dependencies]

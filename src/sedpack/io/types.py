@@ -43,6 +43,7 @@ CompressionT: TypeAlias = Literal[
     "LZ4",
     "ZIP",
     "ZLIB",
+    "ZSTD",
 ]
 
 # Hash checksums types (algorithms supported by hashlib).
@@ -57,6 +58,9 @@ HashChecksumT: TypeAlias = Literal[
     "sha3_256",
     "sha3_384",
     "sha3_512",
+    "xxh32",
+    "xxh64",
+    "xxh128",
 ]
 
 # Shard file-type choices. Also serves as the file-extension of shard files.
