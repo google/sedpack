@@ -123,6 +123,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install sedpack --no-index --find-links dist --force-reinstall
+            pip install --require-hashes --no-deps -r requirements.txt # TODO workaround
             pip install pytest
             pytest
       - name: pytest
@@ -138,6 +139,7 @@ jobs:
             set -e
             python3 -m virtualenv .venv
             source .venv/bin/activate
+            pip install --require-hashes --no-deps -r requirements.txt # TODO workaround
             pip install pytest
             pip install sedpack --find-links dist --force-reinstall
             pytest
@@ -176,6 +178,7 @@ jobs:
           python3 -m venv .venv
           source .venv/Scripts/activate
           pip install sedpack --find-links dist --force-reinstall
+          pip install --require-hashes --no-deps -r requirements.txt # TODO workaround
           pip install pytest
           pytest
 
@@ -210,6 +213,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install sedpack --find-links dist --force-reinstall
+          pip install --require-hashes --no-deps -r requirements.txt # TODO workaround
           pip install pytest
           pytest
 
@@ -258,6 +262,7 @@ jobs:
           pyodide venv .venv
           source .venv/bin/activate
           pip install sedpack --find-links dist --force-reinstall
+          pip install --require-hashes --no-deps -r requirements.txt # TODO workaround
           pip install pytest
           python -m pytest
 
