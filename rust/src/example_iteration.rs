@@ -61,7 +61,7 @@ impl std::str::FromStr for CompressionType {
             "LZ4" => Ok(CompressionType::LZ4),
             "GZIP" => Ok(CompressionType::Gzip),
             "ZLIB" => Ok(CompressionType::Zlib),
-            _ => Err("{input} unimplemented".to_string()),
+            _ => Err(format!("{input} unimplemented")),
         }
     }
 }
