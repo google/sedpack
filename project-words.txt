@@ -10,6 +10,8 @@ Yann
 Yokeable
 asyncstdlib
 bldr
+booktitle
+burszteindc
 byteswap
 cdylib
 compresslevel
@@ -20,6 +22,8 @@ fbapi
 flatbuffer
 flate
 frombuffer
+howpublished
+inproceedings
 itemsize
 kwarguments
 ndarray
@@ -42,6 +46,7 @@ tfdata
 tfdataset
 tfrec
 tfrecord
+tinyaes
 tfrecords
 tobytes
 uoffset
