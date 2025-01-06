@@ -45,3 +45,4 @@ tfrecord
 tfrecords
 tobytes
 uoffset
+zstd
