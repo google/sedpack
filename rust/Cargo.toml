@@ -28,3 +28,4 @@ rand = "0.8"
 strum = "0.26.3"
 strum_macros = "0.26.4"
 yoke = { version = "0.7", features = ["derive"] }
+zstd = "0.13.2"
