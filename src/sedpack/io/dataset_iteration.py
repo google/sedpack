@@ -28,7 +28,7 @@ from typing_extensions import Self
 
 import asyncstdlib
 import numpy as np
-import tensorflow as tf
+import tensorflow as tf  # type: ignore[import-untyped]
 
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
@@ -169,8 +169,7 @@ class DatasetIteration(DatasetBase):
         tf_dataset = tf_dataset.interleave(
             lambda x: tf.data.TFRecordDataset(
                 x,
-                compression_type=self.dataset_structure.
-                compression,  # type: ignore
+                compression_type=self.dataset_structure.compression,
             ),
             cycle_length=cycle_length,
             block_length=1,
@@ -272,7 +271,7 @@ class DatasetIteration(DatasetBase):
             )
             if process_record:
                 tf_dataset = tf_dataset.map(
-                    process_record,  # type: ignore[arg-type]
+                    process_record,
                     num_parallel_calls=parallelism,
                 )
             if shuffle:
@@ -303,7 +302,7 @@ class DatasetIteration(DatasetBase):
         # Process each record if requested
         if process_record:
             tf_dataset = tf_dataset.map(
-                process_record,  # type: ignore[arg-type]
+                process_record,
                 num_parallel_calls=parallelism,
             )
 
@@ -393,24 +392,32 @@ class DatasetIteration(DatasetBase):
                                  f"implemented.")
 
         # Automatically shuffle.
+        # TODO(issue #85) Async iterator typing.
+        example_iterator: AsyncIterator[ExampleT]
         if shuffle:
             example_iterator = round_robin_async(
                 asyncstdlib.map(
-                    shard_iterator.iterate_shard_async,  # type: ignore
+                    shard_iterator.
+                    iterate_shard_async,  # type: ignore[arg-type]
                     shard_paths_iterator,
                 ),
                 buffer_size=file_parallelism,
-            )
+            )  # type: ignore[assignment]
         else:
             example_iterator = asyncstdlib.chain.from_iterable(
                 asyncstdlib.map(
-                    shard_iterator.iterate_shard_async,  # type: ignore
+                    shard_iterator.
+                    iterate_shard_async,  # type: ignore[arg-type]
                     shard_paths_iterator,
                 ))
 
         # Process each record if requested.
+        example_iterator_processed: AsyncIterator[ExampleT] | AsyncIterator[T]
         if process_record:
-            example_iterator = asyncstdlib.map(process_record, example_iterator)
+            example_iterator_processed = asyncstdlib.map(
+                process_record, example_iterator)
+        else:
+            example_iterator_processed = example_iterator
 
         async for example in example_iterator:
             yield example
@@ -465,13 +472,14 @@ class DatasetIteration(DatasetBase):
         if repeat:
             shard_paths_iterator = itertools.cycle(shard_paths)
         else:
-            shard_paths_iterator = shard_paths  # type: ignore
+            shard_paths_iterator = shard_paths  # type: ignore[assignment]
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
             shard_paths_iterator = shuffle_buffer(
-                shard_paths_iterator,  # type: ignore
-                buffer_size=len(shard_paths))
+                shard_paths_iterator,  # type: ignore[assignment]
+                buffer_size=len(shard_paths),
+            )
         return shard_paths_iterator
 
     def as_numpy_iterator_concurrent(
@@ -567,7 +575,8 @@ class DatasetIteration(DatasetBase):
                 with LazyPool(file_parallelism) as pool:
                     yield from round_robin(
                         pool.imap_unordered(
-                            shard_iterator.process_and_list,  # type: ignore
+                            shard_iterator.
+                            process_and_list,  # type: ignore[arg-type]
                             shard_paths_iterator,
                         ),
                         # round_robin keeps the whole shard files in memory.
@@ -669,19 +678,23 @@ class DatasetIteration(DatasetBase):
 
         example_iterator = itertools.chain.from_iterable(
             map(
-                shard_iterator.iterate_shard,  # type: ignore
-                shard_paths_iterator))  # type: ignore
+                shard_iterator.iterate_shard,  # type: ignore[arg-type]
+                shard_paths_iterator,
+            ))
 
         # Process each record if requested
         if process_record:
-            example_iterator = map(process_record,
-                                   example_iterator)  # type: ignore
+            example_iterator = map(
+                process_record,
+                example_iterator,  # type: ignore[assignment]
+            )
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
             example_iterator = shuffle_buffer(
-                example_iterator,  # type: ignore
-                buffer_size=shuffle)
+                example_iterator,  # type: ignore[assignment]
+                buffer_size=shuffle,
+            )
 
         yield from example_iterator
 
@@ -832,7 +845,7 @@ class RustGenerator:
 
           shuffle (int): Size of the shuffle buffer.
         """
-        self._rust_iter: _sedpack_rs.RustIter | None = None
+        self._rust_iter: _sedpack_rs.RustIter | None = None  # type: ignore[no-any-unimported]
 
         self._dataset: DatasetIteration = dataset
         self._split: SplitT = split

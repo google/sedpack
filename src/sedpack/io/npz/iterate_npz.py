@@ -17,7 +17,7 @@ for more information how a npz shard is saved.
 
 import io
 from pathlib import Path
-from typing import Iterable
+from typing import AsyncIterator, Iterable
 
 import aiofiles
 import numpy as np
@@ -47,7 +47,8 @@ class IterateShardNP(IterateShardBase[T]):
         for i in range(elements):
             yield {name: value[i] for name, value in shard_content.items()}
 
-    async def iterate_shard_async(self, file_path: Path):
+    async def iterate_shard_async(self,
+                                  file_path: Path) -> AsyncIterator[ExampleT]:
         """Asynchronously iterate a shard saved in the NumPy format npz.
         """
         async with aiofiles.open(file_path, "rb") as f:

@@ -14,11 +14,12 @@
 """Read a dataset using pure asyncio.
 """
 
+import asyncio
 import os
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, AsyncIterator, Callable, Iterable
 
-import tensorflow as tf
+import tensorflow as tf  # type: ignore[import-untyped]
 
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard import IterateShardBase
@@ -54,7 +55,7 @@ class IterateShardTFRec(IterateShardBase[T]):
         # Read the shard.
         tf_dataset_records = tf.data.TFRecordDataset(
             str(file_path),
-            compression_type=self.dataset_structure.compression,  # type: ignore
+            compression_type=self.dataset_structure.compression,
         )
 
         # Decode examples.
@@ -63,10 +64,14 @@ class IterateShardTFRec(IterateShardBase[T]):
             num_parallel_calls=self.num_parallel_calls,
         )
 
-        yield from tf_dataset_examples.as_numpy_iterator()  # type: ignore
+        yield from tf_dataset_examples.as_numpy_iterator()
 
-    async def iterate_shard_async(self, file_path: Path):
-        raise NotImplementedError
+    async def iterate_shard_async(self,
+                                  file_path: Path) -> AsyncIterator[ExampleT]:
+        for example in self.iterate_shard(file_path=file_path):
+            yield example
+            # Give up event loop (a bit dirty).
+            await asyncio.sleep(0)
 
     def process_and_list(self, shard_file: Path) -> list[T]:
         """Return a list of processed examples. Used as a function call in a

@@ -20,7 +20,7 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 from pathlib import Path
 from typing import Any
 
-import tensorflow as tf
+import tensorflow as tf  # type: ignore[import-untyped]
 
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.tfrec.tfdata import to_tfrecord
@@ -70,7 +70,7 @@ class ShardWriterTFRec(ShardWriterBase):
         if not self._tf_shard_writer:
             self._tf_shard_writer = tf.io.TFRecordWriter(
                 str(self._shard_file),
-                self.dataset_structure.compression,  # type: ignore
+                self.dataset_structure.compression,
             )
 
         example = to_tfrecord(
