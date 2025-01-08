@@ -28,7 +28,7 @@ from typing_extensions import Self
 
 import asyncstdlib
 import numpy as np
-import tensorflow as tf  # type: ignore[import-untyped]
+import tensorflow as tf
 
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
@@ -169,7 +169,7 @@ class DatasetIteration(DatasetBase):
         tf_dataset = tf_dataset.interleave(
             lambda x: tf.data.TFRecordDataset(
                 x,
-                compression_type=self.dataset_structure.compression,
+                compression_type=self.dataset_structure.compression,  # type: ignore[arg-type]
             ),
             cycle_length=cycle_length,
             block_length=1,
@@ -271,7 +271,7 @@ class DatasetIteration(DatasetBase):
             )
             if process_record:
                 tf_dataset = tf_dataset.map(
-                    process_record,
+                    process_record,  # type: ignore[arg-type]
                     num_parallel_calls=parallelism,
                 )
             if shuffle:
@@ -302,7 +302,7 @@ class DatasetIteration(DatasetBase):
         # Process each record if requested
         if process_record:
             tf_dataset = tf_dataset.map(
-                process_record,
+                process_record,  # type: ignore[arg-type]
                 num_parallel_calls=parallelism,
             )
 

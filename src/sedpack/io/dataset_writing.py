@@ -25,7 +25,7 @@ from typing import (
 import uuid
 
 from tqdm.auto import tqdm
-import tensorflow as tf  # type: ignore[import-untyped]
+import tensorflow as tf
 
 import sedpack
 from sedpack.io.dataset_base import DatasetBase

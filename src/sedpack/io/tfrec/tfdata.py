@@ -20,7 +20,7 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 from typing import Any, Callable, cast
 
 import numpy as np
-import tensorflow as tf  # type: ignore[import-untyped]
+import tensorflow as tf
 
 from sedpack.io.metadata import Attribute
 

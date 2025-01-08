@@ -55,7 +55,7 @@ class IterateShardTFRec(IterateShardBase[T]):
         # Read the shard.
         tf_dataset_records = tf.data.TFRecordDataset(
             str(file_path),
-            compression_type=self.dataset_structure.compression,
+            compression_type=self.dataset_structure.compression,  # type: ignore[arg-type]
         )
 
         # Decode examples.
@@ -64,7 +64,7 @@ class IterateShardTFRec(IterateShardBase[T]):
             num_parallel_calls=self.num_parallel_calls,
         )
 
-        yield from tf_dataset_examples.as_numpy_iterator()
+        yield from tf_dataset_examples.as_numpy_iterator()  # type: ignore[misc]
 
     async def iterate_shard_async(self,
                                   file_path: Path) -> AsyncIterator[ExampleT]:
