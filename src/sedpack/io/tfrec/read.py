@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Iterable
 
-import tensorflow as tf  # type: ignore[import-untyped]
+import tensorflow as tf
 
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard import IterateShardBase
