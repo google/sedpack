@@ -144,7 +144,7 @@ def identity(x: T) -> T:
     return x
 
 
-def func_or_identity(f: Callable | None) -> Callable:
+def func_or_identity(f: Callable[..., T] | None) -> Callable[..., T]:
     """Return the function or an identity in case the argument is None.
     """
     if f is None:

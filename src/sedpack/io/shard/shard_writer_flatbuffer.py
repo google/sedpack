@@ -19,7 +19,7 @@ For information about FlatBuffers see https://flatbuffers.dev/
 from pathlib import Path
 import sys
 
-import flatbuffers  # type: ignore
+from flatbuffers import Builder
 import numpy as np
 
 from sedpack.io.compress import CompressedFile
@@ -55,9 +55,10 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             shard_file=shard_file,
         )
 
-        self._examples: list = []
+        # Offsets.
+        self._examples: list[int] = []
 
-        self._builder: flatbuffers.Builder | None = None
+        self._builder: Builder | None = None  # type: ignore[no-any-unimported]
 
     def _write(self, values: ExampleT) -> None:
         """Write an example on disk. Writing may be buffered.
@@ -67,21 +68,23 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             values (ExampleT): Attribute values.
         """
         if self._builder is None:
-            self._builder = flatbuffers.Builder(0)
+            self._builder = Builder(0)
 
         # Since we are not saving attribute names we need to make sure to
         # iterate in the correct order.
-        saved_attributes: list = []
+        saved_attributes: list[int] = []
         for attribute in self.dataset_structure.saved_data_description:
-            attribute_bytes = self.save_numpy_vector_as_bytearray(
+            attribute_bytes: int = self.save_numpy_vector_as_bytearray(
                 builder=self._builder,
                 attribute=attribute,
                 value=values[attribute.name],
             )
 
             fbapi_Attribute.AttributeStart(self._builder)
-            fbapi_Attribute.AttributeAddAttributeBytes(self._builder,
-                                                       attribute_bytes)
+            fbapi_Attribute.AttributeAddAttributeBytes(
+                self._builder,
+                attribute_bytes,
+            )
             saved_attributes.append(fbapi_Attribute.AttributeEnd(self._builder))
 
         # Save attributes vector.
@@ -98,9 +101,9 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         self._examples.append(fbapi_Example.ExampleEnd(self._builder))
 
     @staticmethod
-    def save_numpy_vector_as_bytearray(builder: flatbuffers.Builder,
-                                       attribute: Attribute,
-                                       value: AttributeValueT) -> int:
+    def save_numpy_vector_as_bytearray(  # type: ignore[no-any-unimported]
+            builder: Builder, attribute: Attribute,
+            value: AttributeValueT) -> int:
         """Save a given array into a FlatBuffer as bytes. This is to ensure
         compatibility with types which are not supported by FlatBuffers (e.g.,
         np.float16).  The FlatBuffers schema must mark this vector as type
@@ -197,7 +200,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         builder.vectorNumElems = length
 
         # Return the vector offset.
-        return builder.EndVector()
+        return builder.EndVector()  # type: ignore[no-any-return]
 
     def close(self) -> None:
         """Close the shard file(-s).

@@ -18,8 +18,11 @@
 
 # pylint: skip-file
 
-import flatbuffers  # type: ignore
-from flatbuffers.compat import import_numpy  # type: ignore
+import flatbuffers  # type: ignore[import-untyped]
+from flatbuffers.builder import Builder
+from flatbuffers.compat import import_numpy  # type: ignore[import-untyped]
+
+from sedpack.io.flatbuffer.shardfile.Attribute import Attribute
 
 np = import_numpy()
 
@@ -28,75 +31,75 @@ class Example(object):
     __slots__ = ['_tab']
 
     @classmethod
-    def GetRootAs(cls, buf, offset=0):
+    def GetRootAs(cls, buf: bytes, offset: int = 0) -> "Example":
         n = flatbuffers.encode.Get(flatbuffers.packer.uoffset, buf, offset)
         x = Example()
         x.Init(buf, n + offset)
         return x
 
-    @classmethod
-    def GetRootAsExample(cls, buf, offset=0):
-        """This method is deprecated. Please switch to GetRootAs."""
-        return cls.GetRootAs(buf, offset)
-
     # Example
-    def Init(self, buf, pos):
+    def Init(self, buf: bytes, pos: int) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Example
-    def Attributes(self, j):
+    def Attributes(self, j: int) -> Attribute | None:
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
             x = self._tab.Vector(o)
             x += flatbuffers.number_types.UOffsetTFlags.py_type(j) * 4
             x = self._tab.Indirect(x)
-            from sedpack.io.flatbuffer.shardfile.Attribute import Attribute
             obj = Attribute()
             obj.Init(self._tab.Bytes, x)
             return obj
         return None
 
     # Example
-    def AttributesLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+    def AttributesLength(self) -> int:
+        o: int = flatbuffers.number_types.UOffsetTFlags.py_type(
+            self._tab.Offset(4))
         if o != 0:
-            return self._tab.VectorLen(o)
+            return self._tab.VectorLen(o)  # type: ignore[no-any-return]
         return 0
 
     # Example
-    def AttributesIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
+    def AttributesIsNone(self) -> bool:
+        o: int = flatbuffers.number_types.UOffsetTFlags.py_type(
+            self._tab.Offset(4))
         return o == 0
 
 
-def ExampleStart(builder):
+def ExampleStart(builder: Builder) -> None:  # type: ignore[no-any-unimported]
     builder.StartObject(1)
 
 
-def Start(builder):
+def Start(builder: Builder) -> None:  # type: ignore[no-any-unimported]
     ExampleStart(builder)
 
 
-def ExampleAddAttributes(builder, attributes):
+def ExampleAddAttributes(  # type: ignore[no-any-unimported]
+        builder: Builder, attributes: int) -> None:
     builder.PrependUOffsetTRelativeSlot(
         0, flatbuffers.number_types.UOffsetTFlags.py_type(attributes), 0)
 
 
-def AddAttributes(builder, attributes):
+def AddAttributes(  # type: ignore[no-any-unimported]
+        builder: Builder, attributes: int) -> None:
     ExampleAddAttributes(builder, attributes)
 
 
-def ExampleStartAttributesVector(builder, numElems):
-    return builder.StartVector(4, numElems, 4)
+def ExampleStartAttributesVector(  # type: ignore[no-any-unimported]
+        builder: Builder, numElems: int) -> int:
+    return builder.StartVector(4, numElems, 4)  # type: ignore[no-any-return]
 
 
-def StartAttributesVector(builder, numElems):
+def StartAttributesVector(  # type: ignore[no-any-unimported]
+        builder: Builder, numElems: int) -> int:
     return ExampleStartAttributesVector(builder, numElems)
 
 
-def ExampleEnd(builder):
-    return builder.EndObject()
+def ExampleEnd(builder: Builder) -> int:  # type: ignore[no-any-unimported]
+    return builder.EndObject()  # type: ignore[no-any-return]
 
 
-def End(builder):
+def End(builder: Builder) -> int:  # type: ignore[no-any-unimported]
     return ExampleEnd(builder)

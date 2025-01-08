@@ -77,9 +77,10 @@ class ShardWriterNP(ShardWriterBase):
         match self.dataset_structure.compression:
             case "ZIP":
                 np.savez_compressed(str(self._shard_file),
-                                    **self._buffer)  # type: ignore
+                                    **self._buffer)  # type: ignore[arg-type]
             case "":
-                np.savez(str(self._shard_file), **self._buffer)  # type: ignore
+                np.savez(str(self._shard_file),
+                         **self._buffer)  # type: ignore[arg-type]
             case _:
                 # Default should never happen since ShardWriterBase checks that
                 # the requested compression type is supported.
