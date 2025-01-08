@@ -42,7 +42,7 @@ from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
 
-from sedpack import _sedpack_rs  # type: ignore[attr-defined]
+from sedpack._sedpack_rs import RustIter
 
 
 class DatasetIteration(DatasetBase):
@@ -169,7 +169,8 @@ class DatasetIteration(DatasetBase):
         tf_dataset = tf_dataset.interleave(
             lambda x: tf.data.TFRecordDataset(
                 x,
-                compression_type=self.dataset_structure.compression,  # type: ignore[arg-type]
+                compression_type=self.dataset_structure.
+                compression,  # type: ignore[arg-type]
             ),
             cycle_length=cycle_length,
             block_length=1,
@@ -419,7 +420,7 @@ class DatasetIteration(DatasetBase):
         else:
             example_iterator_processed = example_iterator
 
-        async for example in example_iterator:
+        async for example in example_iterator_processed:
             yield example
 
     def as_numpy_common(
@@ -744,7 +745,7 @@ class DatasetIteration(DatasetBase):
             raise ValueError("This method is implemented only for FlatBuffers.")
 
         # Check if the compression type is supported by Rust.
-        supported_compressions = _sedpack_rs.RustIter.supported_compressions()
+        supported_compressions = RustIter.supported_compressions()
         if self.dataset_structure.compression not in supported_compressions:
             raise ValueError(
                 f"The compression {self.dataset_structure.compression} is not "
@@ -768,18 +769,18 @@ class RustGenerator:
     when the iteration did not finished, which can happen when using
     tf.data.Dataset.from_generator).
 
-    `_sedpack_rs.RustIter` is a Rust data structure which holds data unknown to
-    Python reference counting (will be dropped at _sedpack_rs.RustIter.__exit__
-    call (it could also implement droppable).
+    `RustIter` is a Rust data structure which holds data unknown to Python
+    reference counting (will be dropped at RustIter.__exit__ call (it could also
+    implement droppable).
 
     `tf.data.Dataset.from_generator` expects a callable which returns an
     iterable. The problem is that it does call it even without exhausting the
     previous iterable. We need to prevent leaking data by creating multiple
-    instances of `_sedpack_rs.RustIter`.
+    instances of `RustIter`.
 
     The current implementation manages manually the context manager of
-    `_sedpack_rs.RustIter` by calling __enter__ and __exit__. The current Rust
-    implementation of `_sedpack_rs.RustIter` is reentrant.
+    `RustIter` by calling __enter__ and __exit__. The current Rust
+    implementation of `RustIter` is reentrant.
 
     Possible solutions / alternatives:
 
@@ -803,7 +804,7 @@ class RustGenerator:
 
         ```
         def __call__(self):
-          with _sedpack_rs.RustIter() as rust_iter:
+          with RustIter() as rust_iter:
             yield from rust_iter
         ```
         This should eventually clean all instances.
@@ -845,7 +846,8 @@ class RustGenerator:
 
           shuffle (int): Size of the shuffle buffer.
         """
-        self._rust_iter: _sedpack_rs.RustIter | None = None  # type: ignore[no-any-unimported]
+        self._rust_iter: RustIter | None  # type: ignore[no-any-unimported]
+        self._rust_iter = None
 
         self._dataset: DatasetIteration = dataset
         self._split: SplitT = split
@@ -904,7 +906,7 @@ class RustGenerator:
                     shuffle=self._shuffle,
                 ))
 
-            self._rust_iter = _sedpack_rs.RustIter(
+            self._rust_iter = RustIter(
                 files=shard_paths,
                 repeat=False,
                 threads=self._file_parallelism,

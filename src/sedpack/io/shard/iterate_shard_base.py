@@ -52,6 +52,7 @@ class IterateShardBase(ABC, Generic[T]):
     def iterate_shard_async(self, file_path: Path) -> AsyncIterator[ExampleT]:
         """Asynchronously iterate a shard.
         """
+        # TODO(issue #85) fix and test async iterator typing
 
     @abstractmethod
     def process_and_list(self, shard_file: Path) -> list[T]:

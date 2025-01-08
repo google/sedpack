@@ -19,7 +19,7 @@ For information about FlatBuffers see https://flatbuffers.dev/
 from pathlib import Path
 import sys
 
-import flatbuffers
+from flatbuffers import Builder
 import numpy as np
 
 from sedpack.io.compress import CompressedFile
@@ -58,7 +58,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         # Offsets.
         self._examples: list[int] = []
 
-        self._builder: flatbuffers.Builder | None = None  # type: ignore[no-any-unimported]
+        self._builder: Builder | None = None  # type: ignore[no-any-unimported]
 
     def _write(self, values: ExampleT) -> None:
         """Write an example on disk. Writing may be buffered.
@@ -68,7 +68,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             values (ExampleT): Attribute values.
         """
         if self._builder is None:
-            self._builder = flatbuffers.Builder(0)
+            self._builder = Builder(0)
 
         # Since we are not saving attribute names we need to make sure to
         # iterate in the correct order.
@@ -102,7 +102,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
 
     @staticmethod
     def save_numpy_vector_as_bytearray(  # type: ignore[no-any-unimported]
-            builder: flatbuffers.Builder, attribute: Attribute,
+            builder: Builder, attribute: Attribute,
             value: AttributeValueT) -> int:
         """Save a given array into a FlatBuffer as bytes. This is to ensure
         compatibility with types which are not supported by FlatBuffers (e.g.,

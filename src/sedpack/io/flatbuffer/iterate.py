@@ -68,8 +68,8 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                 # - Speed, since we first need to check the type for every
                 #   attribute.
                 # Bytearray representation. Little endian, just loaded.
-                maybe_attribute_data: fbapi_Attribute.Attribute | None = example.Attributes(
-                    attribute_id)
+                maybe_attribute_data: fbapi_Attribute.Attribute | None
+                maybe_attribute_data = example.Attributes(attribute_id)
                 if maybe_attribute_data is None:
                     logger = logging.getLogger("sedpack.io.Dataset")
                     logger.error("Unable to get an attribute, corrupted shard?")
@@ -139,8 +139,11 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
             self.dataset_structure.compression).decompress(content)
         yield from self._iterate_content(content=content)
 
-    async def iterate_shard_async(self,
-                                  file_path: Path) -> AsyncIterator[ExampleT]:
+    # TODO(issue #85) fix and test async iterator typing
+    async def iterate_shard_async(  # pylint: disable=invalid-overridden-method
+        self,
+        file_path: Path,
+    ) -> AsyncIterator[ExampleT]:
         """Asynchronously iterate a shard.
         """
         async with aiofiles.open(file_path, "rb") as f:
