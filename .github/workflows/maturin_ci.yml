@@ -3,6 +3,8 @@
 #
 #    maturin generate-ci github
 #
+# Prefer to run matrix of unit-tests in the pytest workflow until the following
+# issue is solved: https://github.com/PyO3/maturin/issues/1971
 name: Maturin CI
 
 on:
