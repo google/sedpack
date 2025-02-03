@@ -60,7 +60,7 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install --require-hashes -r requirements.txt
+          pip install .  # make sure to install dependencies
           pip install sedpack --no-index --find-links dist --force-reinstall
           pip install pytest
           pytest
@@ -77,7 +77,7 @@ jobs:
             pip3 install -U pip pytest
           run: |
             set -e
-            pip install --require-hashes -r requirements.txt
+            pip install .  # make sure to install dependencies
             pip3 install sedpack --no-index --find-links dist --force-reinstall
             pytest
 
@@ -122,7 +122,7 @@ jobs:
             apk add py3-pip py3-virtualenv
             python3 -m virtualenv .venv
             source .venv/bin/activate
-            pip install --require-hashes -r requirements.txt
+            pip install .  # make sure to install dependencies
             pip install sedpack --no-index --no-index --find-links dist --force-reinstall
             pip install pytest
             pytest
@@ -140,7 +140,7 @@ jobs:
             python3 -m virtualenv .venv
             source .venv/bin/activate
             pip install pytest
-            pip install --require-hashes -r requirements.txt
+            pip install .  # make sure to install dependencies
             pip install sedpack --no-index --find-links dist --force-reinstall
             pytest
 
@@ -177,7 +177,7 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/Scripts/activate
-          pip install --require-hashes -r requirements.txt
+          pip install .  # make sure to install dependencies
           pip install sedpack --no-index --find-links dist --force-reinstall
           pip install pytest
           pytest
@@ -212,7 +212,7 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install --require-hashes -r requirements.txt
+          pip install .  # make sure to install dependencies
           pip install sedpack --no-index --find-links dist --force-reinstall
           pip install pytest
           pytest
