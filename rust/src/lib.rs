@@ -49,9 +49,8 @@ mod static_iter {
     /// - Python does not guarantee that __del__ is called right away (or at all). Thus RustIter
     ///   also implements a context manager which is guaranteed to call __exit__ and drop memory
     ///   owned by the corresponding ExampleIterator.
-    static STATIC_ITERATORS: std::sync::LazyLock<
-        std::sync::Mutex<HashMap<i32, ExampleIterator>>,
-    > = std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
+    static STATIC_ITERATORS: std::sync::LazyLock<std::sync::Mutex<HashMap<i32, ExampleIterator>>> =
+        std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
 
     #[pyclass]
     pub struct RustIter {
