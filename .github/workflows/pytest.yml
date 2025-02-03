@@ -56,10 +56,13 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ matrix.os }}-${{ matrix.platform }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          key: ${{ matrix.os }}-${{ matrix.platform }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
-        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+        run: |
+          pip install -r test_requirements.txt
+          pip install --editable .
+          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
@@ -67,12 +70,6 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
-      - name: Installing test requirements and sedpack
-        # Start by "installing" sedpack to be sure all dependencies are listed
-        run: |
-          pip install -r test_requirements.txt
-          pip install --editable .
-          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Running unit tests
         run: |
           python -m pytest
