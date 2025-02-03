@@ -50,13 +50,13 @@ mod static_iter {
     ///   also implements a context manager which is guaranteed to call __exit__ and drop memory
     ///   owned by the corresponding ExampleIterator.
     static STATIC_ITERATORS: std::sync::LazyLock<
-        std::sync::Mutex<HashMap<usize, ExampleIterator>>,
+        std::sync::Mutex<HashMap<i32, ExampleIterator>>,
     > = std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
 
     #[pyclass]
     pub struct RustIter {
         /// Which ExampleIterator are we interacting with (unique id).
-        static_index: usize,
+        static_index: i32,
         /// Read only value. For iteration we use this object as a context manager which allows us
         /// to free resources in STATIC_ITERATORS on the call of __exit__.
         ///
