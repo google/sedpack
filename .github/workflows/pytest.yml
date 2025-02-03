@@ -13,22 +13,18 @@ on:
 
 jobs:
   unittesting:
-    runs-on: [${{ matrix.platform.os }}, ${{ matrix.platform.architecture }}]
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
         platform:
-          - os: ubuntu-latest
-            architecture: x64
-          - os: ubuntu-latest
-            architecture: arm64
-          - os: windows-latest
-            architecture: x64
-          - os: windows-latest
-            architecture: x86
-          - os: macos-13
-            architecture: x64
-          - os: macos-14
-            architecture: arm64
+          - runner: ubuntu-latest
+          - runner: ubuntu-24.04-arm
+          - runner: windows-latest
+          # Intel:
+          - runner: macos-13
+          # arm64
+          - runner: macos-14
+          - runner: macos-latest
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +44,7 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ matrix.platform.os }}-${{ matrix.platform.architecture }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
