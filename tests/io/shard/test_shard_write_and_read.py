@@ -179,7 +179,7 @@ def test_fb_all_dtypes_np(tmp_path):
             np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
         "a_float64":
             np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        # The type np.float128 is supported on all platforms.
+        # The type np.float128 is not supported on all platforms.
         #"a_float128":
         #    np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
@@ -240,7 +240,7 @@ def test_fb_all_dtypes_fb(tmp_path):
             np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
         "a_float64":
             np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        # The type np.float128 is supported on all platforms.
+        # The type np.float128 is not supported on all platforms.
         #"a_float128":
         #    np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
