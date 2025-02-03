@@ -32,7 +32,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "aiofiles",
+    "aiofile",
     "asyncstdlib",
     "flatbuffers",
     "lz4",

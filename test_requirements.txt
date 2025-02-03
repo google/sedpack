@@ -6,6 +6,5 @@ pydantic
 pytest
 pytest-cov
 twine
-types-aiofiles
 types-tensorflow
 types-tqdm

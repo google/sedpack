@@ -19,7 +19,7 @@ import io
 from pathlib import Path
 from typing import AsyncIterator, Iterable
 
-import aiofiles
+import aiofile
 import numpy as np
 
 from sedpack.io.shard import IterateShardBase
@@ -54,7 +54,7 @@ class IterateShardNP(IterateShardBase[T]):
     ) -> AsyncIterator[ExampleT]:
         """Asynchronously iterate a shard saved in the NumPy format npz.
         """
-        async with aiofiles.open(file_path, "rb") as f:
+        async with aiofile.async_open(file_path, "rb") as f:
             content_bytes: bytes = await f.read()
             content_io = io.BytesIO(content_bytes)
 

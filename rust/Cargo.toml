@@ -1,11 +1,6 @@
 [package]
 name = "sedpack_rs"
-
-# The development version. Note that the pypi.org version is older than this
-# one in order for pip to install local build files in the Maturin workflow
-# (.github/workflows/maturin_ci.yml).
-version = "0.1.3"
-
+version = "0.1.2"
 edition = "2021"
 description = "Rust bindings for sedpack a general ML dataset package"
 authors = [
