@@ -29,6 +29,14 @@ jobs:
             target: s390x
           - runner: ubuntu-latest
             target: ppc64le
+          - runner: windows-latest
+            target: x64
+          - runner: windows-latest
+            target: x86
+          - runner: macos-13
+            target: x86_64
+          - runner: macos-14
+            target: aarch64
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v4
