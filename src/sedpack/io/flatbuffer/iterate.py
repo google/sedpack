@@ -20,7 +20,7 @@ import logging
 from pathlib import Path
 from typing import AsyncIterator, Iterable
 
-import aiofile
+import aiofiles
 import numpy as np
 import numpy.typing as npt
 
@@ -146,7 +146,7 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
     ) -> AsyncIterator[ExampleT]:
         """Asynchronously iterate a shard.
         """
-        async with aiofile.async_open(file_path, "rb") as f:
+        async with aiofiles.open(file_path, "rb") as f:
             content = await f.read()
             content = CompressedFile(
                 self.dataset_structure.compression).decompress(content)

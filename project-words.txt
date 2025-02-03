@@ -8,7 +8,6 @@ Picod
 SCAAML
 Yann
 Yokeable
-aiofile
 asyncstdlib
 bldr
 byteswap
