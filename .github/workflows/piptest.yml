@@ -16,26 +16,12 @@ jobs:
     strategy:
       matrix:
         platform:
-          - runner: ubuntu-latest
-            target: x86_64
-          - runner: ubuntu-latest
-            target: x86
-          - runner: ubuntu-latest
-            target: aarch64
-          - runner: ubuntu-latest
-            target: armv7
-          - runner: ubuntu-latest
-            target: s390x
-          - runner: ubuntu-latest
-            target: ppc64le
-          - runner: windows-latest
-            target: x64
-          - runner: windows-latest
-            target: x86
-          - runner: macos-13
-            target: x86_64
-          - runner: macos-14
-            target: aarch64
+          - runner: ubuntu-latest  # x64
+          - runner: ubuntu-24.04-arm  # arm64
+          - runner: windows-latest  # x64
+          - runner: macos-13  # Intel
+          - runner: macos-14  # arm64
+          - runner: macos-latest  # arm64
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10

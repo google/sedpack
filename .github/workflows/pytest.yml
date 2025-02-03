@@ -17,14 +17,12 @@ jobs:
     strategy:
       matrix:
         platform:
-          - runner: ubuntu-latest
-          - runner: ubuntu-24.04-arm
-          - runner: windows-latest
-          # Intel:
-          - runner: macos-13
-          # arm64
-          - runner: macos-14
-          - runner: macos-latest
+          - runner: ubuntu-latest  # x64
+          - runner: ubuntu-24.04-arm  # arm64
+          - runner: windows-latest  # x64
+          - runner: macos-13  # Intel
+          - runner: macos-14  # arm64
+          - runner: macos-latest  # arm64
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v4
