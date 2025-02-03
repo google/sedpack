@@ -70,6 +70,8 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
+      - name: Double check local install is up to date
+        run: pip install --editable .
       - name: Running unit tests
         run: |
           python -m pytest
