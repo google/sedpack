@@ -45,6 +45,12 @@ jobs:
           key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
+        # requirements.txt is not reliable since across different platforms and
+        # their versions the pip package versions might vary. We regenerate it
+        # again from pyproject.toml every time when pyproject.toml or
+        # requirements.txt changes. The pinned versions in requirements.txt are
+        # tested by coverage since that is running on ubuntu which is also used
+        # to produce the main requirements.txt file.
         run: |
           pip install pip-tools
           pip-compile --generate-hashes pyproject.toml > requirements.txt
@@ -84,12 +90,13 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
-        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+        run: |
+          python -m pip install --require-hashes --no-deps -r requirements.txt
+          pip install -r test_requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
@@ -100,7 +107,6 @@ jobs:
       - name: Installing test requirements and sedpack
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
-          pip install -r test_requirements.txt
           pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Install workflow dependencies
