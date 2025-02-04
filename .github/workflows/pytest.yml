@@ -20,6 +20,7 @@ jobs:
           - runner: ubuntu-latest  # x64
           - runner: ubuntu-24.04-arm  # arm64
           - runner: windows-latest  # x64
+          - runner: macos-13  # Intel
           - runner: macos-14  # arm64
           - runner: macos-latest  # arm64
     if: github.event_name != 'schedule'
@@ -41,12 +42,13 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
-          pip install -r test_requirements.txt
+          pip-compile --generate-hashes pyproject.toml
           pip install -r requirements.txt
+          pip install -r test_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
