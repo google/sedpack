@@ -15,9 +15,9 @@ jobs:
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       matrix:
+        # ubuntu-24.04-arm is not stable enough
         platform:
           - runner: ubuntu-latest  # x64
-          - runner: ubuntu-24.04-arm  # arm64
           - runner: windows-latest  # x64
           - runner: macos-13  # Intel
           - runner: macos-14  # arm64
