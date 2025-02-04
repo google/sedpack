@@ -47,9 +47,7 @@ jobs:
       - name: Populate pip cache
         run: |
           pip install -r test_requirements.txt
-          pip install --editable .
-          pip uninstall sedpack
-          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
+          pip install -r requirements.txt
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
