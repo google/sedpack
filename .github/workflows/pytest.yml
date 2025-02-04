@@ -46,6 +46,7 @@ jobs:
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
+          pip install pip-tools
           pip-compile --generate-hashes pyproject.toml
           pip install -r requirements.txt
           pip install -r test_requirements.txt
