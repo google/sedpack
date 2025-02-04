@@ -42,12 +42,13 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
           pip install -r test_requirements.txt
           pip install -r requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
