@@ -3,7 +3,7 @@ title: Sedpack Installation
 description: Sedpack Installation
 ---
 
-Installation of the Sedpakc Python package.
+Installation of the Sedpack Python package.
 
 ## Python Package Index
 
