@@ -74,6 +74,14 @@ def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
 
 
 def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
+    """Convert the tinyAES dataset from the original format to sedpack.
+
+    Args:
+
+      dataset_path (Path): The newly created sedpack dataset.
+
+      original_files (Path): Path to the original NumPy files.
+    """
     # Make sure that the original files are present.
     test_dir: Path = original_files / "test"
     train_dir: Path = original_files / "train"
@@ -183,6 +191,8 @@ def process_record(record):
 
 
 def train(dataset_path: Path) -> None:
+    """Train a GPAM model on the given dataset.
+    """
     batch_size: int = 64  # hyperparameter
     steps_per_epoch: int = 800  # hyperparameter
     epochs: int = 750  # hyperparameter
