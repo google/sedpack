@@ -15,15 +15,20 @@
 
 https://github.com/google/scaaml/tree/main/scaaml_intro
 
+The SCAAML package is a requirement: `python3 -m pip install "scaaml>=3.0.3"`.
+
 Example use:
     python tiny_aes.py --dataset_path "~/datasets/tiny_aes_sedpack/" --original_files "~/datasets/tinyaes"
 """
 import argparse
 from pathlib import Path
 
+import keras
 import numpy as np
 from tqdm import tqdm
 
+from scaaml.metrics.custom import MeanRank
+from scaaml.models import get_gpam_model
 from sedpack.io import Dataset, DatasetFiller, Metadata, DatasetStructure, Attribute
 
 
@@ -38,9 +43,17 @@ def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
     sub_bytes_in = np.transpose(shard["sub_bytes_in"])
     plaintexts = np.transpose(shard["pts"])
 
+    # Running extremes
+    running_min: float = 1e10
+    running_max: float = -1e10
+
     for i in range(256):
+        # Update the extremes
+        running_min = np.min(traces[i])
+        running_max = np.max(traces[i])
+
         values = {
-            "trace": traces[i],
+            "trace1": traces[i],
             "key": keys[i],
             "ct": cts[i],
             "sub_bytes_out": sub_bytes_out[i],
@@ -56,6 +69,8 @@ def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
                 "key": shard["keys"][:, i].tolist(),
             },
         )
+
+    return running_min, running_max
 
 
 def create_dataset(dataset_path: Path, original_files: Path) -> None:
@@ -101,7 +116,7 @@ def create_dataset(dataset_path: Path, original_files: Path) -> None:
     dataset_structure = DatasetStructure(
         saved_data_description=[
             Attribute(
-                name="trace",
+                name="trace1",
                 shape=(80_000,),
                 dtype="float16",
             ),
@@ -122,26 +137,107 @@ def create_dataset(dataset_path: Path, original_files: Path) -> None:
         dataset_structure=dataset_structure,
     )
 
+    # Running extremes
+    running_min: float = 1e10
+    running_max: float = -1e10
+
     # Fill in the examples.
     with dataset.filler() as dataset_filler:
         for shard_file in tqdm(test_files, desc="Fill the test split"):
-            add_shard(
+            shard_min, shard_max = add_shard(
                 shard_file=shard_file,
                 dataset_filler=dataset_filler,
                 split="test",
             )
+            running_min = min(running_min, shard_min)
+            running_max = max(running_max, shard_max)
 
         for shard_file in tqdm(train_files, desc="Fill the train split"):
-            add_shard(
+            shard_min, shard_max = add_shard(
                 shard_file=shard_file,
                 dataset_filler=dataset_filler,
                 split="train",
             )
+            running_min = min(running_min, shard_min)
+            running_max = max(running_max, shard_max)
+
+    # Update extremes of the trace (first attribute).
+    dataset.dataset_structure.saved_data_description[0].custom_metadata.update(
+        { "min": float(running_min), "max": float(running_max) }
+    )
+    dataset.write_config()
+
+
+def process_record(record):
+    # The first neural network was using just the first half of the trace:
+    inputs = record["trace1"]
+    outputs = {
+        "sub_bytes_in_0": keras.ops.one_hot(record["sub_bytes_in"][0], num_classes=256,),
+    }
+    return (inputs, outputs)
 
 
 def train(dataset_path: Path) -> None:
-    # TODO
-    pass
+    batch_size: int = 64  # hyperparameter
+    steps_per_epoch: int = 800  # hyperparameter
+    epochs: int = 750  # hyperparameter
+    target_lr: float = 0.0005  # hyperparameter
+    merge_filter_1: int = 0  # hyperparameter
+    merge_filter_2: int = 0  # hyperparameter
+    trace_len: int = 80_000  # hyperparameter
+    patch_size: int = 200  # hyperparameter
+    val_steps: int = 16
+
+    # Load the dataset
+    dataset = Dataset(dataset_path)
+
+    # Create the definition of inputs and outputs.
+    trace_min = dataset.dataset_structure.saved_data_description[0].custom_metadata["min"]
+    trace_max = dataset.dataset_structure.saved_data_description[0].custom_metadata["max"]
+    inputs={"trace1": {"min": trace_min, "delta": trace_max - trace_min}}
+    outputs={"sub_bytes_in_0": {"max_val": 256}}
+
+    model = get_gpam_model(
+        inputs=inputs,
+        outputs=outputs,
+        output_relations=[],
+        trace_len=trace_len,
+        merge_filter_1=merge_filter_1,
+        merge_filter_2=merge_filter_2,
+        patch_size=patch_size,
+    )
+
+    # Compile model
+    model.compile(
+        optimizer=keras.optimizers.Adafactor(target_lr),
+        loss=["categorical_crossentropy" for _ in range(len(outputs))],
+        metrics={name: ["acc", MeanRank()] for name in outputs},
+    )
+    model.summary()
+
+    train_ds = dataset.as_tfdataset(
+        split="train",
+        process_record=process_record,
+        batch_size=batch_size,
+        #file_parallelism=4,
+        #parallelism=4,
+    )
+    validation_ds = dataset.as_tfdataset(
+        split="test",
+        process_record=process_record,
+        batch_size=batch_size,
+        #file_parallelism=4,
+        #parallelism=4,
+    )
+
+    # Train the model.
+    history = model.fit(
+        train_ds,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        validation_data=validation_ds,
+        validation_steps=val_steps,
+    )
 
 
 def main():
@@ -163,7 +259,7 @@ def main():
             original_files=args.original_files,
         )
 
-    train()
+    train(dataset_path=args.dataset_path)
 
 
 if __name__ == "__main__":

@@ -155,23 +155,32 @@ class DatasetWriting(DatasetBase):
         """
         return DatasetFiller(self)
 
-    def write_config(self, updated_infos: list[ShardListInfo]) -> FileInfo:
+    def write_config(
+        self,
+        updated_infos: list[ShardListInfo] | None = None,
+    ) -> FileInfo:
         """Save configuration as json.
 
         Args:
 
-          updated_infos (list[ShardListInfo]): List of updates or new shard
-          list infos.
+          updated_infos (list[ShardListInfo] | None): List of updates or new
+          shard list infos.
 
         Returns: a tuple of hash checksums corresponding to the root dataset
         info file.
         """
+        updated_infos_list: list[ShardListInfo]
+        if updated_infos:
+            updated_infos_list = updated_infos
+        else:
+            updated_infos_list = []
+
         # Update shards lists in splits.
         splits_to_update: defaultdict[SplitT,
                                       list[ShardListInfo]] = defaultdict(list)
 
         # Sort the infos by their split.
-        for info in updated_infos:
+        for info in updated_infos_list:
             # The path is at least `split / shards_list.json` or longer.
             split = str(info.shard_list_info_file.file_path.parts[0])
             # Type narrowing with get_args does not seem to work with mypy.
