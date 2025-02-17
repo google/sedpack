@@ -2,6 +2,8 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/google/sedpack/badge.svg?branch=main)](https://coveralls.io/github/google/sedpack?branch=main)
 
+[Documentation](https://google.github.io/sedpack/)
+
 Mainly refactored from the [SCAAML](https://github.com/google/scaaml) project.
 
 ## Available components

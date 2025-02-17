@@ -186,7 +186,7 @@ class DatasetWriting(DatasetBase):
             # Type narrowing with get_args does not seem to work with mypy.
             if split not in get_args(SplitT):
                 raise ValueError(f"Not a known split value: {split}")
-            splits_to_update[split].append(info)  # type: ignore
+            splits_to_update[split].append(info)  # type: ignore[index]
 
         # Merge recursively.
         for split, updates in splits_to_update.items():

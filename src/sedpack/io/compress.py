@@ -18,7 +18,7 @@ import bz2
 import gzip
 import lzma
 
-import lz4.frame  # type: ignore
+import lz4.frame
 import zstandard as zstd
 
 from sedpack.io.types import CompressionT
@@ -76,7 +76,7 @@ class CompressedFile:
             case "LZMA":
                 return lzma.compress(data)
             case "LZ4":
-                return lz4.frame.compress(data)
+                return lz4.frame.compress(data)  # type: ignore[no-any-return]
             case "ZSTD":
                 return zstd.compress(data)
             case _:
@@ -102,7 +102,7 @@ class CompressedFile:
             case "LZMA":
                 return lzma.decompress(data)
             case "LZ4":
-                return lz4.frame.decompress(data)
+                return lz4.frame.decompress(data)  # type: ignore[no-any-return]
             case "ZSTD":
                 return zstd.decompress(data)
             case _:

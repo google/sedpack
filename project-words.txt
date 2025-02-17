@@ -26,8 +26,10 @@ howpublished
 inproceedings
 itemsize
 kwarguments
+mathjax
 ndarray
 newbyteorder
+patchelf
 perfcounters
 pickleable
 pyarray
@@ -49,4 +51,4 @@ tfrecord
 tinyaes
 tfrecords
 tobytes
-uoffset
+zstd

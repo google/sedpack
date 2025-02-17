@@ -33,6 +33,7 @@ pub enum CompressionType {
     LZ4,
     Gzip,
     Zlib,
+    Zstd,
 }
 
 impl CompressionType {
@@ -48,6 +49,7 @@ impl std::fmt::Display for CompressionType {
             CompressionType::LZ4 => write!(f, "LZ4"),
             CompressionType::Gzip => write!(f, "GZIP"),
             CompressionType::Zlib => write!(f, "ZLIB"),
+            CompressionType::Zstd => write!(f, "ZSTD"),
         }
     }
 }
@@ -61,6 +63,7 @@ impl std::str::FromStr for CompressionType {
             "LZ4" => Ok(CompressionType::LZ4),
             "GZIP" => Ok(CompressionType::Gzip),
             "ZLIB" => Ok(CompressionType::Zlib),
+            "ZSTD" => Ok(CompressionType::Zstd),
             _ => Err(format!("{input} unimplemented")),
         }
     }
@@ -128,6 +131,7 @@ fn get_file_bytes(shard_info: &ShardInfo) -> Vec<u8> {
         CompressionType::Gzip | CompressionType::Zlib => {
             read_to_end(flate2::read::GzDecoder::new(open_file))
         }
+        CompressionType::Zstd => zstd::stream::decode_all(open_file).unwrap(),
     }
 }
 

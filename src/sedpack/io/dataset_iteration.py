@@ -42,7 +42,7 @@ from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
 
-from sedpack import _sedpack_rs  # type: ignore[attr-defined]
+from sedpack._sedpack_rs import RustIter
 
 
 class DatasetIteration(DatasetBase):
@@ -170,7 +170,7 @@ class DatasetIteration(DatasetBase):
             lambda x: tf.data.TFRecordDataset(
                 x,
                 compression_type=self.dataset_structure.
-                compression,  # type: ignore
+                compression,  # type: ignore[arg-type]
             ),
             cycle_length=cycle_length,
             block_length=1,
@@ -393,26 +393,34 @@ class DatasetIteration(DatasetBase):
                                  f"implemented.")
 
         # Automatically shuffle.
+        # TODO(issue #85) Async iterator typing.
+        example_iterator: AsyncIterator[ExampleT]
         if shuffle:
             example_iterator = round_robin_async(
                 asyncstdlib.map(
-                    shard_iterator.iterate_shard_async,  # type: ignore
+                    shard_iterator.
+                    iterate_shard_async,  # type: ignore[arg-type]
                     shard_paths_iterator,
                 ),
                 buffer_size=file_parallelism,
-            )
+            )  # type: ignore[assignment]
         else:
             example_iterator = asyncstdlib.chain.from_iterable(
                 asyncstdlib.map(
-                    shard_iterator.iterate_shard_async,  # type: ignore
+                    shard_iterator.
+                    iterate_shard_async,  # type: ignore[arg-type]
                     shard_paths_iterator,
                 ))
 
         # Process each record if requested.
+        example_iterator_processed: AsyncIterator[ExampleT] | AsyncIterator[T]
         if process_record:
-            example_iterator = asyncstdlib.map(process_record, example_iterator)
+            example_iterator_processed = asyncstdlib.map(
+                process_record, example_iterator)
+        else:
+            example_iterator_processed = example_iterator
 
-        async for example in example_iterator:
+        async for example in example_iterator_processed:
             yield example
 
     def as_numpy_common(
@@ -465,13 +473,14 @@ class DatasetIteration(DatasetBase):
         if repeat:
             shard_paths_iterator = itertools.cycle(shard_paths)
         else:
-            shard_paths_iterator = shard_paths  # type: ignore
+            shard_paths_iterator = shard_paths  # type: ignore[assignment]
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
             shard_paths_iterator = shuffle_buffer(
-                shard_paths_iterator,  # type: ignore
-                buffer_size=len(shard_paths))
+                shard_paths_iterator,  # type: ignore[assignment]
+                buffer_size=len(shard_paths),
+            )
         return shard_paths_iterator
 
     def as_numpy_iterator_concurrent(
@@ -567,7 +576,8 @@ class DatasetIteration(DatasetBase):
                 with LazyPool(file_parallelism) as pool:
                     yield from round_robin(
                         pool.imap_unordered(
-                            shard_iterator.process_and_list,  # type: ignore
+                            shard_iterator.
+                            process_and_list,  # type: ignore[arg-type]
                             shard_paths_iterator,
                         ),
                         # round_robin keeps the whole shard files in memory.
@@ -669,19 +679,23 @@ class DatasetIteration(DatasetBase):
 
         example_iterator = itertools.chain.from_iterable(
             map(
-                shard_iterator.iterate_shard,  # type: ignore
-                shard_paths_iterator))  # type: ignore
+                shard_iterator.iterate_shard,  # type: ignore[arg-type]
+                shard_paths_iterator,
+            ))
 
         # Process each record if requested
         if process_record:
-            example_iterator = map(process_record,
-                                   example_iterator)  # type: ignore
+            example_iterator = map(
+                process_record,
+                example_iterator,  # type: ignore[assignment]
+            )
 
         # Randomize only if > 0 -- no shuffle in test/validation
         if shuffle:
             example_iterator = shuffle_buffer(
-                example_iterator,  # type: ignore
-                buffer_size=shuffle)
+                example_iterator,  # type: ignore[assignment]
+                buffer_size=shuffle,
+            )
 
         yield from example_iterator
 
@@ -731,7 +745,7 @@ class DatasetIteration(DatasetBase):
             raise ValueError("This method is implemented only for FlatBuffers.")
 
         # Check if the compression type is supported by Rust.
-        supported_compressions = _sedpack_rs.RustIter.supported_compressions()
+        supported_compressions = RustIter.supported_compressions()
         if self.dataset_structure.compression not in supported_compressions:
             raise ValueError(
                 f"The compression {self.dataset_structure.compression} is not "
@@ -755,18 +769,18 @@ class RustGenerator:
     when the iteration did not finished, which can happen when using
     tf.data.Dataset.from_generator).
 
-    `_sedpack_rs.RustIter` is a Rust data structure which holds data unknown to
-    Python reference counting (will be dropped at _sedpack_rs.RustIter.__exit__
-    call (it could also implement droppable).
+    `RustIter` is a Rust data structure which holds data unknown to Python
+    reference counting (will be dropped at RustIter.__exit__ call (it could also
+    implement droppable).
 
     `tf.data.Dataset.from_generator` expects a callable which returns an
     iterable. The problem is that it does call it even without exhausting the
     previous iterable. We need to prevent leaking data by creating multiple
-    instances of `_sedpack_rs.RustIter`.
+    instances of `RustIter`.
 
     The current implementation manages manually the context manager of
-    `_sedpack_rs.RustIter` by calling __enter__ and __exit__. The current Rust
-    implementation of `_sedpack_rs.RustIter` is reentrant.
+    `RustIter` by calling __enter__ and __exit__. The current Rust
+    implementation of `RustIter` is reentrant.
 
     Possible solutions / alternatives:
 
@@ -790,7 +804,7 @@ class RustGenerator:
 
         ```
         def __call__(self):
-          with _sedpack_rs.RustIter() as rust_iter:
+          with RustIter() as rust_iter:
             yield from rust_iter
         ```
         This should eventually clean all instances.
@@ -832,7 +846,8 @@ class RustGenerator:
 
           shuffle (int): Size of the shuffle buffer.
         """
-        self._rust_iter: _sedpack_rs.RustIter | None = None
+        self._rust_iter: RustIter | None  # type: ignore[no-any-unimported]
+        self._rust_iter = None
 
         self._dataset: DatasetIteration = dataset
         self._split: SplitT = split
@@ -891,7 +906,7 @@ class RustGenerator:
                     shuffle=self._shuffle,
                 ))
 
-            self._rust_iter = _sedpack_rs.RustIter(
+            self._rust_iter = RustIter(
                 files=shard_paths,
                 repeat=False,
                 threads=self._file_parallelism,

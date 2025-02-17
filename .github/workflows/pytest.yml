@@ -13,7 +13,16 @@ on:
 
 jobs:
   unittesting:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        # ubuntu-20.04-arm was not stable enough when testing
+        platform:
+          - runner: ubuntu-latest  # x64
+          - runner: windows-latest  # x64
+          - runner: macos-13  # Intel
+          - runner: macos-14  # arm64
+          - runner: macos-latest  # arm64
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v4
@@ -33,12 +42,21 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
-        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+        # requirements.txt is not reliable since across different platforms and
+        # their versions the pip package versions might vary. We regenerate it
+        # again from pyproject.toml every time when pyproject.toml or
+        # requirements.txt changes. The pinned versions in requirements.txt are
+        # tested by coverage since that is running on ubuntu which is also used
+        # to produce the main requirements.txt file.
+        run: |
+          pip install pip-tools
+          pip-compile --generate-hashes pyproject.toml > requirements.txt
+          pip install -r requirements.txt
+          pip install -r test_requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
@@ -46,12 +64,8 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
-      - name: Installing test requirements and sedpack
-        # Start by "installing" sedpack to be sure all dependencies are listed
-        run: |
-          pip install -r test_requirements.txt
-          pip install --editable .
-          echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
+      - name: Install sedpack locally
+        run: pip install --editable .
       - name: Running unit tests
         run: |
           python -m pytest
@@ -76,12 +90,13 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
-        run: python -m pip install --require-hashes --no-deps -r requirements.txt
+        run: |
+          python -m pip install --require-hashes --no-deps -r requirements.txt
+          pip install -r test_requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
         uses: actions/cache/save@v4
@@ -92,7 +107,6 @@ jobs:
       - name: Installing test requirements and sedpack
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
-          pip install -r test_requirements.txt
           pip install --editable .
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Install workflow dependencies

@@ -70,7 +70,7 @@ class ShardWriterTFRec(ShardWriterBase):
         if not self._tf_shard_writer:
             self._tf_shard_writer = tf.io.TFRecordWriter(
                 str(self._shard_file),
-                self.dataset_structure.compression,  # type: ignore
+                self.dataset_structure.compression,  # type: ignore[arg-type]
             )
 
         example = to_tfrecord(
