@@ -264,7 +264,7 @@ dataset = Dataset(args.dataset_directory)  # Load the dataset
 `Batching` examples together is a common practice during [stochastic gradient
 descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent). Instead of
 computing the gradient for the whole dataset or just one example we compute it
-for several randomly chosen examples at a time (for a `batch` or for for a
+for several randomly chosen examples at a time (for a `batch` or for a
 `mini-batch`). This allows better utilization of parallelization and thus of
 the hardware (GPU / TPU) as well as it allows us to do more robust gradients.
 We thus set the parameter `batch_size` to whatever we wish. The batch dimension
