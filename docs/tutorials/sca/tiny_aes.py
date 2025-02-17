@@ -86,7 +86,6 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
     test_dir: Path = original_files / "test"
     train_dir: Path = original_files / "train"
     if not test_dir.is_dir() or not train_dir.is_dir():
-        print
         raise FileNotFoundError("Expected the original NumPy files to be in "
                                 f"{test_dir} and {train_dir}")
     test_files: list[Path] = list(test_dir.glob("*.npz"))
