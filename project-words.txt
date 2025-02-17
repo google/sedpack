@@ -1,6 +1,8 @@
+Adafactor
 Bursztein
 Corinna
 Elems
+GPAM
 Hastie
 Karel
 Král
@@ -12,6 +14,8 @@ Yann
 Yokeable
 asyncstdlib
 bldr
+booktitle
+burszteindc
 byteswap
 cdylib
 compresslevel
@@ -24,6 +28,8 @@ fbapi
 flatbuffer
 flate
 frombuffer
+howpublished
+inproceedings
 itemsize
 kwarguments
 mathjax
@@ -49,6 +55,6 @@ tfdataset
 tfrec
 tfrecord
 tfrecords
+tinyaes
 tobytes
-uoffset
 zstd
