@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Download the MNIST dataset and save it in dataset-lib format.
+"""Download the MNIST dataset and save it in dataset-lib format. For a tutorial
+with explanations see: https://google.github.io/sedpack/tutorials/mnist
 
 Example use:
     python mnist_save.py -d "~/Datasets/mnist_dataset/"
