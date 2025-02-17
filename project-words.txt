@@ -1,11 +1,13 @@
 Bursztein
 Corinna
 Elems
+Hastie
 Karel
 Král
 MNIST
 Picod
 SCAAML
+Tibshirani
 Yann
 Yokeable
 asyncstdlib
@@ -15,8 +17,10 @@ burszteindc
 byteswap
 cdylib
 compresslevel
+convnet
 crossentropy
 diutils
+dtype
 dunder
 fbapi
 flatbuffer

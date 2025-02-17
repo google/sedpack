@@ -32,6 +32,12 @@ export default defineConfig({
             { label: 'Installation', slug: 'start_here/install' },
           ],
         },
+        {
+          label: 'Tutorials',
+          items: [
+            { label: 'MNIST', slug: 'tutorials/mnist' },
+          ],
+        },
       ],
     }),
   ],

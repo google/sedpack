@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Read MNIST data and feed it to a neural network.
+"""Read MNIST data and feed it to a neural network. For a tutorial with
+explanations see: https://google.github.io/sedpack/tutorials/mnist
 
 Example use:
     python mnist_save.py -d "~/Datasets/my_new_dataset/"
