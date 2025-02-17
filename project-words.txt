@@ -1,6 +1,8 @@
+Adafactor
 Bursztein
 Corinna
 Elems
+GPAM
 Hastie
 Karel
 Král
@@ -52,7 +54,7 @@ tfdata
 tfdataset
 tfrec
 tfrecord
-tinyaes
 tfrecords
+tinyaes
 tobytes
 zstd

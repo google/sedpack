@@ -162,9 +162,10 @@ def create_dataset(dataset_path: Path, original_files: Path) -> None:
             running_max = max(running_max, shard_max)
 
     # Update extremes of the trace (first attribute).
-    dataset.dataset_structure.saved_data_description[0].custom_metadata.update(
-        { "min": float(running_min), "max": float(running_max) }
-    )
+    dataset.dataset_structure.saved_data_description[0].custom_metadata.update({
+        "min": float(running_min),
+        "max": float(running_max)
+    })
     dataset.write_config()
 
 
@@ -172,7 +173,11 @@ def process_record(record):
     # The first neural network was using just the first half of the trace:
     inputs = record["trace1"]
     outputs = {
-        "sub_bytes_in_0": keras.ops.one_hot(record["sub_bytes_in"][0], num_classes=256,),
+        "sub_bytes_in_0":
+            keras.ops.one_hot(
+                record["sub_bytes_in"][0],
+                num_classes=256,
+            ),
     }
     return (inputs, outputs)
 
@@ -192,10 +197,12 @@ def train(dataset_path: Path) -> None:
     dataset = Dataset(dataset_path)
 
     # Create the definition of inputs and outputs.
-    trace_min = dataset.dataset_structure.saved_data_description[0].custom_metadata["min"]
-    trace_max = dataset.dataset_structure.saved_data_description[0].custom_metadata["max"]
-    inputs={"trace1": {"min": trace_min, "delta": trace_max - trace_min}}
-    outputs={"sub_bytes_in_0": {"max_val": 256}}
+    trace_min = dataset.dataset_structure.saved_data_description[
+        0].custom_metadata["min"]
+    trace_max = dataset.dataset_structure.saved_data_description[
+        0].custom_metadata["max"]
+    inputs = {"trace1": {"min": trace_min, "delta": trace_max - trace_min}}
+    outputs = {"sub_bytes_in_0": {"max_val": 256}}
 
     model = get_gpam_model(
         inputs=inputs,
