@@ -38,7 +38,7 @@ def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
     shard = np.load(shard_file)
     traces = np.squeeze(shard["traces"], axis=2)
     keys = np.transpose(shard["keys"])
-    cts = np.transpose(shard["cts"])
+    ciphertexts = np.transpose(shard["cts"])
     sub_bytes_out = np.transpose(shard["sub_bytes_out"])
     sub_bytes_in = np.transpose(shard["sub_bytes_in"])
     plaintexts = np.transpose(shard["pts"])
@@ -55,7 +55,7 @@ def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
         values = {
             "trace1": traces[i],
             "key": keys[i],
-            "ct": cts[i],
+            "ciphertext": ciphertexts[i],
             "sub_bytes_out": sub_bytes_out[i],
             "sub_bytes_in": sub_bytes_in[i],
             "plaintext": plaintexts[i],
@@ -73,7 +73,7 @@ def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
     return running_min, running_max
 
 
-def create_dataset(dataset_path: Path, original_files: Path) -> None:
+def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
     # Make sure that the original files are present.
     test_dir: Path = original_files / "test"
     train_dir: Path = original_files / "train"
@@ -124,7 +124,7 @@ def create_dataset(dataset_path: Path, original_files: Path) -> None:
             Attribute(name="plaintext", shape=(16,), dtype="uint8"),
             Attribute(name="sub_bytes_out", shape=(16,), dtype="uint8"),
             Attribute(name="sub_bytes_in", shape=(16,), dtype="uint8"),
-            Attribute(name="ct", shape=(16,), dtype="uint8"),
+            Attribute(name="ciphertext", shape=(16,), dtype="uint8"),
         ],
         shard_file_type="fb",
         compression="LZ4",
@@ -261,7 +261,7 @@ def main():
     args = parser.parse_args()
 
     if args.original_files:
-        create_dataset(
+        convert_to_sedpack(
             dataset_path=args.dataset_path,
             original_files=args.original_files,
         )
