@@ -55,10 +55,12 @@ Update: `pip-compile pyproject.toml --generate-hashes --upgrade` and commit requ
 
 ### Tutorial
 
-Tutorials available in the docs/tutorials/ directory.  For a "hello world" see
-[docs/tutorials/quick_start/mnist_save.py](https://github.com/google/sedpack/blob/main/docs/tutorials/quick_start/mnist_save.py)
-and
-[docs/tutorials/quick_start/mnist_save.py](https://github.com/google/sedpack/blob/main/docs/tutorials/quick_start/mnist_read.py).
+A tutorial and documentation is available at
+[https://google.github.io/sedpack/](https://google.github.io/sedpack/).
+
+Code for the tutorials is avaialble in the `docs/tutorials` directory. For a
+"hello world" see
+[https://google.github.io/sedpack/tutorials/mnist/](https://google.github.io/sedpack/tutorials/mnist/).
 
 ## Disclaimer
 

@@ -35,4 +35,4 @@ jobs:
       - name: Run tutorial using sedpack pip package
         run: |
           python docs/tutorials/quick_start/mnist_save.py -d mnist_dataset
-          python docs/tutorials/quick_start/mnist_read.py -d mnist_dataset
+          python docs/tutorials/quick_start/mnist_read_keras.py -d mnist_dataset
