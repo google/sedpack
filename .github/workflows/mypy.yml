@@ -50,4 +50,5 @@ jobs:
           pip install -r test_requirements.txt
           mkdir -p .mypy_cache
           mypy --version
-          mypy --no-color-output --install-types --non-interactive .
+          mypy --no-color-output --install-types --non-interactive src
+          mypy --no-color-output --install-types --non-interactive doc
