@@ -34,7 +34,7 @@ from sedpack.io import Dataset
 from sedpack.io.types import ExampleT, TFModelT
 
 
-def jaxify(d):
+def process_batch(d):
     """Turn the NumPy arrays into JAX arrays and reshape the input to have a
     channel.
     """
@@ -152,7 +152,7 @@ def main() -> None:
         # - The train state's model parameters
         # - The optimizer state
         # - The training loss and accuracy batch metrics
-        batch = jaxify(batch)
+        batch = process_batch(batch)
         train_step(model, optimizer, metrics, batch)
 
         if step > 0 and (step % eval_every == 0 or step
@@ -168,7 +168,7 @@ def main() -> None:
 
             # Compute the metrics on the test set after each training epoch.
             for test_batch in validation_data.as_numpy_iterator():
-                test_batch = jaxify(test_batch)
+                test_batch = process_batch(test_batch)
                 eval_step(model, metrics, test_batch)
 
             # Log the test metrics.

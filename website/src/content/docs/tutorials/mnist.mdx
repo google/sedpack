@@ -333,7 +333,7 @@ batch_size: int = 128
 
     ```python
     # ExampleT: TypeAlias of dict[str, sedpack.io.types.AttributeValueT]
-    def jaxify(d):
+    def process_batch(d):
         """Turn the NumPy arrays into JAX arrays and reshape the input to have a
         channel.
         """
@@ -418,7 +418,7 @@ And we train:
 
     ```python
     for step, batch in enumerate(tqdm(train_data)):
-        batch = jaxify(batch)
+        batch = process_batch(batch)
         train_step(model, optimizer, metrics, batch)
     ```
   </TabItem>

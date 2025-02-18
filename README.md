@@ -58,7 +58,7 @@ Update: `pip-compile pyproject.toml --generate-hashes --upgrade` and commit requ
 A tutorial and documentation is available at
 [https://google.github.io/sedpack/](https://google.github.io/sedpack/).
 
-Code for the tutorials is avaialble in the `docs/tutorials` directory. For a
+Code for the tutorials is available in the `docs/tutorials` directory. For a
 "hello world" see
 [https://google.github.io/sedpack/tutorials/mnist/](https://google.github.io/sedpack/tutorials/mnist/).
 
