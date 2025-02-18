@@ -42,7 +42,7 @@ class ShardProgress:
     written_examples: int = 0
 
 
-class _DatasetFillerContext:
+class DatasetFillerContext:
     """The actual context. Use DatasetFiller which closes the last shard on
     exit. Takes care of creating new shards with proper part_number and
     group_number.
@@ -99,7 +99,7 @@ class _DatasetFillerContext:
     @property
     def shard_lists(self) -> dict[SplitT, ShardsList]:
         """Return information about all shards written by this
-        _DatasetFillerContext.
+        DatasetFillerContext.
         """
         return self._shards_lists
 
@@ -240,8 +240,8 @@ class DatasetFiller:
           `DatasetFiller` objects it is advised to set this parameter to
           `False` since this is not thread safe.
         """
-        self._dataset_filler_context: _DatasetFillerContext
-        self._dataset_filler_context = _DatasetFillerContext(
+        self._dataset_filler_context: DatasetFillerContext
+        self._dataset_filler_context = DatasetFillerContext(
             dataset_root_path=dataset.path,
             dataset_structure=dataset.dataset_structure,
             relative_path_from_split=relative_path_from_split,
@@ -250,8 +250,8 @@ class DatasetFiller:
         self._dataset: DatasetWriting = dataset
         self._updated_infos: list[ShardListInfo] = []
 
-    def __enter__(self) -> _DatasetFillerContext:
-        """Initialize _DatasetFillerContext."""
+    def __enter__(self) -> DatasetFillerContext:
+        """Initialize DatasetFillerContext."""
         assert not self._updated_infos
         return self._dataset_filler_context
 

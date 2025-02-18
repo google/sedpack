@@ -100,14 +100,22 @@ def main() -> None:
         validation_split_position: int = int(len(x_train) * 0.1)
         for index_position, index in enumerate(
                 tqdm(train_indices, desc='train and val')):
-            split = "test" if index_position < validation_split_position else "train"
-            dataset_filler.write_example(
-                values={
-                    "input": x_train[index],
-                    "digit": y_train[index],
-                },
-                split=split,
-            )
+            if index_position < validation_split_position:
+                dataset_filler.write_example(
+                    values={
+                        "input": x_train[index],
+                        "digit": y_train[index],
+                    },
+                    split="test",
+                )
+            else:
+                dataset_filler.write_example(
+                    values={
+                        "input": x_train[index],
+                        "digit": y_train[index],
+                    },
+                    split="train",
+                )
 
 
 if __name__ == "__main__":

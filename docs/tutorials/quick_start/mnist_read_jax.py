@@ -24,6 +24,8 @@ import argparse
 from functools import partial
 from typing import Any, Dict, Tuple
 
+from jax import Array
+from jax.typing import ArrayLike
 from flax import nnx
 import jax.numpy as jnp
 import numpy as np
@@ -34,7 +36,7 @@ from sedpack.io import Dataset
 from sedpack.io.types import ExampleT, TFModelT
 
 
-def process_batch(d):
+def process_batch(d: Any) -> dict[str, Array]:
     """Turn the NumPy arrays into JAX arrays and reshape the input to have a
     channel.
     """
@@ -58,7 +60,7 @@ class CNN(nnx.Module):
         self.linear1 = nnx.Linear(3_136, 256, rngs=rngs)
         self.linear2 = nnx.Linear(256, 10, rngs=rngs)
 
-    def __call__(self, x):
+    def __call__(self, x: Array) -> Array:
         x = self.avg_pool(nnx.relu(self.conv1(x)))
         x = self.avg_pool(nnx.relu(self.conv2(x)))
         x = x.reshape(x.shape[0], -1)  # flatten
@@ -67,7 +69,7 @@ class CNN(nnx.Module):
         return x
 
 
-def loss_fn(model: CNN, batch):
+def loss_fn(model: CNN, batch: dict[str, Array]) -> tuple[Array, Array]:
     logits = model(batch["input"])
     loss = optax.softmax_cross_entropy_with_integer_labels(
         logits=logits, labels=batch["digit"]).mean()
@@ -76,17 +78,21 @@ def loss_fn(model: CNN, batch):
 
 @nnx.jit
 def train_step(model: CNN, optimizer: nnx.Optimizer, metrics: nnx.MultiMetric,
-               batch):
+               batch: dict[str, ArrayLike]) -> None:
     """Train for a single step.
     """
     grad_fn = nnx.value_and_grad(loss_fn, has_aux=True)
     (loss, logits), grads = grad_fn(model, batch)
     metrics.update(loss=loss, logits=logits, labels=batch["digit"])
-    optimizer.update(grads)
+    optimizer.update(grads)  # type: ignore[no-untyped-call]
 
 
 @nnx.jit
-def eval_step(model: CNN, metrics: nnx.MultiMetric, batch):
+def eval_step(
+    model: CNN,
+    metrics: nnx.MultiMetric,
+    batch: dict[str, Array],
+) -> None:
     loss, logits = loss_fn(model, batch)
     metrics.update(loss=loss, logits=logits, labels=batch["digit"])
 
@@ -110,18 +116,18 @@ def main() -> None:
     args = parser.parse_args()
 
     model = CNN(rngs=nnx.Rngs(0))
-    nnx.display(model)
+    nnx.display(model)  # type: ignore[no-untyped-call]
 
-    learning_rate = 0.005
-    momentum = 0.9
+    learning_rate: float = 0.005
+    momentum: float = 0.9
     optimizer = nnx.Optimizer(model, optax.adamw(learning_rate, momentum))
-    metrics = nnx.MultiMetric(
+    metrics = nnx.MultiMetric(  # type: ignore[no-untyped-call]
         accuracy=nnx.metrics.Accuracy(),
         loss=nnx.metrics.Average("loss"),
     )
-    nnx.display(optimizer)
+    nnx.display(optimizer)  # type: ignore[no-untyped-call]
 
-    metrics_history = {
+    metrics_history: dict[str, list[Array]] = {
         "train_loss": [],
         "train_accuracy": [],
         "test_loss": [],
@@ -141,8 +147,8 @@ def main() -> None:
         shuffle=1_000,
         repeat=False,
     )
-    train_steps = 1_200
-    eval_every = 200
+    train_steps: int = 1_200
+    eval_every: int = 200
 
     for step, batch in enumerate(tqdm(train_data)):
         if step > train_steps:
@@ -158,10 +164,11 @@ def main() -> None:
         if step > 0 and (step % eval_every == 0 or step
                          == train_steps - 1):  # One training epoch has passed.
             # Log the training metrics.
-            for metric, value in metrics.compute().items(
-            ):  # Compute the metrics.
+            # Compute the metrics.
+            for metric, value in metrics.compute().items():
+                # Record the metrics.
                 metrics_history[f"train_{metric}"].append(
-                    value)  # Record the metrics.
+                    value)  # type: ignore[arg-type]
                 print(f"{metric} = {value}", end=" ")
             metrics.reset()  # Reset the metrics for the test set.
             print()
@@ -173,7 +180,8 @@ def main() -> None:
 
             # Log the test metrics.
             for metric, value in metrics.compute().items():
-                metrics_history[f"test_{metric}"].append(value)
+                metrics_history[f"test_{metric}"].append(
+                    value)  # type: ignore[arg-type]
                 print(f"test {metric} = {value}", end=" ")
             metrics.reset()  # Reset the metrics for the next training epoch.
             print()
