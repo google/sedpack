@@ -16,7 +16,7 @@ explanations see: https://google.github.io/sedpack/tutorials/mnist
 
 Example use:
     python mnist_save.py -d "~/Datasets/my_new_dataset/"
-    python mnist_read.py -d "~/Datasets/my_new_dataset/"
+    python mnist_read_keras.py -d "~/Datasets/my_new_dataset/"
 """
 import argparse
 from typing import Any, Dict, Tuple

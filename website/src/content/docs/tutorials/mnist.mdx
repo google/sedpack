@@ -20,13 +20,24 @@ sedpack usage.
 Downloading the dataset is supported by many machine learning frameworks.
 
 <Tabs syncKey="ML_framework">
+
   <TabItem label="Keras">
     ```python
     import keras
-    
+
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
     ```
   </TabItem>
+
+  <TabItem label="JAX / Flax">
+    ```python
+    # In this example we still use Keras to download the dataset.
+    import keras
+
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+    ```
+  </TabItem>
+
 </Tabs>
 
 ## Create a Sedpack Dataset
@@ -155,11 +166,20 @@ the MNIST data we notice that there is `x_train`, `y_train`, `x_test`, and
 `y_test`:
 
 <Tabs syncKey="ML_framework">
+
   <TabItem label="Keras">
     ```python
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
     ```
   </TabItem>
+
+  <TabItem label="JAX / Flax">
+    ```python
+    # In this example we still use Keras to download the dataset.
+    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+    ```
+  </TabItem>
+
 </Tabs>
 
 The `x` or `y` part denotes if those are the inputs or outputs (`x` is an array
@@ -244,9 +264,15 @@ The neural network can be according to your favourite framework's tutorial (or
 your own):
 
 <Tabs syncKey="ML_framework">
+
   <TabItem label="Keras">
     [Keras: Simple MNIST convnet](https://keras.io/examples/vision/mnist_convnet/)
   </TabItem>
+
+  <TabItem label="JAX / Flax">
+    [MNIST tutorial](https://flax.readthedocs.io/en/latest/mnist_tutorial.html) of Flax
+  </TabItem>
+
 </Tabs>
 
 ### Load
@@ -274,44 +300,101 @@ is always the first dimension.
 batch_size: int = 128
 ```
 
-The data might not have been saved in the exact format the training loop needs.
-For instance we have saved the classes as small integers when the training loop
-prefers those encoded as [one-hot](https://en.wikipedia.org/wiki/One-hot).
-Moreover it might be useful to clearly distinguish which are the inputs and
-which are the outputs (return a tuple of `(inputs, outputs)`). All of these and
-more can be done by a simple transformation function which takes an example (a
-dictionary of values) and returns whatever form one pleases.
+<Tabs syncKey="ML_framework">
 
-```python
-# ExampleT: TypeAlias of dict[str, sedpack.io.types.AttributeValueT]
-def process_record(rec: ExampleT) -> Any:
-    # One hot encoding
-    output = tf.one_hot(rec["digit"], 10)
-    # Return tuple (input, output)
-    return rec["input"], output
-```
+  <TabItem label="Keras">
+    The data might not have been saved in the exact format the training loop
+    needs.  For instance we have saved the classes as small integers when the
+    training loop prefers those encoded as
+    [one-hot](https://en.wikipedia.org/wiki/One-hot).  Moreover it might be
+    useful to clearly distinguish which are the inputs and which are the
+    outputs (return a tuple of `(inputs, outputs)`). All of these and more can
+    be done by a simple transformation function which takes an example (a
+    dictionary of values) and returns whatever form one pleases.
+
+    ```python
+    # ExampleT: TypeAlias of dict[str, sedpack.io.types.AttributeValueT]
+    def process_record(rec: ExampleT) -> Any:
+        # One hot encoding
+        output = tf.one_hot(rec["digit"], 10)
+        # Return tuple (input, output)
+        return rec["input"], output
+    ```
+  </TabItem>
+
+  <TabItem label="JAX / Flax">
+
+    The data might not have been saved in the exact format the training loop
+    needs.  For instance we have saved the classes as small integers `np.uint8`
+    when the training loop prefers those encoded as `jnp.int32`.  Moreover it
+    could be beneficial to reshape the inputs. All of these and more can be
+    done by a simple transformation function which takes an example (a
+    dictionary of values) and returns whatever form one pleases.
+
+    ```python
+    # ExampleT: TypeAlias of dict[str, sedpack.io.types.AttributeValueT]
+    def process_batch(d):
+        """Turn the NumPy arrays into JAX arrays and reshape the input to have a
+        channel.
+        """
+        batch_size: int = d["input"].shape[0]
+        return {
+            "input": jnp.array(d["input"]).reshape(batch_size, 28, 28, 1),
+            "digit": jnp.array(d["digit"], jnp.int32),
+        }
+    ```
+  </TabItem>
+
+</Tabs>
 
 Loading the train and test (validation) split is then as follows:
 
-```python
-# Load train and validation splits of the dataset
-train_data = dataset.as_tfdataset(
-    "train",
-    batch_size=batch_size,
-    process_record=process_record,
-)
-validation_data = dataset.as_tfdataset(
-    "test",  # validation split
-    batch_size=batch_size,
-    process_record=process_record,
-)
-```
+<Tabs syncKey="ML_framework">
+
+  <TabItem label="Keras">
+    ```python
+    # Load train and validation splits of the dataset
+    train_data = dataset.as_tfdataset(
+        "train",
+        batch_size=batch_size,
+        process_record=process_record,
+    )
+    validation_data = dataset.as_tfdataset(
+        "test",  # validation split
+        batch_size=batch_size,
+        process_record=process_record,
+    )
+    ```
+  </TabItem>
+
+  <TabItem label="JAX / Flax">
+    ```python
+      train_data = dataset.as_tfdataset(
+          "train",
+          batch_size=batch_size,
+          shuffle=1_000,
+      )
+      validation_data = dataset.as_tfdataset(
+          "test",  # validation split
+          batch_size=batch_size,
+          shuffle=1_000,
+          repeat=False,
+      )
+    ```
+  </TabItem>
+
+</Tabs>
+
+This has been the historical API. We are working on benchmarking our own
+pipeline written in [Rust](https://www.rust-lang.org/). When that API gets
+mature it will be the default choice.
 
 ### Train
 
 And we train:
 
 <Tabs syncKey="ML_framework">
+
   <TabItem label="Keras">
     ```python
     model = get_model()
@@ -327,4 +410,17 @@ And we train:
     )
     ```
   </TabItem>
+
+  <TabItem label="JAX / Flax">
+    We followed the
+    [tutorial](https://flax.readthedocs.io/en/latest/mnist_tutorial.html) and
+    wrote a custom training loop.
+
+    ```python
+    for step, batch in enumerate(tqdm(train_data)):
+        batch = process_batch(batch)
+        train_step(model, optimizer, metrics, batch)
+    ```
+  </TabItem>
+
 </Tabs>
