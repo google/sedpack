@@ -1,4 +1,5 @@
 Adafactor
+AdamW
 Bursztein
 Corinna
 Elems
@@ -44,6 +45,7 @@ pyfunction
 pymethods
 pymodule
 rlib
+rngs
 savez
 sedpack
 setaf
