@@ -47,7 +47,7 @@ def process_batch(d: Any) -> dict[str, Array]:
     }
 
 
-class CNN(nnx.Module):
+class CNN(nnx.Module):  # type: ignore[misc]
     """FLAX CNN model.
     """
 
@@ -76,7 +76,7 @@ def loss_fn(model: CNN, batch: dict[str, Array]) -> tuple[Array, Array]:
     return loss, logits
 
 
-@nnx.jit
+@nnx.jit  # type: ignore[misc]
 def train_step(model: CNN, optimizer: nnx.Optimizer, metrics: nnx.MultiMetric,
                batch: dict[str, ArrayLike]) -> None:
     """Train for a single step.
@@ -84,10 +84,10 @@ def train_step(model: CNN, optimizer: nnx.Optimizer, metrics: nnx.MultiMetric,
     grad_fn = nnx.value_and_grad(loss_fn, has_aux=True)
     (loss, logits), grads = grad_fn(model, batch)
     metrics.update(loss=loss, logits=logits, labels=batch["digit"])
-    optimizer.update(grads)  # type: ignore[no-untyped-call]
+    optimizer.update(grads)
 
 
-@nnx.jit
+@nnx.jit  # type: ignore[misc]
 def eval_step(
     model: CNN,
     metrics: nnx.MultiMetric,
@@ -116,16 +116,16 @@ def main() -> None:
     args = parser.parse_args()
 
     model = CNN(rngs=nnx.Rngs(0))
-    nnx.display(model)  # type: ignore[no-untyped-call]
+    nnx.display(model)
 
     learning_rate: float = 0.005
     momentum: float = 0.9
     optimizer = nnx.Optimizer(model, optax.adamw(learning_rate, momentum))
-    metrics = nnx.MultiMetric(  # type: ignore[no-untyped-call]
+    metrics = nnx.MultiMetric(
         accuracy=nnx.metrics.Accuracy(),
         loss=nnx.metrics.Average("loss"),
     )
-    nnx.display(optimizer)  # type: ignore[no-untyped-call]
+    nnx.display(optimizer)
 
     metrics_history: dict[str, list[Array]] = {
         "train_loss": [],
@@ -167,8 +167,7 @@ def main() -> None:
             # Compute the metrics.
             for metric, value in metrics.compute().items():
                 # Record the metrics.
-                metrics_history[f"train_{metric}"].append(
-                    value)  # type: ignore[arg-type]
+                metrics_history[f"train_{metric}"].append(value)
                 print(f"{metric} = {value}", end=" ")
             metrics.reset()  # Reset the metrics for the test set.
             print()
@@ -180,8 +179,7 @@ def main() -> None:
 
             # Log the test metrics.
             for metric, value in metrics.compute().items():
-                metrics_history[f"test_{metric}"].append(
-                    value)  # type: ignore[arg-type]
+                metrics_history[f"test_{metric}"].append(value)
                 print(f"test {metric} = {value}", end=" ")
             metrics.reset()  # Reset the metrics for the next training epoch.
             print()
