@@ -160,7 +160,7 @@ def main() -> None:
             # Log the training metrics.
             for metric, value in metrics.compute().items(
             ):  # Compute the metrics.
-                metrics_history[f'train_{metric}'].append(
+                metrics_history[f"train_{metric}"].append(
                     value)  # Record the metrics.
                 print(f"{metric} = {value}", end=" ")
             metrics.reset()  # Reset the metrics for the test set.
@@ -173,7 +173,7 @@ def main() -> None:
 
             # Log the test metrics.
             for metric, value in metrics.compute().items():
-                metrics_history[f'test_{metric}'].append(value)
+                metrics_history[f"test_{metric}"].append(value)
                 print(f"test {metric} = {value}", end=" ")
             metrics.reset()  # Reset the metrics for the next training epoch.
             print()
