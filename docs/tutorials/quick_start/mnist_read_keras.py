@@ -48,7 +48,7 @@ def get_model() -> TFModelT:
     x = layers.Dropout(0.5)(x)
     x = layers.Dense(num_classes, activation="softmax", name="digit")(x)
 
-    model = keras.Model(inputs=input_data, outputs=x)
+    model: TFModelT = keras.Model(inputs=input_data, outputs=x)
 
     model.summary()
     model.compile(loss="categorical_crossentropy",
@@ -134,11 +134,13 @@ def main() -> None:
 
         # Pass just the input (the handwritten digit image) to the model and get
         # the predicted class as the class with highest probability.
-        image = example[0]
+        image: list[list[float]] = example[0]  # type: ignore[assignment,index]
         # Note that the model still expects a batch, here we pass a batch of one
         # image.
-        predicted_class: int = np.argmax(model(np.expand_dims(image, axis=0)))
-        correct_class: int = np.argmax(example[1])
+        predicted_class: int = np.argmax(model(np.expand_dims(
+            image, axis=0)))  # type: ignore[assignment]
+        correct_class: int = np.argmax(
+            example[1])  # type: ignore[assignment,index]
         print("")
         print(f"Predicted: {predicted_class} (should be {correct_class}) for")
         # Turn into ASCII art

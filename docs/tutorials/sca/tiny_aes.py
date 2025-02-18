@@ -22,18 +22,27 @@ Example use:
 """
 import argparse
 from pathlib import Path
+from typing import Any, get_args
 
 import keras
+from keras.engine.keras_tensor import KerasTensor
 import numpy as np
 from tqdm import tqdm
 
 from scaaml.metrics.custom import MeanRank
 from scaaml.models import get_gpam_model
-from sedpack.io import Dataset, DatasetFiller, Metadata, DatasetStructure, Attribute
+from sedpack.io import (
+    Dataset,
+    DatasetFillerContext,
+    Metadata,
+    DatasetStructure,
+    Attribute,
+)
+from sedpack.io.typing import SplitT
 
 
-def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
-              split: str) -> None:
+def add_shard(shard_file: Path, dataset_filler: DatasetFillerContext,
+              split: SplitT) -> tuple[float, float]:
     # Reading these one by one is slow.
     shard = np.load(shard_file)
     traces = np.squeeze(shard["traces"], axis=2)
@@ -176,7 +185,8 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
     dataset.write_config()
 
 
-def process_record(record):
+def process_record(
+        record: dict[str, Any]) -> tuple[KerasTensor, dict[str, KerasTensor]]:
     # The first neural network was using just the first half of the trace:
     inputs = record["trace1"]
     outputs = {
@@ -256,7 +266,7 @@ def train(dataset_path: Path) -> None:
     )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--dataset_path",
                         "-d",

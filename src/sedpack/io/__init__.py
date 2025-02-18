@@ -14,7 +14,7 @@
 """Dataset creation and usage."""
 
 from sedpack.io.dataset import Dataset
-from sedpack.io.dataset_filler import DatasetFiller
+from sedpack.io.dataset_filler import DatasetFiller, DatasetFillerContext
 from sedpack.io.metadata import Attribute
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.metadata import Metadata
@@ -23,6 +23,7 @@ __all__ = [
     "Attribute",
     "Dataset",
     "DatasetFiller",
+    "DatasetFillerContext",
     "DatasetStructure",
     "Metadata",
 ]

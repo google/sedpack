@@ -93,14 +93,20 @@ def main() -> None:
                 split="holdout",
             )
 
-        # Randomly assign 10% of validation and the rest is training
+        # Randomly assign 10% of validation and the rest is training.
         assert len(x_train) == len(y_train)
         train_indices: list[int] = list(range(len(x_train)))
         random.shuffle(train_indices)
         validation_split_position: int = int(len(x_train) * 0.1)
         for index_position, index in enumerate(
                 tqdm(train_indices, desc='train and val')):
-            split = "test" if index_position < validation_split_position else "train"
+
+            # Assign to either train or test (aka validation).
+            split: SplitT = "test"
+            if index_position < validation_split_position:
+                split = "train"
+
+            # Write the example.
             dataset_filler.write_example(
                 values={
                     "input": x_train[index],
