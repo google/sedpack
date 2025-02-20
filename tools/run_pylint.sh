@@ -16,5 +16,4 @@
 # Ensure we are at the project root directory
 cd $(readlink -f $(dirname $0))/..
 
-pylint *.py src doc
-
+pylint *.py src docs

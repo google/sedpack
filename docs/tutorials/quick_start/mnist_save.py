@@ -99,7 +99,7 @@ def main() -> None:
         random.shuffle(train_indices)
         validation_split_position: int = int(len(x_train) * 0.1)
         for index_position, index in enumerate(
-                tqdm(train_indices, desc='train and val')):
+                tqdm(train_indices, desc="train and val")):
 
             # Assign to either train or test (aka validation).
             split: SplitT = "test"

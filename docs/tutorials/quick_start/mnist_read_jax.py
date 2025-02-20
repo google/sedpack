@@ -22,18 +22,16 @@ Example use:
 """
 import argparse
 from functools import partial
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from jax import Array
 from jax.typing import ArrayLike
 from flax import nnx
 import jax.numpy as jnp
-import numpy as np
 import optax
 from tqdm import tqdm
 
 from sedpack.io import Dataset
-from sedpack.io.types import ExampleT, TFModelT
 
 
 def process_batch(d: Any) -> dict[str, Array]:
@@ -154,7 +152,8 @@ def main() -> None:
         if step > train_steps:
             break
 
-        # Run the optimization for one step and make a stateful update to the following:
+        # Run the optimization for one step and make a stateful update to the
+        # following:
         # - The train state's model parameters
         # - The optimizer state
         # - The training loss and accuracy batch metrics
