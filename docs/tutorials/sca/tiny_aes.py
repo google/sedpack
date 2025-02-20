@@ -159,7 +159,19 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
 
     # Fill in the examples.
     with dataset.filler() as dataset_filler:
-        for shard_file in tqdm(test_files, desc="Fill the test split"):
+        # Arbitrary split of the test files into test and holdout (otherwise we
+        # have no holdout). Even files into "holdout".
+        for shard_file in tqdm(test_files[::2], desc="Fill the holdout split"):
+            shard_min, shard_max = add_shard(
+                shard_file=shard_file,
+                dataset_filler=dataset_filler,
+                split="holdout",
+            )
+            running_min = min(running_min, shard_min)
+            running_max = max(running_max, shard_max)
+
+        # Odd files into "test".
+        for shard_file in tqdm(test_files[1::2], desc="Fill the test split"):
             shard_min, shard_max = add_shard(
                 shard_file=shard_file,
                 dataset_filler=dataset_filler,
