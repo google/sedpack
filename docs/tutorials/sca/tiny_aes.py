@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import Any, get_args
 
 import keras
-from keras.engine.keras_tensor import KerasTensor
 import numpy as np
 from tqdm import tqdm
 
@@ -197,8 +196,11 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
     dataset.write_config()
 
 
-def process_record(
-        record: dict[str, Any]) -> tuple[KerasTensor, dict[str, KerasTensor]]:
+def process_record(record: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+    """Processing of a single record. The input is a dictionary of string and
+    tensor, the output of this function is a tuple the neural network's input
+    (trace) and a dictionary of one-hot encoded expected outputs.
+    """
     # The first neural network was using just the first half of the trace:
     inputs = record["trace1"]
     outputs = {
