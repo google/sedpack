@@ -38,7 +38,7 @@ from sedpack.io import (
     DatasetStructure,
     Attribute,
 )
-from sedpack.io.typing import SplitT
+from sedpack.io.types import SplitT
 
 
 def add_shard(shard_file: Path, dataset_filler: DatasetFillerContext,
