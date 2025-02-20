@@ -1,1 +1,1 @@
-# Typehints for Rust implementation
+# Type-hints for Rust implementation
