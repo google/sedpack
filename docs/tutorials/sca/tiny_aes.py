@@ -18,11 +18,12 @@ https://github.com/google/scaaml/tree/main/scaaml_intro
 The SCAAML package is a requirement: `python3 -m pip install "scaaml>=3.0.3"`.
 
 Example use:
-    python tiny_aes.py --dataset_path "~/datasets/tiny_aes_sedpack/" --original_files "~/datasets/tinyaes"
+    python tiny_aes.py --dataset_path "~/datasets/tiny_aes_sedpack/" \
+                       --original_files "~/datasets/tinyaes"
 """
 import argparse
 from pathlib import Path
-from typing import Any, get_args
+from typing import Any
 
 import keras
 import numpy as np
@@ -37,7 +38,7 @@ from sedpack.io import (
     DatasetStructure,
     Attribute,
 )
-from sedpack.io.typing import SplitT
+from sedpack.io.types import SplitT
 
 
 def add_shard(shard_file: Path, dataset_filler: DatasetFillerContext,
@@ -121,7 +122,7 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
             year={2019},
             editor={DEF CON}
             }
-            """,
+            """,  # pylint: disable=line-too-long
             "original from":
                 "https://github.com/google/scaaml/tree/main/scaaml_intro",
         },
@@ -271,7 +272,7 @@ def train(dataset_path: Path) -> None:
     )
 
     # Train the model.
-    history = model.fit(
+    _ = model.fit(
         train_ds,
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,

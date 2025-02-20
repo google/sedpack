@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Any, get_args, Union
+from typing import get_args, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -21,8 +21,7 @@ import pytest
 
 import sedpack
 from sedpack.io import Dataset
-from sedpack.io import Metadata, DatasetStructure, Attribute
-from sedpack.io.flatbuffer.iterate import IterateShardFlatBuffer
+from sedpack.io import Metadata
 from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
 
 from sedpack import _sedpack_rs  # type: ignore[attr-defined]
