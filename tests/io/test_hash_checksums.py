@@ -14,7 +14,6 @@
 
 from pathlib import Path
 
-
 from sedpack.io.utils import hash_checksums
 
 

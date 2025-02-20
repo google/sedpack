@@ -59,4 +59,5 @@ tfrecord
 tfrecords
 tinyaes
 tobytes
+uoffset
 zstd

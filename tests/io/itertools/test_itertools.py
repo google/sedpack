@@ -14,7 +14,6 @@
 
 import random
 
-
 from sedpack.io.itertools import *
 
 
