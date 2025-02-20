@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import Any, get_args
 
 import keras
-from keras.engine.keras_tensor import KerasTensor
 import numpy as np
 from tqdm import tqdm
 
@@ -159,7 +158,19 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
 
     # Fill in the examples.
     with dataset.filler() as dataset_filler:
-        for shard_file in tqdm(test_files, desc="Fill the test split"):
+        # Arbitrary split of the test files into test and holdout (otherwise we
+        # have no holdout). Even files into "holdout".
+        for shard_file in tqdm(test_files[::2], desc="Fill the holdout split"):
+            shard_min, shard_max = add_shard(
+                shard_file=shard_file,
+                dataset_filler=dataset_filler,
+                split="holdout",
+            )
+            running_min = min(running_min, shard_min)
+            running_max = max(running_max, shard_max)
+
+        # Odd files into "test".
+        for shard_file in tqdm(test_files[1::2], desc="Fill the test split"):
             shard_min, shard_max = add_shard(
                 shard_file=shard_file,
                 dataset_filler=dataset_filler,
@@ -185,8 +196,11 @@ def convert_to_sedpack(dataset_path: Path, original_files: Path) -> None:
     dataset.write_config()
 
 
-def process_record(
-        record: dict[str, Any]) -> tuple[KerasTensor, dict[str, KerasTensor]]:
+def process_record(record: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+    """Processing of a single record. The input is a dictionary of string and
+    tensor, the output of this function is a tuple the neural network's input
+    (trace) and a dictionary of one-hot encoded expected outputs.
+    """
     # The first neural network was using just the first half of the trace:
     inputs = record["trace1"]
     outputs = {
