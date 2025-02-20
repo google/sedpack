@@ -37,7 +37,7 @@ from sedpack.io import (
     DatasetStructure,
     Attribute,
 )
-from sedpack.io.types import SplitT
+from sedpack.io.typing import SplitT  # TODO test that mypy fails
 
 
 def add_shard(shard_file: Path, dataset_filler: DatasetFillerContext,
