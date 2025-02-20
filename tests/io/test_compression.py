@@ -14,11 +14,9 @@
 
 import gzip
 from pathlib import Path
-from typing import Any, Union
+from typing import Union
 
 import pytest
-import numpy as np
-import numpy.typing as npt
 
 from sedpack.io.compress import CompressedFile
 from sedpack.io.types import CompressionT

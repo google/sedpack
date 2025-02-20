@@ -15,8 +15,7 @@
 from typing import get_args
 
 from sedpack.io.types import ShardFileTypeT
-from sedpack.io.shard.shard_writer_base import ShardWriterBase
-from sedpack.io.shard.get_shard_writer import get_shard_writer, _SHARD_FILE_TYPE_TO_CLASS
+from sedpack.io.shard.get_shard_writer import _SHARD_FILE_TYPE_TO_CLASS
 
 
 def test_all_file_types_supported():

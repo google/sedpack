@@ -15,15 +15,13 @@
 import os
 from pathlib import Path
 import random
-from typing import Any, Union
+from typing import Union
 
 import numpy as np
-import numpy.typing as npt
 
 import sedpack
 from sedpack.io import Dataset
-from sedpack.io import Metadata, DatasetStructure, Attribute
-from sedpack.io.types import CompressionT, ShardFileTypeT
+from sedpack.io import Metadata
 
 
 def get_dataset(tmpdir: Union[str, Path]) -> Dataset:
