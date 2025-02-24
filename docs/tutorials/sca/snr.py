@@ -40,7 +40,7 @@ import jax
 import jax.numpy as jnp
 
 
-@jax.jit
+@jax.jit  # type: ignore[misc]
 def jax_update(existing_aggregate: jax.Array,
                new_trace: jax.Array) -> tuple[jax.Array, jax.Array, jax.Array]:
     """For a new value new_trace, compute the new count, new mean, the new
@@ -107,7 +107,9 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
             desc=f"[JAX] Computing SNR over {split}",
             total=dataset.dataset_info.splits[split].number_of_examples,
     ):
-        current_leakage = int(example[ap_name][0]).bit_count()
+        current_leakage = int(
+            example[ap_name][0],  # type: ignore[index]
+        ).bit_count()
         leakage_to_aggregate[current_leakage] = jax_update(
             leakage_to_aggregate[current_leakage],
             example["trace1"],
@@ -128,8 +130,10 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
 
     signals = np.array([mean for mean, _ in results.values()])
 
-    return 20 * np.log(
-        np.var(signals, axis=0) / results[most_common_leakage][1])
+    return np.array(
+        20 * np.log(np.var(signals, axis=0) / results[most_common_leakage][1]),
+        dtype=np.float32,
+    )
 
 
 def snr_np(dataset_path: Path) -> npt.NDArray[np.float64]:
@@ -162,7 +166,7 @@ def snr_np(dataset_path: Path) -> npt.NDArray[np.float64]:
 
     plt.plot(snr.result)
     plt.savefig("snr.png")
-    return snr.result
+    return np.array(snr.result, dtype=np.float64)
 
 
 def main() -> None:
