@@ -1,0 +1,75 @@
+---
+title: Side Channel Attacks Overview
+description: Side Channel Attacks Overview
+---
+
+Side channel attacks (SCA) and side channel analysis (conveniently also SCA)
+study how to correlate data dependent computation characteristics (e.g.,
+timing, power consumption or electromagnetic emissions) to secret values. There
+is a rich body of research in this area. For some evaluations large amounts of
+data are needed.
+
+At the [CHES 24 OPTIMIST workshop](https://optimist-ose.org/workshop-24) an
+initiative for [Open Tools, Interfaces and Metrics for Implementation Security
+Testing (OPTIMIST)](https://optimist-ose.org/) started. One of the outcomes
+being a call for format for trace storage. In this series of tutorials we argue
+that Sedpack is a viable solution for this purpose. If you have any questions,
+feature suggestions or patches see [sedpack GitHub
+repository](https://github.com/google/sedpack).
+
+The **sedpack** project started as a refactor and evolution of the data storage
+system used by **SCAAML (Side Channel Attacks Assisted with Machine
+Learning)**. See the [SCAAML website](https://google.github.io/scaaml/) or the
+[SCAAML GitHub repository](https://github.com/google/scaaml/).
+
+## What's Next
+
+For the purposes of exposition we mainly focus on the very easy dataset of
+power consumption measurements of a textbook [AES
+(Wikipedia)](https://de.wikipedia.org/wiki/Advanced_Encryption_Standard)
+implementation. This dataset is both publicly available and easy to attack
+(analyze). If you know side channel attacks feel free to skip to the next
+sections otherwise you might choose to read through the following blog-posts:
+
+-   [A Hacker Guide To Deep Learning Based Side Channel
+    Attacks](https://elie.net/talk/a-hackerguide-to-deep-learning-based-side-channel-attacks)
+    a video of DefCon 27 (2019) talk introducing SCAAML.
+-   [Hacker's guide to deep-learning side-channel attacks: the
+    theory](https://elie.net/blog/security/hacker-guide-to-deep-learning-side-channel-attacks-the-theory)
+    a gentle introduction to the theory.
+-   [Hacker's guide to deep-learning side-channel attacks: code
+    walkthrough](https://elie.net/blog/security/hacker-guide-to-deep-learning-side-channel-attacks-code-walkthrough)
+    the very first version of the SCAAML model. Later in this series of
+    tutorials we use our most recent model on the same dataset.
+
+In this series of tutorials we showcase how the sedpack storage can be
+leveraged to help with side channel analysis. This series is not a
+one-solution-fits fully fledged side channel framework. The point is to
+showcase a tool designed to do one thing well (data storage) and enables others
+to work together using as universal interface as possible. We will see that
+different forms of iteration (randomly shuffled or just plain iteration)
+possibly with batching (yielding several examples at once) provides a ground
+for both machine learning as well as classical attack needs.
+
+## Existing Tools
+
+There is a variety of excellent tools for side channel analysis. Most of which
+provide not only storage capabilities but also side channel analysis tools.
+This provides an advantage of being ready to use. On the other hand storing
+data in one of those $N$ tools and using algorithms from another creates an $N
+\times N$ compatibility matrix (with the diagonal hopefully being trivial). Our
+goal is to make one storage tool which can be then used by other tools. And
+thus saving a significant amount of duplicated work.
+
+### An Incomplete List of Existing Tools
+
+We acknowledge that the following list is incomplete.  In fact it is our hope
+that it is incomplete as we hope this list will be growing.  In an alphabetical
+order:
+
+-   [LASCAR](https://github.com/Ledger-Donjon/lascar)
+-   [SCARR](https://github.com/decryptofy/scarr)
+-   [riscure](https://www.keysight.com/ch/de/products/network-test/device-vulnerability-analysis.html)
+
+If we forgot your tool and you want it to be listed here please open an issue
+or send us a pull request.

@@ -1,0 +1,161 @@
+---
+title: Deep Learning with GPAM
+description: Generalized Power Attacks against Crypto Hardware using Long-Range Deep Learning (GPAM)
+---
+
+In this tutorial we use the new GPAM model introduced by
+
+```text
+Generalized Power Attacks against Crypto Hardware using Long-Range Deep Learning
+Bursztein, Elie and Invernizzi, Luca and Král, Karel and Moghimi, Daniel and Picod, Jean-Michel and Zhang, Marina,
+IACR Transactions on Cryptographic Hardware and Embedded Systems, 2024
+```
+
+The script
+[docs/tutorials/sca/tiny_aes.py](https://github.com/google/sedpack/blob/main/docs/tutorials/sca/tiny_aes.py)
+contains the training code.
+
+The GPAM model has been introduced as a part of the SCAAML project
+[GPAM](https://google.github.io/scaaml/papers/gpam_ches_2024/). In this
+tutorial we (us and you, the reader) work together to modernize the original [A
+Hacker Guide To Deep Learning Based Side Channel
+Attacks](https://elie.net/talk/a-hackerguide-to-deep-learning-based-side-channel-attacks)
+tutorial.
+
+## Creating the Model
+
+We first need to define hyperparameters same as listed in the GPAM paper.
+
+```python
+batch_size: int = 64  # hyperparameter
+steps_per_epoch: int = 800  # hyperparameter
+epochs: int = 750  # hyperparameter
+target_lr: float = 0.0005  # hyperparameter
+merge_filter_1: int = 0  # hyperparameter
+merge_filter_2: int = 0  # hyperparameter
+trace_len: int = 80_000  # hyperparameter
+patch_size: int = 200  # hyperparameter
+val_steps: int = 16
+```
+
+Then we can load the dataset and take note of maxima and minima of traces so
+that we can normalize each trace to the interval `[-1, 1]` which helps deep
+learning since most of the time we initialize the weights with the assumption
+that the inputs are normally distributed with mean zero and variance 1.
+
+```python
+# Load the dataset
+from sedpack.io import Dataset
+
+dataset = Dataset(dataset_path)
+
+# Create the definition of inputs and outputs.
+assert dataset.dataset_structure.saved_data_description[0].name == "trace1"
+trace_min = dataset.dataset_structure.saved_data_description[0].custom_metadata["min"]
+trace_max = dataset.dataset_structure.saved_data_description[0].custom_metadata["max"]
+inputs = {"trace1": {"min": trace_min, "delta": trace_max - trace_min}}
+outputs = {"sub_bytes_in_0": {"max_val": 256}}
+```
+
+Then we can just import and create the model.
+
+```python
+from scaaml.models import get_gpam_model
+
+model = get_gpam_model(
+    inputs=inputs,
+    outputs=outputs,
+    output_relations=[],
+    trace_len=trace_len,
+    merge_filter_1=merge_filter_1,
+    merge_filter_2=merge_filter_2,
+    patch_size=patch_size,
+)
+
+# Compile model
+model.compile(
+    optimizer=keras.optimizers.Adafactor(target_lr),
+    loss=["categorical_crossentropy" for _ in range(len(outputs))],
+    metrics={name: ["acc", MeanRank()] for name in outputs},
+)
+model.summary()
+```
+
+We need one-hot representation of the target classes. Thus we add the following
+code which transforms records into suitable input-output pairs for Keras
+training:
+
+```python
+def process_record(record: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+    """Processing of a single record. The input is a dictionary of string and
+    tensor, the output of this function is a tuple the neural network's input
+    (trace) and a dictionary of one-hot encoded expected outputs.
+    """
+    # The first neural network was using just the first half of the trace:
+    inputs = record["trace1"]
+    outputs = {
+        "sub_bytes_in_0":
+            keras.ops.one_hot(
+                record["sub_bytes_in"][0],
+                num_classes=256,
+            ),
+    }
+    return (inputs, outputs)
+```
+
+And we train using
+
+```python
+train_ds = dataset.as_tfdataset(
+    split="train",
+    process_record=process_record,
+    batch_size=batch_size,
+)
+validation_ds = dataset.as_tfdataset(
+    split="test",
+    process_record=process_record,
+    batch_size=batch_size,
+)
+
+# Train the model.
+_ = model.fit(
+    train_ds,
+    steps_per_epoch=steps_per_epoch,
+    epochs=epochs,
+    validation_data=validation_ds,
+    validation_steps=val_steps,
+)
+```
+
+## Exercises for the Reader
+
+### Hypertuning
+
+The values have not been hypertuned. We still achieve around 60% accuracy of
+predicting the byte value. And with relatively few epochs we see some leakage
+already (10 to 100 epochs). But here are some ideas of what could be tuned:
+
+-   The learning rate is rather small. What happens when we increase
+    `target_lr`?
+-   The `patch_size` was chosen to be roughly square root of the trace length.
+    What do we get for different values?
+-   We know that `patch_size` must divide the `trace_len`. What happens when
+    during `process_record` we cut just a part of the trace so that it is a
+    multiple of `patch_size`?
+-   We do not use `merge_filter_1` and `merge_filter_2`. What is the influence
+    of those?
+
+You can leverage [KerasTuner](https://keras.io/keras_tuner/getting_started/) to
+find the right hyperparameters.
+
+### Cutting the Traces
+
+In our SNR tutorial we saw that most of the leakage comes from a single point.
+Can we benefit from cutting the trace and possibly changing the
+hyperparameters? Do we get training speedup? Do we get an improvement in
+accuracy?
+
+### Multiple Outputs
+
+It is possible to train with multiple outputs. Can you output predictions of
+two or even all 16 bytes of S-BOX input values?
