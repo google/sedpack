@@ -113,6 +113,12 @@ class DatasetBase:
         """
         return self._dataset_info.metadata
 
+    @metadata.setter
+    def metadata(self, value: Metadata) -> None:
+        """Set the metadata of this dataset.
+        """
+        self._dataset_info.metadata = value
+
     @property
     def dataset_info(self) -> DatasetInfo:
         """Get a copy of the dataset information.
