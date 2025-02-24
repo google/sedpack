@@ -35,13 +35,15 @@ from scaaml.stats.attack_points.aes_128.attack_points import (
     SubBytesOut,
 )
 from sedpack.io import Dataset
+from sedpack.io.types import SplitT
 
 import jax
 import jax.numpy as jnp
 
 
 @jax.jit
-def jax_update(existing_aggregate, new_trace):
+def jax_update(existing_aggregate: jax.Array,
+               new_trace: jax.Array) -> tuple[jax.Array, jax.Array, jax.Array]:
     """For a new value new_trace, compute the new count, new mean, the new
     squared_deltas.  mean accumulates the mean of the entire dataset
     squared_deltas aggregates the squared distance from the mean count
@@ -55,21 +57,30 @@ def jax_update(existing_aggregate, new_trace):
     squared_deltas += delta * updated_delta
     return (count, mean, squared_deltas)
 
-def jax_get_initial_aggregate(trace_len: int):
+
+def jax_get_initial_aggregate(
+        trace_len: int) -> tuple[jax.Array, jax.Array, jax.Array]:
+    """Return an initial aggregate.
+    """
     dtype = jnp.float32
     count = jnp.array(0, dtype=dtype)
     mean = jnp.zeros(trace_len, dtype=dtype)
     squared_deltas = jnp.zeros(trace_len, dtype=dtype)
     return (count, mean, squared_deltas)
 
+
 # Retrieve the mean, variance and sample variance from an aggregate
-def jax_finalize(existing_aggregate):
+def jax_finalize(
+    existing_aggregate: tuple[jax.Array, jax.Array, jax.Array]
+) -> tuple[jax.Array, jax.Array]:
     """Retrieve the mean, variance, and sample variance from an aggregate.
     """
     (count, mean, squared_deltas) = existing_aggregate
     assert count >= 2
-    (mean, variance,) = (mean, squared_deltas / count,)
-    return (mean, variance,)
+    return (
+        mean,
+        squared_deltas / count,
+    )
 
 
 def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
@@ -79,13 +90,14 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
     dataset = Dataset(dataset_path)
 
     # We know that trace1 is the first.
-    trace_len: int = dataset.dataset_structure.saved_data_description[0].shape[0]
+    trace_len: int = dataset.dataset_structure.saved_data_description[0].shape[
+        0]
 
     leakage_to_aggregate = {
         i: jax_get_initial_aggregate(trace_len=trace_len) for i in range(9)
     }
 
-    split = "test"
+    split: SplitT = "test"
 
     for example in tqdm(
             dataset.as_numpy_iterator(
@@ -94,26 +106,31 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
                 shuffle=0,
             ),
             desc=f"[JAX] Computing SNR over {split}",
-            total=dataset._dataset_info.splits[split].number_of_examples,
+            total=dataset.dataset_info.splits[split].number_of_examples,
     ):
         current_leakage = int(example[ap_name][0]).bit_count()
-        leakage_to_aggregate[current_leakage] = jax_update(leakage_to_aggregate[current_leakage], example["trace1"],)
+        leakage_to_aggregate[current_leakage] = jax_update(
+            leakage_to_aggregate[current_leakage],
+            example["trace1"],
+        )
 
     results = {
-        leakage: jax_finalize(aggregate) for leakage, aggregate in leakage_to_aggregate.items()
+        leakage: jax_finalize(aggregate)
+        for leakage, aggregate in leakage_to_aggregate.items()
     }
 
     # Find out which class is the most common.
     most_common_leakage = 0
     most_common_count = 0
-    for leakage, (count, _mean, _squared_deltas) in leakage_to_aggregate.items():
+    for leakage, (count, _, _) in leakage_to_aggregate.items():
         if count >= most_common_count:
             most_common_leakage = leakage
             most_common_count = count
 
-    signals = np.array([mean for mean, _variance in results.values()])
+    signals = np.array([mean for mean, _ in results.values()])
 
-    return 20 * np.log(np.var(signals, axis=0) / results[most_common_leakage][1])
+    return 20 * np.log(
+        np.var(signals, axis=0) / results[most_common_leakage][1])
 
 
 def snr_np(dataset_path: Path) -> npt.NDArray[np.float64]:
@@ -131,7 +148,7 @@ def snr_np(dataset_path: Path) -> npt.NDArray[np.float64]:
         db=True,
     )
 
-    split = "test"
+    split: SplitT = "test"
 
     for example in tqdm(
             dataset.as_numpy_iterator(
@@ -140,7 +157,7 @@ def snr_np(dataset_path: Path) -> npt.NDArray[np.float64]:
                 shuffle=0,
             ),
             desc=f"[NP] Computing SNR over {split}",
-            total=dataset._dataset_info.splits[split].number_of_examples,
+            total=dataset.dataset_info.splits[split].number_of_examples,
     ):
         snr.update(example)
 

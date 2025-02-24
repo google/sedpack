@@ -12,7 +12,7 @@ interesting. And how much
 
 ## A Little Theory
 
-We attempt to give the minimal necessary background. Unfortunatelly the
+We attempt to give the minimal necessary background. Unfortunately the
 ChipWhisperer tutorial on SNR keeps moving around.
 [PA_Intro_3-Measuring_SNR_of_Target.ipynb](https://github.com/newaetech/chipwhisperer-jupyter/blob/master/archive/PA_Intro_3-Measuring_SNR_of_Target.ipynb).
 The use of SNR appeared in the paper
@@ -190,7 +190,7 @@ time the improvements we provide here might not be the most optimal versions.
 
 There are two main ineffective pieces of code in our previous example.
 
--    Recoumputing AES in software. The `SNRSinglePass` class with
+-    Recomputing AES in software. The `SNRSinglePass` class with
      `LeakageModelAES128` are generic but are not optimized at all. Most
      notably they implement AES128 in Python even when we care about a single
      byte.  Luckily we have saved `sub_bytes_in` together with our dataset so

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base class for a dataset."""
+from copy import deepcopy
 import logging
 from pathlib import Path
 import semver
@@ -111,6 +112,12 @@ class DatasetBase:
         """Return the metadata of this dataset.
         """
         return self._dataset_info.metadata
+    
+    @property
+    def dataset_info(self) -> DatasetInfo:
+        """Get a copy of the dataset information.
+        """
+        return deepcopy(self._dataset_info)
 
     @metadata.setter
     def metadata(self, value: Metadata) -> None:
