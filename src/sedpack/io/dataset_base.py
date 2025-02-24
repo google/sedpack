@@ -112,7 +112,7 @@ class DatasetBase:
         """Return the metadata of this dataset.
         """
         return self._dataset_info.metadata
-    
+
     @property
     def dataset_info(self) -> DatasetInfo:
         """Get a copy of the dataset information.

@@ -32,7 +32,6 @@ from scaaml.stats.snr import SNRSinglePass
 from scaaml.stats.attack_points.aes_128.attack_points import (
     LeakageModelAES128,
     SubBytesIn,
-    SubBytesOut,
 )
 from sedpack.io import Dataset
 from sedpack.io.types import SplitT
