@@ -119,12 +119,6 @@ class DatasetBase:
         """
         return deepcopy(self._dataset_info)
 
-    @metadata.setter
-    def metadata(self, value: Metadata) -> None:
-        """Set the metadata of this dataset.
-        """
-        self._dataset_info.metadata = value
-
     @property
     def dataset_structure(self) -> DatasetStructure:
         """Return the structure of this dataset.
