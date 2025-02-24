@@ -52,9 +52,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "maturin[patchelf,zig]",
+]
 
 [project.scripts]
 
 [project.urls]
 "Homepage" = "https://github.com/google/sedpack"
 "Bug Tracker" = "https://github.com/google/sedpack"
+
+[tool.ruff]
+target-version = "py310"

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import get_args
 
 import numpy as np
 
@@ -23,7 +22,7 @@ from sedpack.io.types import ShardFileTypeT
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.npz import IterateShardNP
 from sedpack.io.tfrec import IterateShardTFRec
-from sedpack.io.shard.get_shard_writer import get_shard_writer, _SHARD_FILE_TYPE_TO_CLASS
+from sedpack.io.shard.get_shard_writer import get_shard_writer
 
 
 def shard_write_and_read(attributes: dict[str, np.ndarray], shard_file: Path,

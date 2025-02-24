@@ -12,12 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import gzip
 from pathlib import Path
-from typing import Any, Union
-
-import numpy as np
-import numpy.typing as npt
 
 from sedpack.io.utils import hash_checksums
 

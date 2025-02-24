@@ -14,7 +14,6 @@
 
 from pathlib import Path
 import pytest
-from typing import get_args
 
 import numpy as np
 
@@ -24,7 +23,7 @@ from sedpack.io.types import ShardFileTypeT
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.npz import IterateShardNP
 from sedpack.io.tfrec import IterateShardTFRec
-from sedpack.io.shard.get_shard_writer import get_shard_writer, _SHARD_FILE_TYPE_TO_CLASS
+from sedpack.io.shard.get_shard_writer import get_shard_writer
 
 
 def shard_write_and_read(attributes: dict[str, np.ndarray], shard_file: Path,
@@ -179,8 +178,9 @@ def test_fb_all_dtypes_np(tmp_path):
             np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
         "a_float64":
             np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        "a_float128":
-            np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
+        # The type np.float128 is not supported on all platforms.
+        #"a_float128":
+        #    np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
     shard_write_and_read(attributes, shard_file, shard_file_type="npz")
 
@@ -239,8 +239,9 @@ def test_fb_all_dtypes_fb(tmp_path):
             np.random.uniform(-5, 5, size=(E, 16)).astype(np.float32),
         "a_float64":
             np.random.uniform(-5, 5, size=(E, 1, 5)).astype(np.float64),
-        "a_float128":
-            np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
+        # The type np.float128 is not supported on all platforms.
+        #"a_float128":
+        #    np.random.uniform(-5, 5, size=(E, 5, 3)).astype(np.float128),
     }
     shard_write_and_read(attributes, shard_file, shard_file_type="fb")
 

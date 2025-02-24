@@ -17,7 +17,7 @@ import pytest
 
 import sedpack
 from sedpack.io import Dataset
-from sedpack.io import Attribute, Metadata
+from sedpack.io import Metadata
 from sedpack.io.errors import DatasetExistsError
 
 

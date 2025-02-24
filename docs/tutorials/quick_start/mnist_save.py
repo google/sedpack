@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Download the MNIST dataset and save it in dataset-lib format.
+"""Download the MNIST dataset and save it in dataset-lib format. For a tutorial
+with explanations see: https://google.github.io/sedpack/tutorials/mnist
 
 Example use:
     python mnist_save.py -d "~/Datasets/mnist_dataset/"
-    python mnist_read.py -d "~/Datasets/mnist_dataset/"
+    python mnist_read_keras.py -d "~/Datasets/mnist_dataset/"
 """
 
 import argparse
@@ -92,14 +93,20 @@ def main() -> None:
                 split="holdout",
             )
 
-        # Randomly assign 10% of validation and the rest is training
+        # Randomly assign 10% of validation and the rest is training.
         assert len(x_train) == len(y_train)
         train_indices: list[int] = list(range(len(x_train)))
         random.shuffle(train_indices)
         validation_split_position: int = int(len(x_train) * 0.1)
         for index_position, index in enumerate(
-                tqdm(train_indices, desc='train and val')):
-            split = "test" if index_position < validation_split_position else "train"
+                tqdm(train_indices, desc="train and val")):
+
+            # Assign to either train or test (aka validation).
+            split: SplitT = "test"
+            if index_position < validation_split_position:
+                split = "train"
+
+            # Write the example.
             dataset_filler.write_example(
                 values={
                     "input": x_train[index],

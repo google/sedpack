@@ -12,7 +12,16 @@ on:
 
 jobs:
   piptesting:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        # ubuntu-24.04-arm is not stable enough
+        platform:
+          - runner: ubuntu-latest  # x64
+          - runner: windows-latest  # x64
+          - runner: macos-13  # Intel
+          - runner: macos-14  # arm64
+          - runner: macos-latest  # arm64
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -26,4 +35,4 @@ jobs:
       - name: Run tutorial using sedpack pip package
         run: |
           python docs/tutorials/quick_start/mnist_save.py -d mnist_dataset
-          python docs/tutorials/quick_start/mnist_read.py -d mnist_dataset
+          python docs/tutorials/quick_start/mnist_read_keras.py -d mnist_dataset

@@ -13,15 +13,14 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Any, get_args, Union
+from typing import get_args, Union
 
 import pytest
 import numpy as np
-import numpy.typing as npt
 
 import sedpack
 from sedpack.io import Dataset
-from sedpack.io import Metadata, DatasetStructure, Attribute
+from sedpack.io import Metadata
 from sedpack.io.types import CompressionT, HashChecksumT, ShardFileTypeT, TRAIN_SPLIT
 
 
