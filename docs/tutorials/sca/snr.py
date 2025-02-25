@@ -191,7 +191,7 @@ def main() -> None:
 
     print(f"It took {np_runtime:.2f}s to run the pure Python / NP version and "
           f"{jax_runtime:.2f}s to run the JAX version")
-    print("The result differes by at most "
+    print("The result differs by at most "
           f"{np.max(np.abs(result_np_slow - result_jax)) = }")
 
 
