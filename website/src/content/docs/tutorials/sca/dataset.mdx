@@ -61,7 +61,7 @@ We save the following attributes:
 Some (most) of our scenarios will be dealing with profiled attacks. Where
 during the profiling phase we know the secret (`key`) and during attack we try
 to find it out. For convenience we also save the `ciphertext` (result of
-encryption of the given `plaintexts` by the `key`) and first round of AES S-BOX
+encryption of the given `plaintext` by the `key`) and first round of AES S-BOX
 inputs and outputs. These are for convenience and we could omit those. In a
 profiled setting (one device where we train -- profiling phase and another
 device where we attack -- attack phase) `ciphertext`, `sub_bytes_in`,
