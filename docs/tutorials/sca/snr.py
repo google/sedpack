@@ -39,10 +39,12 @@ from sedpack.io.types import SplitT
 import jax
 import jax.numpy as jnp
 
+AggregateT = tuple[jax.Array, jax.Array, jax.Array]
+
 
 @jax.jit  # type: ignore[misc]
-def jax_update(existing_aggregate: jax.Array,
-               new_trace: jax.Array) -> tuple[jax.Array, jax.Array, jax.Array]:
+def jax_update(existing_aggregate: AggregateT,
+               new_trace: jax.Array) -> AggregateT:
     """For a new value new_trace, compute the new count, new mean, the new
     squared_deltas.  mean accumulates the mean of the entire dataset
     squared_deltas aggregates the squared distance from the mean count
@@ -57,8 +59,7 @@ def jax_update(existing_aggregate: jax.Array,
     return (count, mean, squared_deltas)
 
 
-def jax_get_initial_aggregate(
-        trace_len: int) -> tuple[jax.Array, jax.Array, jax.Array]:
+def jax_get_initial_aggregate(trace_len: int) -> AggregateT:
     """Return an initial aggregate.
     """
     dtype = jnp.float32
@@ -69,9 +70,7 @@ def jax_get_initial_aggregate(
 
 
 # Retrieve the mean, variance and sample variance from an aggregate
-def jax_finalize(
-    existing_aggregate: tuple[jax.Array, jax.Array, jax.Array]
-) -> tuple[jax.Array, jax.Array]:
+def jax_finalize(existing_aggregate: AggregateT) -> tuple[jax.Array, jax.Array]:
     """Retrieve the mean, variance, and sample variance from an aggregate.
     """
     (count, mean, squared_deltas) = existing_aggregate
