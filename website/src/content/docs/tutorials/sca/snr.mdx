@@ -239,10 +239,12 @@ The code for updates in Welford's algorithms looks like follows:
     # Welford's algorithm
     
     def np_update(existing_aggregate, new_trace):
-        """For a new value new_trace, compute the new count, new mean, the new
-        squared_deltas.  mean accumulates the mean of the entire dataset
-        squared_deltas aggregates the squared distance from the mean count
-        aggregates the number of samples seen so far
+        """For a given value `new_trace`, compute the new `count`, new `mean`, and
+        new `squared_deltas`. The variables have the following meaning:
+
+        - `mean` accumulates the mean of the entire dataset,
+        - `squared_deltas` aggregates the squared distance from the mean,
+        - `count` aggregates the number of samples seen so far.
         """
         (count, mean, squared_deltas) = existing_aggregate
         count += 1
@@ -276,10 +278,12 @@ The code for updates in Welford's algorithms looks like follows:
     
     @numba.jit
     def numba_update(existing_aggregate, new_trace):
-        """For a new value new_trace, compute the new count, new mean, the new
-        squared_deltas.  mean accumulates the mean of the entire dataset
-        squared_deltas aggregates the squared distance from the mean count
-        aggregates the number of samples seen so far
+        """For a given value `new_trace`, compute the new `count`, new `mean`, and
+        new `squared_deltas`. The variables have the following meaning:
+
+        - `mean` accumulates the mean of the entire dataset,
+        - `squared_deltas` aggregates the squared distance from the mean,
+        - `count` aggregates the number of samples seen so far.
         """
         (count, mean, squared_deltas) = existing_aggregate
         count += 1
@@ -313,10 +317,12 @@ The code for updates in Welford's algorithms looks like follows:
     
     @jax.jit
     def jax_update(existing_aggregate, new_trace):
-        """For a new value new_trace, compute the new count, new mean, the new
-        squared_deltas.  mean accumulates the mean of the entire dataset
-        squared_deltas aggregates the squared distance from the mean count
-        aggregates the number of samples seen so far
+        """For a given value `new_trace`, compute the new `count`, new `mean`, and
+        new `squared_deltas`. The variables have the following meaning:
+
+        - `mean` accumulates the mean of the entire dataset,
+        - `squared_deltas` aggregates the squared distance from the mean,
+        - `count` aggregates the number of samples seen so far.
         """
         (count, mean, squared_deltas) = existing_aggregate
         count += 1
