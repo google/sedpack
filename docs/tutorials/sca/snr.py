@@ -45,10 +45,12 @@ AggregateT = tuple[jax.Array, jax.Array, jax.Array]
 @jax.jit  # type: ignore[misc]
 def jax_update(existing_aggregate: AggregateT,
                new_trace: jax.Array) -> AggregateT:
-    """For a new value new_trace, compute the new count, new mean, the new
-    squared_deltas.  mean accumulates the mean of the entire dataset
-    squared_deltas aggregates the squared distance from the mean count
-    aggregates the number of samples seen so far
+    """For a given value `new_trace`, compute the new `count`, new `mean`, and
+    new `squared_deltas`. The variables have the following meaning:
+
+    - `mean` accumulates the mean of the entire dataset,
+    - `squared_deltas` aggregates the squared distance from the mean,
+    - `count` aggregates the number of samples seen so far.
     """
     (count, mean, squared_deltas) = existing_aggregate
     count += 1
