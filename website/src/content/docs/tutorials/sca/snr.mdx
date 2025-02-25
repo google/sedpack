@@ -76,8 +76,8 @@ each time point over all traces with Hamming weight of the first S-BOX input
 byte equal to 3. Thus we have 9 arrays (Hamming weight of a byte is 0 to 8) of
 variances, each of the same length as the original trace.
 
-If we assume the additive noise caused by the measurements has mean zero and is
-independent from trace to trace (exercise: explain why both are reasonable
+We often assume the additive noise caused by the measurements has mean zero and
+is independent from trace to trace (exercise: explain why both are reasonable
 assumptions). We can define variance of the signal as the variance between each
 class. Since we captured many traces for each class we just compute 9 sample
 means and compute variance of these 9 means (again an array of length equal to
