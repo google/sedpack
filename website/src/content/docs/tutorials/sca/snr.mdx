@@ -266,8 +266,8 @@ The code for updates in Welford's algorithms looks like follows:
         """
         (count, mean, squared_deltas) = existing_aggregate
         assert count >= 2
-        (mean, variance,) = (mean, squared_deltas / count,)
-        return (mean, variance,)
+        (mean, variance) = (mean, squared_deltas / count)
+        return (mean, variance)
     ```
   </TabItem>
 
@@ -305,8 +305,8 @@ The code for updates in Welford's algorithms looks like follows:
         """
         (count, mean, squared_deltas) = existing_aggregate
         assert count >= 2
-        (mean, variance,) = (mean, squared_deltas / count,)
-        return (mean, variance,)
+        (mean, variance) = (mean, squared_deltas / count)
+        return (mean, variance)
     ```
   </TabItem>
 
@@ -344,8 +344,8 @@ The code for updates in Welford's algorithms looks like follows:
         """
         (count, mean, squared_deltas) = existing_aggregate
         assert count >= 2
-        (mean, variance,) = (mean, squared_deltas / count,)
-        return (mean, variance,)
+        (mean, variance) = (mean, squared_deltas / count)
+        return (mean, variance)
     ```
   </TabItem>
 
