@@ -36,6 +36,15 @@ export default defineConfig({
           label: 'Tutorials',
           items: [
             { label: 'MNIST', slug: 'tutorials/mnist' },
+            {
+              label: 'Side Channel Attacks',
+              items: [
+                { label: 'SCA Overview', slug: 'tutorials/sca/overview' },
+                { label: 'Dataset Preparation', slug: 'tutorials/sca/dataset' },
+                { label: 'Signal to Noise Ratio', slug: 'tutorials/sca/snr' },
+                { label: 'Deep Learning (GPAM)', slug: 'tutorials/sca/gpam' },
+              ],
+            },
           ],
         },
       ],
