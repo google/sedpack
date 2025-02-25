@@ -22,6 +22,7 @@ Example use:
 """
 import argparse
 from pathlib import Path
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -180,10 +181,18 @@ def main() -> None:
                         required=True)
     args = parser.parse_args()
 
+    jax_begin = time.time()
     result_jax = snr_jax(dataset_path=args.dataset_path, ap_name="sub_bytes_in")
-    result_np_slow = snr_np(dataset_path=args.dataset_path)
+    jax_runtime = time.time() - jax_begin
 
-    print(f"{np.max(np.abs(result_np_slow - result_jax)) = }")
+    np_begin = time.time()
+    result_np_slow = snr_np(dataset_path=args.dataset_path)
+    np_runtime = time.time() - np_begin
+
+    print(f"It took {np_runtime:.2f}s to run the pure Python / NP version and "
+          f"{jax_runtime:.2f}s to run the JAX version")
+    print("The result differes by at most "
+          f"{np.max(np.abs(result_np_slow - result_jax)) = }")
 
 
 if __name__ == "__main__":
