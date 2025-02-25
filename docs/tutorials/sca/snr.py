@@ -94,6 +94,7 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
         0]
 
     leakage_to_aggregate = {
+        # An aggregate for each possible Hamming weight of the first byte.
         i: jax_get_initial_aggregate(trace_len=trace_len) for i in range(9)
     }
 
