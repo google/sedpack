@@ -63,11 +63,11 @@ during the profiling phase we know the secret (`key`) and during attack we try
 to find it out. For convenience we also save the `ciphertext` (result of
 encryption of the given `plaintext` by the `key`) and first round of AES S-BOX
 inputs and outputs. These are for convenience and we could omit those. In a
-profiled setting (one device where we train -- profiling phase and another
-device where we attack -- attack phase) `ciphertext`, `sub_bytes_in`,
-`sub_bytes_out` could be considered to be redundant information. In the
-non-profiled setting (single device where we do not know the `key`) we would
-have access only to `plaintext` and `ciphertext`.
+profiled setting (one device where we train and another device where we attack,
+these different phases are called the profiling phase and the attack phase)
+`ciphertext`, `sub_bytes_in`, `sub_bytes_out` could be considered to be
+redundant information. In the non-profiled setting (single device where we do
+not know the `key`) we would have access only to `plaintext` and `ciphertext`.
 
 Naturally if we wanted to save more attack points, e.g., last round of AES
 states, all inputs of the S-BOX, we could. Alternatively we can choose to
