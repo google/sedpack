@@ -116,7 +116,7 @@ impl Iterator for ExampleIterator {
 }
 
 /// Iterator over a single shard file.
-struct ShardProgress {
+pub struct ShardProgress {
     total_examples: usize,
     used_examples: usize,
     shard: LoadedShard,
@@ -143,7 +143,7 @@ fn read_to_end(mut reader: impl std::io::Read) -> Vec<u8> {
 }
 
 /// Get ShardProgress.
-fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
+pub fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
     let file_bytes = get_file_bytes(shard_info);
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
