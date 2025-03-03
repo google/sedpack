@@ -27,5 +27,5 @@ pyo3 = "0.23"
 rand = "0.9"
 strum = "0.27.0"
 strum_macros = "0.27.0"
-yoke = { version = "0.7", features = ["derive"] }
+yoke = { version = "0.8", features = ["derive"] }
 zstd = "0.13.2"
