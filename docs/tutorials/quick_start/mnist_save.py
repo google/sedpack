@@ -67,18 +67,22 @@ def main() -> None:
     )
 
     # Types of attributes stored
-    dataset_structure = DatasetStructure(saved_data_description=[
-        Attribute(
-            name="input",
-            shape=(28, 28),
-            dtype="float32",
-        ),
-        Attribute(
-            name="digit",
-            shape=(),
-            dtype="uint8",
-        ),
-    ], compression=args.compression, shard_file_type=args.shard_file_type,)
+    dataset_structure = DatasetStructure(
+        saved_data_description=[
+            Attribute(
+                name="input",
+                shape=(28, 28),
+                dtype="float32",
+            ),
+            Attribute(
+                name="digit",
+                shape=(),
+                dtype="uint8",
+            ),
+        ],
+        compression=args.compression,
+        shard_file_type=args.shard_file_type,
+    )
 
     # Create a new dataset
     dataset = Dataset.create(

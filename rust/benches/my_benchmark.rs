@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use sedpack_rs::example_iteration::{CompressionType, ExampleIterator, ShardInfo, get_shard_progress};
-pub use sedpack_rs::parallel_map::parallel_map;
 use std::fs;
+
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use sedpack_rs::example_iteration::{
+    get_shard_progress, CompressionType, ExampleIterator, ShardInfo,
+};
+pub use sedpack_rs::parallel_map::parallel_map;
 
 pub fn get_shard_files() -> Vec<ShardInfo> {
     let dir = "mnist_fb_gzip/train/";
@@ -26,7 +29,10 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
         .map(|p| p.path().to_str().unwrap().to_string())
         .filter(|p| p.ends_with(".fb"))
         .into_iter()
-        .map(|file_path| ShardInfo { file_path: file_path, compression_type: CompressionType::Gzip})
+        .map(|file_path| ShardInfo {
+            file_path: file_path,
+            compression_type: CompressionType::Gzip,
+        })
         .collect();
     println!(">> Decoding {} shards", shard_infos.len());
     shard_infos
@@ -34,16 +40,26 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
 
 pub fn example_iterator_benchmark(c: &mut Criterion) {
     let shard_infos = get_shard_files();
-    c.bench_function("ExampleIterator", |b| b.iter(|| {
-        for _example in ExampleIterator::new(black_box(shard_infos.clone()), false, 12) {}
-    }));
+    c.bench_function("ExampleIterator", |b| {
+        b.iter(
+            || {
+                for _example in ExampleIterator::new(black_box(shard_infos.clone()), false, 12) {}
+            },
+        )
+    });
 }
 
 pub fn parallel_map_benchmark(c: &mut Criterion) {
     let shard_infos = get_shard_files();
-    c.bench_function("parallel_map", |b| b.iter(|| {
-        for _shard in parallel_map(|x| get_shard_progress(&x), black_box(shard_infos.clone().into_iter()), 32) {}
-    }));
+    c.bench_function("parallel_map", |b| {
+        b.iter(|| {
+            for _shard in parallel_map(
+                |x| get_shard_progress(&x),
+                black_box(shard_infos.clone().into_iter()),
+                32,
+            ) {}
+        })
+    });
 }
 
 criterion_group!(benches, parallel_map_benchmark, example_iterator_benchmark);
