@@ -11,7 +11,7 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
-      BENCHMARK_RESULTS: benchmark_results.json
+      BENCHMARK_RESULTS: benchmark_results
       PR_EVENT: event.json
     steps:
       - name: Download Benchmark Results
@@ -38,7 +38,7 @@ jobs:
       - name: Track Benchmarks with Bencher
         run: |
           bencher run \
-          --project save-walter-white-1234abcd \
+          --project sedpack \
           --token '${{ secrets.BENCHER_API_TOKEN }}' \
           --branch "$PR_HEAD" \
           --start-point "$PR_BASE" \
@@ -47,7 +47,7 @@ jobs:
           --start-point-reset \
           --testbed ubuntu-latest \
           --err \
-          --adapter json \
+          --adapter rust_criterion \
           --github-actions '${{ secrets.GITHUB_TOKEN }}' \
           --ci-number "$PR_NUMBER" \
           --file "$BENCHMARK_RESULTS"
