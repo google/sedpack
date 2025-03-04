@@ -1,0 +1,75 @@
+# Based on https://bencher.dev/docs/how-to/github-actions/
+name: Run Benchmarks
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  benchmark_fork_pr_branch:
+    name: Run Fork PR Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # begin: Use source sedpack package
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          # The cache key depends on requirements.txt
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
+      # Build a virtualenv, but only if it doesn't already exist
+      - name: Populate pip cache
+        # requirements.txt is not reliable since across different platforms and
+        # their versions the pip package versions might vary. We regenerate it
+        # again from pyproject.toml every time when pyproject.toml or
+        # requirements.txt changes. The pinned versions in requirements.txt are
+        # tested by coverage since that is running on ubuntu which is also used
+        # to produce the main requirements.txt file.
+        run: |
+          pip install pip-tools
+          pip-compile --generate-hashes pyproject.toml > requirements.txt
+          pip install -r requirements.txt
+          pip install -r test_requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install sedpack locally
+        run: pip install --editable .
+      # end: Use source sedpack package
+
+      - name: Prepare benchmarking data
+        run: (cd rust/ ; bash benches/setup.sh )
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: bencherdev/bencher@main
+      - name: Benchmarking
+        run: (cd rust/ ; cargo bench)
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark_results
+          path: ./rust/target/criterion
+      - name: Upload GitHub Pull Request Event
+        uses: actions/upload-artifact@v4
+        with:
+          name: event.json
+          path: ${{ github.event_path }}

@@ -21,12 +21,14 @@ Example use:
 
 import argparse
 import random
+from typing import get_args
 
 from tensorflow import keras
 from tqdm import tqdm
 
 from sedpack.io import Dataset, Metadata, DatasetStructure, Attribute
 from sedpack.io.types import SplitT
+from sedpack.io.types import CompressionT, ShardFileTypeT
 
 
 def main() -> None:
@@ -38,6 +40,16 @@ def main() -> None:
                         "-d",
                         help="Where to save the dataset",
                         required=True)
+    parser.add_argument("--compression",
+                        "-c",
+                        help="Which compression algorithm to use",
+                        default="GZIP",
+                        choices=get_args(CompressionT))
+    parser.add_argument("--shard_file_type",
+                        "-f",
+                        help="Which shard file type to use",
+                        default="tfrec",
+                        choices=get_args(ShardFileTypeT))
     args = parser.parse_args()
 
     # General info about the dataset
@@ -55,18 +67,22 @@ def main() -> None:
     )
 
     # Types of attributes stored
-    dataset_structure = DatasetStructure(saved_data_description=[
-        Attribute(
-            name="input",
-            shape=(28, 28),
-            dtype="float32",
-        ),
-        Attribute(
-            name="digit",
-            shape=(),
-            dtype="uint8",
-        ),
-    ])
+    dataset_structure = DatasetStructure(
+        saved_data_description=[
+            Attribute(
+                name="input",
+                shape=(28, 28),
+                dtype="float32",
+            ),
+            Attribute(
+                name="digit",
+                shape=(),
+                dtype="uint8",
+            ),
+        ],
+        compression=args.compression,
+        shard_file_type=args.shard_file_type,
+    )
 
     # Create a new dataset
     dataset = Dataset.create(

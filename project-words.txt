@@ -29,6 +29,7 @@ booktitle
 burszteindc
 byteswap
 cdylib
+codegen
 compresslevel
 convnet
 crossentropy
