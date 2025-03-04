@@ -27,10 +27,7 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
         .filter_map(|p| p.ok())
         .map(|p| p.path().to_str().unwrap().to_string())
         .filter(|p| p.ends_with(".fb"))
-        .map(|file_path| ShardInfo {
-            file_path,
-            compression_type: CompressionType::Gzip,
-        })
+        .map(|file_path| ShardInfo { file_path, compression_type: CompressionType::Gzip })
         .collect();
     println!(">> Decoding {} shards", shard_infos.len());
     shard_infos
