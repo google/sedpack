@@ -41,4 +41,4 @@ jobs:
           components: clippy
           toolchain: nightly
       - name: clippy
-        run: cargo +nightly clippy
+        run: cargo +nightly clippy --all-targets
