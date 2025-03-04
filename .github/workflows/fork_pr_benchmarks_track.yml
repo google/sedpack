@@ -11,7 +11,7 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
-      BENCHMARK_RESULTS: benchmark_results
+      BENCHMARK_RESULTS: rust/target/criterion
       PR_EVENT: event.json
     steps:
       - name: Download Benchmark Results
@@ -24,6 +24,8 @@ jobs:
         with:
           name: ${{ env.PR_EVENT }}
           run_id: ${{ github.event.workflow_run.id }}
+      - name: Figure out what is where
+        run: ls ; ls rust ; ls rust/target ; ls rust/target/criterion
       - name: Export PR Event Data
         uses: actions/github-script@v6
         with:
