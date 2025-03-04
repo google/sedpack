@@ -24,12 +24,11 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
     let dir = "mnist_fb_gzip/train/";
     let shard_infos: Vec<_> = fs::read_dir(dir)
         .unwrap()
-        .filter(|p| p.is_ok())
-        .map(|p| p.expect("filtered"))
+        .filter_map(|p| p.ok())
         .map(|p| p.path().to_str().unwrap().to_string())
         .filter(|p| p.ends_with(".fb"))
         .map(|file_path| ShardInfo {
-            file_path: file_path,
+            file_path,
             compression_type: CompressionType::Gzip,
         })
         .collect();
