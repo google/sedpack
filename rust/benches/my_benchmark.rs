@@ -28,7 +28,6 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
         .map(|p| p.expect("filtered"))
         .map(|p| p.path().to_str().unwrap().to_string())
         .filter(|p| p.ends_with(".fb"))
-        .into_iter()
         .map(|file_path| ShardInfo {
             file_path: file_path,
             compression_type: CompressionType::Gzip,
@@ -41,11 +40,11 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
 pub fn example_iterator_benchmark(c: &mut Criterion) {
     let shard_infos = get_shard_files();
     c.bench_function("ExampleIterator", |b| {
-        b.iter(
-            || {
-                for _example in ExampleIterator::new(black_box(shard_infos.clone()), false, 12) {}
-            },
-        )
+        b.iter(|| {
+            for example in ExampleIterator::new(shard_infos.clone(), false, 12) {
+                let _ = black_box(example);
+            }
+        })
     });
 }
 
@@ -53,11 +52,11 @@ pub fn parallel_map_benchmark(c: &mut Criterion) {
     let shard_infos = get_shard_files();
     c.bench_function("parallel_map", |b| {
         b.iter(|| {
-            for _shard in parallel_map(
-                |x| get_shard_progress(&x),
-                black_box(shard_infos.clone().into_iter()),
-                32,
-            ) {}
+            for shard in
+                parallel_map(|x| get_shard_progress(&x), shard_infos.clone().into_iter(), 32)
+            {
+                let _ = black_box(shard);
+            }
         })
     });
 }
