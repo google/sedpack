@@ -51,6 +51,5 @@ jobs:
           --err \
           --adapter rust_criterion \
           --github-actions '${{ secrets.GITHUB_TOKEN }}' \
-          --ci-only-thresholds \
           --ci-number "$PR_NUMBER" \
           --file "$BENCHMARK_RESULTS"
