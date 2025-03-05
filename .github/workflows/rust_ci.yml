@@ -3,9 +3,10 @@ on:
   push:
     paths:
       - '**/*.rs'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.rs'
 
 permissions:
   contents: read

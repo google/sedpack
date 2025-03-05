@@ -3,10 +3,14 @@ on:
   push:
     paths:
       - '**/*.py'
+      - '**/*.rs'
       - 'mypy.ini'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.py'
+      - '**/*.rs'
+      - 'mypy.ini'
 jobs:
   mypy:
     runs-on: ubuntu-22.04

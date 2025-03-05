@@ -3,9 +3,10 @@ on:
   push:
     paths:
       - '**/*.py'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.py'
 jobs:
   yapf:
     runs-on: ubuntu-22.04

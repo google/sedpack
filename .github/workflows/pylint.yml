@@ -4,9 +4,11 @@ on:
     paths:
       - '**/*.py'
       - '.pylintrc'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.py'
+      - '.pylintrc'
 jobs:
   copyright_header:
     runs-on: ubuntu-22.04
