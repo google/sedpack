@@ -16,9 +16,15 @@ on:
       - 'requirements.txt'
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.py'
+      - '**/*.rs'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
 
 permissions:
   contents: read

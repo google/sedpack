@@ -5,11 +5,15 @@ on:
       - '**/*.py'
       - '**/*.rs'
       - 'pytest.ini'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - '**/*.py'
+      - '**/*.rs'
+      - 'pytest.ini'
   schedule:
     - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
+  merge_group:  # Needed for required workflows
 
 jobs:
   unittesting:

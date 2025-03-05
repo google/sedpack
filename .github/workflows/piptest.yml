@@ -4,9 +4,11 @@ on:
     paths:
       - 'docs/**/*.py'
       - 'pytest.ini'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'docs/**/*.py'
+      - 'pytest.ini'
   schedule:
     - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
 
