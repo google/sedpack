@@ -62,12 +62,12 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - uses: bencherdev/bencher@main
       - name: Benchmarking
-        run: (cd rust/ ; cargo bench)
+        run: (cd rust/ ; cargo bench > benchmark_results.txt)
       - name: Upload Benchmark Results
         uses: actions/upload-artifact@v4
         with:
-          name: rust_target_criterion
-          path: ./rust/target/criterion
+          name: benchmark_results.txt
+          path: ./rust/benchmark_results.txt
       - name: Upload GitHub Pull Request Event
         uses: actions/upload-artifact@v4
         with:
