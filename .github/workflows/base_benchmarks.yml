@@ -1,0 +1,41 @@
+# Based on the tutorial https://bencher.dev/docs/how-to/github-actions/
+
+on:
+  push:
+    branches: main
+    paths:
+      - '**/*.rs'
+      - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+  schedule:
+    # Run once a month (random values for minute, hour, day; any month or day)
+    - cron: "3 1 4 * *"
+  # Allows you to run this workflow manually from the Actions tab on GitHub.
+  workflow_dispatch:
+
+jobs:
+  benchmark_base_branch:
+    name: Continuous Benchmarking with Bencher
+    permissions:
+      checks: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bencherdev/bencher@main
+      - name: Track base branch benchmarks with Bencher
+        working-directory: ./rust
+        run: |
+          bencher run \
+          --project sedpack \
+          --token '${{ secrets.BENCHER_API_TOKEN }}' \
+          --branch main \
+          --testbed ubuntu-latest \
+          --threshold-measure latency \
+          --threshold-test t_test \
+          --threshold-max-sample-size 64 \
+          --threshold-upper-boundary 0.99 \
+          --thresholds-reset \
+          --err \
+          --adapter rust_criterion \
+          --github-actions '${{ secrets.GITHUB_TOKEN }}' \
+          bencher "cargo bench"
