@@ -3,7 +3,22 @@ name: Run Benchmarks
 
 on:
   pull_request:
-    types: [opened, reopened, edited, synchronize]
+    types: [opened, edited]
+    paths:
+      - '**/*.rs'
+      - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.rs'
+      - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+  schedule:
+    # Run once a month (random values for minute, hour, day, any month or day)
+    - cron: "3 1 4 * *"
+  # Allows you to run this workflow manually from the Actions tab on GitHub.
+  workflow_dispatch:
 
 jobs:
   benchmark_fork_pr_branch:
