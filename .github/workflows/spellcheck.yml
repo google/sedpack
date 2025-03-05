@@ -5,7 +5,7 @@ on:
       - '**/*.py'
       - '**/*.ipynb'
       - '**/*.md'
-  merge_group:
+  merge_group:  # Needed for required workflows
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:

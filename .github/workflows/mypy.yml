@@ -11,6 +11,7 @@ on:
       - '**/*.py'
       - '**/*.rs'
       - 'mypy.ini'
+  merge_group:  # Needed for required workflows
 jobs:
   mypy:
     runs-on: ubuntu-22.04

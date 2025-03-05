@@ -9,6 +9,7 @@ on:
     paths:
       - '**/*.md'
       - '.markdownlint.json'
+  merge_group:  # Needed for required workflows
 
 jobs:
   lint:

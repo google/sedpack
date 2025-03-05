@@ -9,6 +9,7 @@ on:
     paths:
       - '**/*.py'
       - '.pylintrc'
+  merge_group:  # Needed for required workflows
 jobs:
   copyright_header:
     runs-on: ubuntu-22.04
