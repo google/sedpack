@@ -1,9 +1,5 @@
 name: piptest
 on:
-  push:
-    paths:
-      - 'docs/**/*.py'
-      - 'pytest.ini'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:

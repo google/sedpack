@@ -1,8 +1,5 @@
 name: Rust CI
 on:
-  push:
-    paths:
-      - '**/*.rs'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:

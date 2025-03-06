@@ -23,6 +23,8 @@ concurrency:
 
 jobs:
   build:
+    # Run only on the upstream repository.
+    if: github.repository == 'google/sedpack'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout your repository using git

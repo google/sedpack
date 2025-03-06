@@ -1,15 +1,17 @@
 name: pylint
 on:
-  push:
-    paths:
-      - '**/*.py'
-      - '.pylintrc'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - '**/*.py'
       - '.pylintrc'
   merge_group:  # Needed for required workflows
+  # Run after a review has been submitted (this is a required workflow which
+  # might not be triggered when no code changes -- trigger before going to
+  # merge queue).
+  pull_request_review:
+    types: [submitted]
+
 jobs:
   copyright_header:
     runs-on: ubuntu-22.04

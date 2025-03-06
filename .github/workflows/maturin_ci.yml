@@ -17,7 +17,7 @@ on:
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, edited, synchronize, reopened]
     paths:
       - '**/*.py'
       - '**/*.rs'
@@ -165,6 +165,8 @@ jobs:
           path: dist
 
   release:
+    # Run only on the upstream repository.
+    if: github.repository == 'google/sedpack'
     name: Release
     runs-on: ubuntu-latest
     environment: release

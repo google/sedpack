@@ -1,10 +1,5 @@
 name: mypy
 on:
-  push:
-    paths:
-      - '**/*.py'
-      - '**/*.rs'
-      - 'mypy.ini'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -12,6 +7,12 @@ on:
       - '**/*.rs'
       - 'mypy.ini'
   merge_group:  # Needed for required workflows
+  # Run after a review has been submitted (this is a required workflow which
+  # might not be triggered when no code changes -- trigger before going to
+  # merge queue).
+  pull_request_review:
+    types: [submitted]
+
 jobs:
   mypy:
     runs-on: ubuntu-22.04
