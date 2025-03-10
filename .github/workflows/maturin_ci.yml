@@ -8,7 +8,8 @@
 name: Maturin CI
 
 on:
-  push:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
     paths:
       - '**/*.py'
       - '**/*.rs'
@@ -16,9 +17,7 @@ on:
       - 'requirements.txt'
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
-  merge_group:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  merge_group:  # Just to be sure
 
 permissions:
   contents: read
@@ -159,6 +158,8 @@ jobs:
           path: dist
 
   release:
+    # Run only on the upstream repository.
+    if: github.repository == 'google/sedpack'
     name: Release
     runs-on: ubuntu-latest
     environment: release

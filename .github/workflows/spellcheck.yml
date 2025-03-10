@@ -1,13 +1,9 @@
 name: spellcheck
 on:
-  push:
-    paths:
-      - '**/*.py'
-      - '**/*.ipynb'
-      - '**/*.md'
-  merge_group:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:  # Needed for required workflows
+
 jobs:
   spellchecking:
     runs-on: ubuntu-22.04
