@@ -39,4 +39,4 @@ jobs:
           --err \
           --adapter rust_criterion \
           --github-actions '${{ secrets.GITHUB_TOKEN }}' \
-          bencher "cargo bench"
+          "cargo bench"
