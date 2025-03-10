@@ -2,6 +2,7 @@ name: spellcheck
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:  # Needed for required workflows
 
 jobs:
   spellchecking:
