@@ -1,8 +1,6 @@
 # Based on the tutorial https://bencher.dev/docs/how-to/github-actions/
 
 on:
-  pull_request:  # TODO remove
-    types: [opened, synchronize, reopened]
   push:
     branches: main
     paths:
