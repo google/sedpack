@@ -21,6 +21,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          cache: 'pip'
+      - name: Installing sedpack pip package
+        run: |
+          pip install sedpack
+      - name: Prepare benchmarking data
+        working-directory: ./rust
+        run: bash benches/setup.sh
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - uses: bencherdev/bencher@main
       - name: Track base branch benchmarks with Bencher
