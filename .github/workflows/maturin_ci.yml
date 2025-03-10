@@ -8,14 +8,6 @@
 name: Maturin CI
 
 on:
-  push:
-    paths:
-      - '**/*.py'
-      - '**/*.rs'
-      - 'pyproject.toml'
-      - 'requirements.txt'
-      - 'rust/Cargo.toml'
-      - 'rust/Cargo.lock'
   pull_request:
     types: [opened, edited, synchronize, reopened]
     paths:
@@ -25,6 +17,7 @@ on:
       - 'requirements.txt'
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
+  merge_group:  # Just to be sure
 
 permissions:
   contents: read
