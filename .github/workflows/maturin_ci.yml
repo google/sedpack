@@ -158,8 +158,6 @@ jobs:
           path: dist
 
   release:
-    # Run only on the upstream repository.
-    if: github.repository == 'google/sedpack'
     name: Release
     runs-on: ubuntu-latest
     environment: release
