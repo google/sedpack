@@ -1,0 +1,94 @@
+---
+title: Sedpack Installation
+description: Sedpack Installation
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Installation of the Sedpack Python package.
+
+## Python Package Index
+
+All one should need to install the package from
+[PyPI](https://pypi.org/project/sedpack/) is:
+
+```bash
+pip install sedpack
+```
+
+Note that this is the latest stable version of the package.
+If you want the bleeding edge features install from source instead.
+
+## Installing from Source
+
+One can always opt for installation from the source.
+
+Development dependencies:
+
+-   python-dev and gcc for [xxhash](https://pypi.org/project/xxhash/)
+-   [Install Rust](https://www.rust-lang.org/tools/install)
+
+Clone and create a Python virtual environment:
+
+```bash
+git clone github.com/google/sedpack/  # Clone the repository
+python3 -m venv my_env  # Create Python virtual environment
+source my_env/bin/activate  # Activate your virtual environment
+cd sedpack/  # Change directory to the cloned git repository
+```
+
+[optional] Install pinned Python dependencies:
+
+<Tabs syncKey="os_type">
+
+  <TabItem label="Linux">
+    ```bash
+    python3 -m pip install --require-hashes -r requirements.txt
+    ```
+  </TabItem>
+
+  <TabItem label="Windows">
+
+    Currently the file `requirements.txt` is compiled for Linux and some
+    versions of PyPI packages might be different or even not existing
+    elsewhere. One can always recreate those:
+
+    ```bash
+    python3 -m pip install pip-tools
+    python3 -m pip-compile --generate-hashes pyproject.toml > requirements_win.txt
+    python3 -m pip install --require-hashes -r requirements_win.txt
+    ```
+  </TabItem>
+
+  <TabItem label="macOS">
+
+    Currently the file `requirements.txt` is compiled for Linux and some
+    versions of PyPI packages might be different or even not existing
+    elsewhere. One can always recreate those:
+
+    ```bash
+    python3 -m pip install pip-tools
+    python3 -m pip-compile --generate-hashes pyproject.toml > requirements_mac.txt
+    python3 -m pip install --require-hashes -r requirements_mac.txt
+    ```
+  </TabItem>
+
+</Tabs>
+
+Install sedpack with development dependencies:
+
+```bash
+python3 -m pip install --editable '.[dev]'
+```
+
+[optional] Run unit-tests, none should be skipped:
+
+```bash
+python -m pytest
+```
+
+[optional] Rebuild the Rust library after a change:
+
+```bash
+maturin develop --release
+```
