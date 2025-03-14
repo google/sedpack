@@ -23,7 +23,7 @@ criterion = "0.5.1"
 flatbuffers = "25.2"
 flate2 = { version = "1.1.0" }
 lz4_flex = { version = "0.11.3", default-features = false , features = ["frame"] }
-numpy = { git = "https://github.com/PyO3/rust-numpy.git" }
+numpy = "0.24"
 pyo3 = "0.24"
 rand = "0.9"
 strum = "0.27.0"
