@@ -142,16 +142,17 @@ class ShardWriterFlatBuffer(ShardWriterBase):
 
         # Copy the value in order not to modify the original and flatten for
         # better saving.
-        value_np = np.copy(value).flatten()
+        value_flattened = np.copy(value).flatten()
         del value
 
         # This is the workaround when the user passes a value which is
         # wrong dtype. Then a different number of bytes could be saved than
         # read causing unpredictable issues.
-        if not np.can_cast(value_np, to=attribute.dtype, casting="safe"):
-            raise ValueError(f"Cannot cast value of dtype {value_np.dtype} "
-                             f"passed as {attribute = }")
-        value_np = np.array(value_np, dtype=attribute.dtype)
+        if not np.can_cast(value_flattened, to=attribute.dtype, casting="safe"):
+            raise ValueError("Cannot cast value of dtype "
+                             f"{value_flattened.dtype} passed as "
+                             f"{attribute = }")
+        value_np = np.array(value_flattened, dtype=attribute.dtype)
 
         # Ensure little endian which is needed for FlatBuffers.
         match value_np.dtype.byteorder:

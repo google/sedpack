@@ -45,7 +45,7 @@ def next_random_state(r: np.uint32) -> np.uint32:
 
     Returns the next state.
     """
-    return r * 1664525 + 1013904223  # type: ignore[no-any-return]
+    return r * 1664525 + 1013904223
 
 
 T = TypeVar("T")
