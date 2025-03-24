@@ -45,7 +45,7 @@ def next_random_state(r: np.uint32) -> np.uint32:
 
     Returns the next state.
     """
-    return r * 1664525 + 1013904223  # type: ignore[no-any-return]
+    return r * 1664525 + 1013904223
 
 
 T = TypeVar("T")
@@ -140,7 +140,7 @@ def round_robin(iterables: Iterable[Iterable[T]],
     """Visit input iterables in a cycle until each is exhausted interleaving
     them in the process. Automatically shuffles.
 
-    # roundrobin('ABC', 'D', 'EF') -> A D E B F C (in random order)
+    # round_robin('ABC', 'D', 'EF') -> A D E B F C (in random order)
     # Algorithm credited to George Sakkis
     # source https://docs.python.org/3/library/itertools.html
 
@@ -183,7 +183,7 @@ async def round_robin_async(iterables: AsyncIterable[AsyncIterable[T]],
     """Visit input iterables in a cycle until each is exhausted interleaving
     them in the process. Automatically shuffles.
 
-    # roundrobin('ABC', 'D', 'EF') -> A D E B F C (in random order)
+    # round_robin('ABC', 'D', 'EF') -> A D E B F C (in random order)
     # Algorithm credited to George Sakkis
     # source https://docs.python.org/3/library/itertools.html
 
