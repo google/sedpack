@@ -27,9 +27,9 @@ asyncstdlib==3.13.1 \
     --hash=sha256:a64da68176af1da8c699026cad98f70b184f82b4cb39739e0b9701a2a7541cf9 \
     --hash=sha256:f47564b9a3566f8f9172631d88c75fe074b0ce2127963b7265d310df9aeed03a
     # via sedpack (pyproject.toml)
-certifi==2025.1.31 \
-    --hash=sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651 \
-    --hash=sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe
+certifi==2025.4.26 \
+    --hash=sha256:0a816057ea3cdefcef70270d2c515e4506bbc954f417fa5ade2021213bb8f0c6 \
+    --hash=sha256:30350364dfe371162649852c63336a15c70c6510c2ad5015b21c2345311805f3
     # via requests
 charset-normalizer==3.4.1 \
     --hash=sha256:0167ddc8ab6508fe81860a57dd472b2ef4060e8d378f0cc555707126830f2537 \
@@ -552,9 +552,9 @@ perfcounters==3.0.1 \
     --hash=sha256:656b9c739f5dd7595f5b187e93cfcd91958f2afe750ec5c7c1db77f5d960f20d \
     --hash=sha256:93463d8a9c3abab104feac8e52450ca3902eb6d0ba57f02c231b3b9b4eca975c
     # via sedpack (pyproject.toml)
-pluggy==1.5.0 \
-    --hash=sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1 \
-    --hash=sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669
+pluggy==1.6.0 \
+    --hash=sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3 \
+    --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
     # via pytest
 protobuf==6.30.1 \
     --hash=sha256:3c25e51e1359f1f5fa3b298faa6016e650d148f214db2e47671131b9063c53be \
@@ -762,9 +762,9 @@ tensorflow-io-gcs-filesystem==0.37.1 \
     --hash=sha256:fe8dcc6d222258a080ac3dfcaaaa347325ce36a7a046277f6b3e19abc1efb3c5 \
     --hash=sha256:ffebb6666a7bfc28005f4fbbb111a455b5e7d6cd3b12752b7050863ecb27d5cc
     # via tensorflow
-termcolor==3.0.1 \
-    --hash=sha256:a6abd5c6e1284cea2934443ba806e70e5ec8fd2449021be55c280f8a3731b611 \
-    --hash=sha256:da1ed4ec8a5dc5b2e17476d859febdb3cccb612be1c36e64511a6f2485c10c69
+termcolor==3.1.0 \
+    --hash=sha256:591dd26b5c2ce03b9e43f391264626557873ce1d379019786f99b0c2bee140aa \
+    --hash=sha256:6a6dd7fbee581909eeec6a756cff1d7f7c376063b14e4a298dc4980309e55970
     # via
     #   sedpack (pyproject.toml)
     #   tensorflow
@@ -1099,9 +1099,9 @@ zstandard==0.23.0 \
     # via sedpack (pyproject.toml)
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==79.0.0 \
-    --hash=sha256:9828422e7541213b0aacb6e10bbf9dd8febeaa45a48570e09b6d100e063fc9f9 \
-    --hash=sha256:b9ab3a104bedb292323f53797b00864e10e434a3ab3906813a7169e4745b912a
+setuptools==80.7.1 \
+    --hash=sha256:ca5cc1069b85dc23070a6628e6bcecb3292acac802399c7f8edc0100619f9009 \
+    --hash=sha256:f6ffc5f0142b1bd8d0ca94ee91b30c0ca862ffd50826da1ea85258a06fd94552
     # via
     #   tensorboard
     #   tensorflow
