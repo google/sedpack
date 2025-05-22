@@ -78,10 +78,10 @@ def merge_shard_infos(updates: list[ShardListInfo], dataset_root: Path,
     assert len(current_level) <= 1
 
     # Move children of root_shard_list into deeper_updates to let recursion
-    # merge everything.
+    # merge everything. The updates are listed after the already present.
     for child in root_shard_list.children_shard_lists:
         root_shard_list.number_of_examples -= child.number_of_examples
-        deeper_updates.append(child)
+    deeper_updates = root_shard_list.children_shard_lists + deeper_updates
     root_shard_list.children_shard_lists = []
 
     # Recursively update children with one longer common prefix.
