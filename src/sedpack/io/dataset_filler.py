@@ -19,9 +19,8 @@ import dataclasses
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Type, TYPE_CHECKING
-import uuid
 
-from sedpack.io.file_info import FileInfo
+from sedpack.io.file_info import PathGenerator, FileInfo
 from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
 from sedpack.io.shard import Shard
 from sedpack.io.types import ExampleT, SplitT
@@ -96,6 +95,9 @@ class DatasetFillerContext:
         # Cumulated shard infos.
         self._shards_lists: dict[SplitT, ShardsList] = {}
 
+        # Random path generator.
+        self._path_generator = PathGenerator()
+
     @property
     def shard_lists(self) -> dict[SplitT, ShardsList]:
         """Return information about all shards written by this
@@ -108,9 +110,11 @@ class DatasetFillerContext:
         relative_path_with_split: Path = split / self._relative_path_from_split
         # Create new shard info.
         file_type: str = self._dataset_structure.shard_file_type
-        file_name: str = f"{uuid.uuid4().hex}.{file_type}"
+
+        deeper_path: Path = self._path_generator.get_path().with_suffix(
+            "." + file_type)
         shard_info = ShardInfo(file_infos=(FileInfo(
-            file_path=relative_path_with_split / file_name),))
+            file_path=relative_path_with_split / deeper_path),))
 
         return Shard(
             shard_info=shard_info,
@@ -187,7 +191,7 @@ class DatasetFillerContext:
             # Load if exists.
             self._shards_lists[split] = ShardsList.load_or_create(
                 dataset_root_path=self._dataset_root_path,
-                relative_path_self=split / self._relative_path_from_split /
+                relative_path_self=shard_info.file_infos[0].file_path.parent /
                 "shards_list.json",
             )
         self._shards_lists[split].shard_files.append(shard_info)
