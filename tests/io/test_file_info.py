@@ -29,7 +29,7 @@ def test_multilevel() -> None:
         name_length=name_length,
     )
 
-    seen_paths: set[str] = set()
+    seen_paths: set[Path] = set()
 
     # No exception in the top level
     for _ in range((max_branching**levels) + 10):
