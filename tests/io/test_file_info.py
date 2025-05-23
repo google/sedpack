@@ -15,7 +15,7 @@
 from pathlib import Path
 import pytest
 
-from sedpack.io.file_info import DirectoryGenerator
+from sedpack.io.file_info import PathGenerator
 
 
 def test_multilevel() -> None:
@@ -23,46 +23,37 @@ def test_multilevel() -> None:
     max_branching: int = 2
     name_length: int = 3
 
-    generator = DirectoryGenerator(
+    generator = PathGenerator(
         levels=levels,
         max_branching=max_branching,
         name_length=name_length,
     )
 
-    seen_names: set[str] = set()
+    seen_paths: set[str] = set()
 
     # No exception in the top level
     for _ in range((max_branching**levels) + 10):
-        n = generator.get_path()
-        assert n.count("/") == levels - 1
-        p = Path(n)
+        p = generator.get_path()
         assert len(p.parts) == levels
 
         # Last part is long, previous are at most name_length
         assert len(p.parts[-1]) >= 32
         assert all(len(part) == name_length for part in p.parts[:-1])
 
-        # Enforce format: name/name/name/long_name
-        for l in range(1, levels):
-            assert n[l * (1 + name_length) - 1] == "/"
+        seen_paths.add(p)
 
-        seen_names.add(n)
-
-    # Enforce tree structure
-    for l in range(1, levels):
-        for n in seen_names:
-            prefix = n[:l * (1 + name_length) - 1]
-            count = 0
-            for name in seen_names:
-                if name.startswith(prefix):
-                    count += 1
-            assert count <= max_branching**(levels - l)
+    # Enforce bounded number of subdirectories except the top
+    for l in range(levels - 1):
+        for p in seen_paths:
+            prefix = p.parents[l]
+            count = sum(path.is_relative_to(prefix) for path in seen_paths)
+            assert count <= max_branching**(l + 1)
 
 
 def test_single_level() -> None:
     max_branching: int = 3
     name_length: int = 3
-    generator = DirectoryGenerator(
+    generator = PathGenerator(
         levels=1,
         max_branching=max_branching,
         name_length=name_length,
@@ -71,5 +62,5 @@ def test_single_level() -> None:
     # No exception in the top level
     for _ in range(max_branching + 10):
         n = generator.get_path()
-        assert len(n) >= 32  # last level is unbounded length
-        assert "/" not in n
+        assert len(str(n)) >= 32  # last level is unbounded length
+        assert len(n.parts) == 1

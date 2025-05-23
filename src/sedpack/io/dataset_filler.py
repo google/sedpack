@@ -20,7 +20,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Type, TYPE_CHECKING
 
-from sedpack.io.file_info import DirectoryGenerator, FileInfo
+from sedpack.io.file_info import PathGenerator, FileInfo
 from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
 from sedpack.io.shard import Shard
 from sedpack.io.types import ExampleT, SplitT
@@ -96,7 +96,7 @@ class DatasetFillerContext:
         self._shards_lists: dict[SplitT, ShardsList] = {}
 
         # Random path generator.
-        self._directory_generator = DirectoryGenerator()
+        self._path_generator = PathGenerator()
 
     @property
     def shard_lists(self) -> dict[SplitT, ShardsList]:
@@ -110,7 +110,9 @@ class DatasetFillerContext:
         relative_path_with_split: Path = split / self._relative_path_from_split
         # Create new shard info.
         file_type: str = self._dataset_structure.shard_file_type
-        deeper_path: str = f"{self._directory_generator.get_path()}.{file_type}"
+
+        deeper_path: Path = self._path_generator.get_path().with_suffix(
+            "." + file_type)
         shard_info = ShardInfo(file_infos=(FileInfo(
             file_path=relative_path_with_split / deeper_path),))
 
