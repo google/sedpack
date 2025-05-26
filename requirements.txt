@@ -233,9 +233,9 @@ iniconfig==2.1.0 \
     --hash=sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7 \
     --hash=sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760
     # via pytest
-keras==3.9.0 \
-    --hash=sha256:71078e833994384f45d5ea192d18f0969a12bd2572a5d15968c755945ad91d1c \
-    --hash=sha256:b5bf04e7c64c3176eda5124d035005bb7a676fb505f42496c7b03a99d5683652
+keras==3.10.0 \
+    --hash=sha256:6e9100bf66eaf6de4b7f288d34ef9bb8b5dcdd62f42c64cfd910226bb34ad2d2 \
+    --hash=sha256:c095a6bf90cd50defadf73d4859ff794fad76b775357ef7bd1dbf96388dae7d3
     # via tensorflow
 libclang==18.1.1 \
     --hash=sha256:0b2e143f0fac830156feb56f9231ff8338c20aecfe72b4ffe96f19e5a1dbb69a \
@@ -1099,9 +1099,9 @@ zstandard==0.23.0 \
     # via sedpack (pyproject.toml)
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==80.7.1 \
-    --hash=sha256:ca5cc1069b85dc23070a6628e6bcecb3292acac802399c7f8edc0100619f9009 \
-    --hash=sha256:f6ffc5f0142b1bd8d0ca94ee91b30c0ca862ffd50826da1ea85258a06fd94552
+setuptools==80.8.0 \
+    --hash=sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257 \
+    --hash=sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0
     # via
     #   tensorboard
     #   tensorflow
