@@ -50,6 +50,11 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
         shard_file_type=shard_file_type,
     )
 
+    # Test attribute_by_name
+    for attribute in example_attributes:
+        assert dataset_structure.attribute_by_name(
+            attribute_name=attribute.name) == attribute
+
     dataset = Dataset.create(
         path=tiny_experiment_path,
         metadata=dataset_metadata,

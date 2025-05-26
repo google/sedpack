@@ -130,6 +130,23 @@ class DatasetStructure(BaseModel):
     shard_file_type: ShardFileTypeT = "tfrec"
     hash_checksum_algorithms: tuple[HashChecksumT, ...] = ("sha256",)
 
+    def attribute_by_name(self, attribute_name: str) -> Attribute:
+        """Return the attribute of the given name or raise a ValueError if not
+        present.
+
+        Args:
+
+          attribute_name (str): The name of the attribute we want.
+
+        Returns: the attribute object if found.
+
+        Raises: ValueError if no attribute of this name is present.
+        """
+        for attribute in self.saved_data_description:
+            if attribute_name == attribute.name:
+                return attribute
+        raise ValueError(f"No attribute named {attribute_name}")
+
 
 class DatasetInfo(BaseModel):
     """Holds all information saved in the main metadata file
