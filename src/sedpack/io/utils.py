@@ -113,7 +113,7 @@ def safe_update_file(dataset_root_path: Path, relative_path: Path, info: str,
     file_path = dataset_root_path / relative_path
 
     # Create parent directory if it does not exist yet.
-    file_path.parent.mkdir(exist_ok=True)
+    file_path.parent.mkdir(exist_ok=True, parents=True)
 
     # Create the new file (unique, but not a tmp file so that it stays within
     # the same directory).
