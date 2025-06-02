@@ -19,9 +19,9 @@
 
 # pylint: skip-file
 
-import flatbuffers  # type: ignore[import-untyped]
+import flatbuffers
 from flatbuffers import Builder
-from flatbuffers.compat import import_numpy  # type: ignore[import-untyped]
+from flatbuffers.compat import import_numpy
 
 from sedpack.io.flatbuffer.shardfile.Example import Example
 
