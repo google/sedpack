@@ -18,7 +18,7 @@
 
 # pylint: skip-file
 
-import flatbuffers  # type: ignore[import-untyped]
+import flatbuffers
 
 import numpy as np
 import numpy.typing as npt
