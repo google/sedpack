@@ -84,7 +84,7 @@ def hash_checksums(file_path: Path, hashes: tuple[HashChecksumT,
         for i in iter(lambda: hashed_file.readinto(memory_view), 0):
             # Update all hashes.
             for hash_function in hash_functions:
-                hash_function.update(memory_view[:i])
+                hash_function.update(bytes(memory_view[:i]))
 
     # Hex-encoded results, same order as hashes.
     return tuple(hash_function.hexdigest() for hash_function in hash_functions)

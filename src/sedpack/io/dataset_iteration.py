@@ -303,7 +303,7 @@ class DatasetIteration(DatasetBase):
         # Process each record if requested
         if process_record:
             tf_dataset = tf_dataset.map(
-                process_record,  # type: ignore[arg-type]
+                process_record,
                 num_parallel_calls=parallelism,
             )
 
