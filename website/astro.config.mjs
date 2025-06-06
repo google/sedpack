@@ -18,9 +18,13 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Sedpack Documentation',
-      social: {
-        github: 'https://github.com/google/sedpack',
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/google/sedpack',
+        }
+      ],
       // Custom CSS to style MathJax equations
       customCss: ['./src/mathjax.css'],
       sidebar: [
