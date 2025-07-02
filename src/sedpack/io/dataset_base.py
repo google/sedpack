@@ -176,14 +176,20 @@ class ShardInfoIterator:
 
           repeat (bool): Should we cycle indefinitely?
         """
-        if not repeat:
-            self.__len__ = self.number_of_shards
-
         self.split: SplitT | None = split
         self.dataset: DatasetBase = dataset
         self.repeat: bool = repeat
 
         self._iterator: Iterator[ShardInfo] = iter([])
+
+    def __len__(self) -> int:
+        """Either return the number of ShardInfo objects iterated or raise a
+        ValueError if infinite cycle.
+        """
+        if self.number_of_shards() == 0 or not self.repeat:
+            return self.number_of_shards()
+        raise ValueError("Infinite iteration")
+
 
     def number_of_shards(self) -> int:
         """Return the number of distinct shards that are iterated. When
