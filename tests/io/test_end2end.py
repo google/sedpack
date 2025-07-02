@@ -20,6 +20,7 @@ import numpy.typing as npt
 
 import sedpack
 from sedpack.io import Dataset
+from sedpack.io.dataset_base import ShardInfoIterator
 from sedpack.io import Metadata
 from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
 
@@ -108,6 +109,20 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
     # We tested everything
     assert i + 1 == array_of_values.shape[
         0], "Not all examples have been iterated"
+
+    # Number of shards matches
+    full_iterator = ShardInfoIterator(
+        split=None,
+        dataset=dataset,
+    )
+    number_of_all_shards: int = full_iterator.number_of_shards()
+    assert number_of_all_shards == len(full_iterator)
+    assert number_of_all_shards == len(list(full_iterator))
+    assert number_of_all_shards == sum(
+        ShardInfoIterator(
+            split=split,
+            dataset=dataset,
+        ).number_of_shards() for split in ["train", "test", "holdout"])
 
 
 def test_end2end_as_tfdataset_tfrec_float32_float32(
