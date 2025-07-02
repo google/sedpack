@@ -13,6 +13,7 @@
 # limitations under the License.
 """Base class for a dataset."""
 from copy import deepcopy
+import itertools
 import logging
 from pathlib import Path
 import semver
@@ -135,19 +136,6 @@ class DatasetBase:
     def dataset_structure(self, value: DatasetStructure) -> None:
         self._dataset_info.dataset_structure = value
 
-    def _shard_info_iterator(
-            self, shard_list_info: ShardListInfo) -> Iterator[ShardInfo]:
-        """Recursively yield `ShardInfo` from the whole directory tree.
-        """
-        shard_list: ShardsList = ShardsList.model_validate_json(
-            (self.path /
-             shard_list_info.shard_list_info_file.file_path).read_text())
-
-        yield from shard_list.shard_files
-
-        for child in shard_list.children_shard_lists:
-            yield from self._shard_info_iterator(child)
-
     def shard_info_iterator(self, split: SplitT | None) -> Iterator[ShardInfo]:
         """Iterate all `ShardInfo` in the split.
 
@@ -164,9 +152,60 @@ class DatasetBase:
                 # Split not present.
                 raise ValueError(f"There is no shard in {split}.")
 
-            shard_list_info: ShardListInfo = self._dataset_info.splits[split]
+        return ShardInfoIterator(
+            split=split,
+            dataset=self,
+            repeat=False,
+        )
 
-            yield from self._shard_info_iterator(shard_list_info)
+
+class ShardInfoIterator:
+
+    def __init__(self,
+                 split: SplitT | None,
+                 dataset: DatasetBase,
+                 repeat: bool = False) -> None:
+        if not repeat:
+            self.__len__ = self.number_of_shards
+
+        self.split: SplitT | None = split
+        self.dataset: DatasetBase = dataset
+        self.repeat: bool = repeat
+
+    def number_of_shards(self) -> int:
+        """Return the number of distinct shards that are iterated. When
+        repeated this method still returns a finite answer.
+        """
+        # Single split.
+        if self.split is None:
+            if self.split not in self.dataset._dataset_info.splits:
+                return 0
+
+            return self.dataset._dataset_info.splits[
+                self.split].number_of_shards
+
+        # Sum all splits.
+        return sum(
+            shard_list_info.number_of_shards
+            for shard_list_info in self.dataset._dataset_info.splits.values())
+
+    def _shard_info_iterator(
+            self, shard_list_info: ShardListInfo) -> Iterator[ShardInfo]:
+        """Recursively yield `ShardInfo` from the whole directory tree.
+        """
+        shard_list: ShardsList = ShardsList.model_validate_json(
+            (self.dataset.path /
+             shard_list_info.shard_list_info_file.file_path).read_text())
+
+        yield from shard_list.shard_files
+
+        for child in shard_list.children_shard_lists:
+            yield from self._shard_info_iterator(child)
+
+    def __iter__(self):
+        if self.split is None:
+            return itertools.chain.from_iterable(
+                self._shard_info_iterator(shard_list_info)
+                for shard_list_info in self.dataset._dataset_info.splits.values())
         else:
-            for shard_list_info in self._dataset_info.splits.values():
-                yield from self._shard_info_iterator(shard_list_info)
+            return self._shard_info_iterator(self.dataset._dataset_info.splits[self.split])
