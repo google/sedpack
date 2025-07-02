@@ -122,9 +122,9 @@ class DatasetBase:
 
     @property
     def dataset_info(self) -> DatasetInfo:
-        """Get a copy of the dataset information.
+        """Get the dataset information.
         """
-        return deepcopy(self._dataset_info)
+        return self._dataset_info
 
     @property
     def dataset_structure(self) -> DatasetStructure:
@@ -160,11 +160,23 @@ class DatasetBase:
 
 
 class ShardInfoIterator:
+    """Iterate shards of a dataset.
+    """
 
     def __init__(self,
                  split: SplitT | None,
                  dataset: DatasetBase,
                  repeat: bool = False) -> None:
+        """Initialize shard information iteration.
+
+        Args:
+
+          split (SplitT | None): Which split to iterate or all if set to None.
+
+          dataset (DatasetBase): The dataset being iterated.
+
+          repeat (bool): Should we cycle indefinitely?
+        """
         if not repeat:
             self.__len__ = self.number_of_shards
 
@@ -172,22 +184,22 @@ class ShardInfoIterator:
         self.dataset: DatasetBase = dataset
         self.repeat: bool = repeat
 
+        self._iterator: Iterator[ShardListInfo] = iter([])
+
     def number_of_shards(self) -> int:
         """Return the number of distinct shards that are iterated. When
         repeated this method still returns a finite answer.
         """
         # Single split.
         if self.split is None:
-            if self.split not in self.dataset._dataset_info.splits:
-                return 0
+            # Sum all splits.
+            return sum(shard_list_info.number_of_shards for shard_list_info in
+                       self.dataset.dataset_info.splits.values())
 
-            return self.dataset._dataset_info.splits[
-                self.split].number_of_shards
+        if self.split not in self.dataset.dataset_info.splits:
+            return 0
 
-        # Sum all splits.
-        return sum(
-            shard_list_info.number_of_shards
-            for shard_list_info in self.dataset._dataset_info.splits.values())
+        return self.dataset.dataset_info.splits[self.split].number_of_shards
 
     def _shard_info_iterator(
             self, shard_list_info: ShardListInfo) -> Iterator[ShardInfo]:
@@ -202,11 +214,20 @@ class ShardInfoIterator:
         for child in shard_list.children_shard_lists:
             yield from self._shard_info_iterator(child)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ShardInfo]:
+        """Return the shard information iterator (reentrant).
+        """
         if self.split is None:
-            return itertools.chain.from_iterable(
+            self._iterator = itertools.chain.from_iterable(
                 self._shard_info_iterator(shard_list_info) for shard_list_info
-                in self.dataset._dataset_info.splits.values())
+                in self.dataset.dataset_info.splits.values())
         else:
-            return self._shard_info_iterator(
-                self.dataset._dataset_info.splits[self.split])
+            self._iterator = self._shard_info_iterator(
+                self.dataset.dataset_info.splits[self.split])
+
+        return self._iterator
+
+    def __next__(self) -> ShardInfo:
+        """Get the next item.
+        """
+        return next(self._iterator)
