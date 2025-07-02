@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base class for a dataset."""
-from copy import deepcopy
 import itertools
 import logging
 from pathlib import Path
@@ -184,7 +183,7 @@ class ShardInfoIterator:
         self.dataset: DatasetBase = dataset
         self.repeat: bool = repeat
 
-        self._iterator: Iterator[ShardListInfo] = iter([])
+        self._iterator: Iterator[ShardInfo] = iter([])
 
     def number_of_shards(self) -> int:
         """Return the number of distinct shards that are iterated. When
