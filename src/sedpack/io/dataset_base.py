@@ -205,7 +205,8 @@ class ShardInfoIterator:
     def __iter__(self):
         if self.split is None:
             return itertools.chain.from_iterable(
-                self._shard_info_iterator(shard_list_info)
-                for shard_list_info in self.dataset._dataset_info.splits.values())
+                self._shard_info_iterator(shard_list_info) for shard_list_info
+                in self.dataset._dataset_info.splits.values())
         else:
-            return self._shard_info_iterator(self.dataset._dataset_info.splits[self.split])
+            return self._shard_info_iterator(
+                self.dataset._dataset_info.splits[self.split])
