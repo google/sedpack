@@ -190,7 +190,6 @@ class ShardInfoIterator:
             return self.number_of_shards()
         raise ValueError("Infinite iteration")
 
-
     def number_of_shards(self) -> int:
         """Return the number of distinct shards that are iterated. When
         repeated this method still returns a finite answer.

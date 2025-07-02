@@ -111,7 +111,7 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
         0], "Not all examples have been iterated"
 
     # Number of shards matches
-    full_iterator  = ShardInfoIterator(
+    full_iterator = ShardInfoIterator(
         split=None,
         dataset=dataset,
     )
