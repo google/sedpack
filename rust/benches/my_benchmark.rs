@@ -14,7 +14,7 @@
 
 use std::fs;
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use sedpack_rs::example_iteration::{
     get_shard_progress, CompressionType, ExampleIterator, ShardInfo,
 };
@@ -38,7 +38,7 @@ pub fn example_iterator_benchmark(c: &mut Criterion) {
     c.bench_function("ExampleIterator", |b| {
         b.iter(|| {
             for example in ExampleIterator::new(shard_infos.clone(), false, 12) {
-                let _ = black_box(example);
+                let _ = std::hint::black_box(example);
             }
         })
     });
@@ -51,7 +51,7 @@ pub fn parallel_map_benchmark(c: &mut Criterion) {
             for shard in
                 parallel_map(|x| get_shard_progress(&x), shard_infos.clone().into_iter(), 32)
             {
-                let _ = black_box(shard);
+                let _ = std::hint::black_box(shard);
             }
         })
     });
