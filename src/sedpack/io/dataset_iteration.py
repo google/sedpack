@@ -242,14 +242,6 @@ class DatasetIteration(DatasetBase):
         Returns: A tf.data.Dataset object of infinite stream of shuffled and
         batched examples.
         """
-        # Shard file names.
-        shard_paths: list[str] = self.shard_paths_dataset(
-            split=split,
-            shards=shards,
-            custom_metadata_type_limit=custom_metadata_type_limit,
-            shard_filter=shard_filter,
-        )
-
         # The user requested a tf.data.Dataset use as_numpy_iterator_concurrent
         # to provide.
         if self.dataset_structure.shard_file_type != "tfrec":
@@ -281,6 +273,15 @@ class DatasetIteration(DatasetBase):
                 # Batch
                 tf_dataset = tf_dataset.batch(batch_size)
             return tf_dataset
+
+        # The case when shard_file_type == "tfrec":
+        # Shard file names.
+        shard_paths: list[str] = self.shard_paths_dataset(
+            split=split,
+            shards=shards,
+            custom_metadata_type_limit=custom_metadata_type_limit,
+            shard_filter=shard_filter,
+        )
 
         # Dataset creation
         tf_dataset = tf.data.Dataset.from_tensor_slices(shard_paths)
