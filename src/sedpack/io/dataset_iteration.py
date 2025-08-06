@@ -605,9 +605,10 @@ class DatasetIteration(DatasetBase):
 
             custom_metadata_type_limit (int | None): Ignored when None. If
             non-zero then limit the number of shards with different
-            `custom_metadata`. Take only the first `custom_metadata_type_limit`
-            shards with the concrete `custom_metadata`. This is best effort for
-            different `custom_metadata` (hashed as a tuple of sorted items).
+            `custom_metadata`. Take only the first
+            `custom_metadata_type_limit` shards with the concrete
+            `custom_metadata`. This is best effort for different
+            `custom_metadata` (`json.dumps` with `sort_keys`).
 
             shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the

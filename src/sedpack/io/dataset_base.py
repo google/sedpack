@@ -13,6 +13,7 @@
 # limitations under the License.
 """Base class for a dataset."""
 import itertools
+import json
 import logging
 from pathlib import Path
 import random
@@ -273,7 +274,7 @@ class CachedShardInfoIterator(ShardInfoIterator):
           non-zero then limit the number of shards with different
           `custom_metadata`. Take only the first `custom_metadata_type_limit`
           shards with the concrete `custom_metadata`. This is best effort for
-          different `custom_metadata` (string of sorted items).
+          different `custom_metadata` (`json.dumps` with `sort_keys`).
 
           shard_filter (Callable[[ShardInfo], bool | None): If present this is
           a function taking the ShardInfo and returning True if the shard shall
@@ -311,7 +312,10 @@ class CachedShardInfoIterator(ShardInfoIterator):
             old_shards_list = shard_list
             shard_list = []
             for shard_info in old_shards_list:
-                k: str = json.dumps(shard_info.custom_metadata, sort_keys=True)
+                k: str = json.dumps(
+                    shard_info.custom_metadata,
+                    sort_keys=True,
+                )
                 counts[k] = counts.get(k, 0) + 1
                 if counts[k] <= custom_metadata_type_limit:
                     shard_list.append(shard_info)
