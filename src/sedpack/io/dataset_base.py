@@ -137,6 +137,12 @@ class DatasetBase:
     def dataset_structure(self, value: DatasetStructure) -> None:
         self._dataset_info.dataset_structure = value
 
+    @property
+    def logger(self) -> logging.Logger:
+        """Get the logger.
+        """
+        return self._logger
+
     def shard_info_iterator(self, split: SplitT | None) -> Iterator[ShardInfo]:
         """Iterate all `ShardInfo` in the split.
 
@@ -305,6 +311,15 @@ class CachedShardInfoIterator(ShardInfoIterator):
                 if shard_filter(shard_info)
             ]
 
+            kept_metadata: set[str] = {
+                str(s.custom_metadata) for s in shards_list
+            }
+            self.dataset.logger.info(
+                "Filtered shards with custom metadata: %s from split: %s",
+                kept_metadata,
+                split,
+            )
+
         # Only use a limited amount of shards for each setting of
         # custom_metadata.
         if custom_metadata_type_limit:
@@ -319,6 +334,7 @@ class CachedShardInfoIterator(ShardInfoIterator):
                 counts[k] = counts.get(k, 0) + 1
                 if counts[k] <= custom_metadata_type_limit:
                     shard_list.append(shard_info)
+            self.dataset.logger.info("Took %s shards total", len(shard_list))
 
         # Limit the number of shards.
         if shards:
