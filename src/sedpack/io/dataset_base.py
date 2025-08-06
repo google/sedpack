@@ -311,7 +311,7 @@ class CachedShardInfoIterator(ShardInfoIterator):
             old_shards_list = shard_list
             shard_list = []
             for shard_info in old_shards_list:
-                k: str = str(tuple(sorted(shard_info.custom_metadata.items())))
+                k: str = json.dumps(shard_info.custom_metadata, sort_keys=True)
                 counts[k] = counts.get(k, 0) + 1
                 if counts[k] <= custom_metadata_type_limit:
                     shard_list.append(shard_info)
