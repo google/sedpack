@@ -668,21 +668,21 @@ class DatasetIteration(DatasetBase):
         )
 
         # Decode the files.
-        shard_iterator: IterateShardBase[ExampleT]
+        shards_iterator: IterateShardBase[ExampleT]
         match self.dataset_structure.shard_file_type:
             case "tfrec":
-                shard_iterator = IterateShardTFRec(
+                shards_iterator = IterateShardTFRec(
                     dataset_structure=self.dataset_structure,
                     process_record=None,
                     num_parallel_calls=os.cpu_count() or 1,
                 )
             case "npz":
-                shard_iterator = IterateShardNP(
+                shards_iterator = IterateShardNP(
                     dataset_structure=self.dataset_structure,
                     process_record=None,
                 )
             case "fb":
-                shard_iterator = IterateShardFlatBuffer(
+                shards_iterator = IterateShardFlatBuffer(
                     dataset_structure=self.dataset_structure,
                     process_record=None,
                 )
@@ -692,7 +692,7 @@ class DatasetIteration(DatasetBase):
 
         example_iterator = itertools.chain.from_iterable(
             map(
-                shard_iterator.iterate_shard,  # type: ignore[arg-type]
+                shards_iterator.iterate_shard,  # type: ignore[arg-type]
                 shard_paths_iterator,
             ))
 
