@@ -13,7 +13,6 @@
 # limitations under the License.
 """Base class for a dataset."""
 import itertools
-import json
 import logging
 from pathlib import Path
 import random
