@@ -312,7 +312,7 @@ class CachedShardInfoIterator(ShardInfoIterator):
             ]
 
             kept_metadata: set[str] = {
-                str(s.custom_metadata) for s in shards_list
+                str(s.custom_metadata) for s in shard_list
             }
             self.dataset.logger.info(
                 "Filtered shards with custom metadata: %s from split: %s",
