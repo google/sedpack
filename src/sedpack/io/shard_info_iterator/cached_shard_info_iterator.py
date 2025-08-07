@@ -63,7 +63,7 @@ class CachedShardInfoIterator(ShardInfoIterator):
           shards with the concrete `custom_metadata`. This is best effort for
           different `custom_metadata` (`json.dumps` with `sort_keys`).
 
-          shard_filter (Callable[[ShardInfo], bool | None): If present this is
+          shard_filter (Callable[[ShardInfo], bool] | None): If present this is
           a function taking the ShardInfo and returning True if the shard shall
           be used for traversal and False otherwise.
 
