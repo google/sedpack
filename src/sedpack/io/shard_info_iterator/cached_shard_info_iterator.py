@@ -81,7 +81,7 @@ class CachedShardInfoIterator(ShardInfoIterator):
         self.shuffle: int = shuffle
 
         # Logging for non-trivial operations such as filtering custom metadata.
-        self._logger = logging.getLogger("sedpack.io.Dataset")
+        self._logger = logging.getLogger(__name__)
 
         # Cache the list of shards.
         shard_list: list[ShardInfo] = list(
