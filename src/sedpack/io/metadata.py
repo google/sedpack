@@ -124,7 +124,7 @@ class DatasetStructure(BaseModel):
         hash_checksum_algorithms (tuple[HashChecksumT, ...]): Which hash
         algorithms should be computed for file hash checksums.
     """
-    saved_data_description: list[Attribute] = Field(default_factory=list)
+    saved_data_description: list[Attribute] = []
     compression: CompressionT = "GZIP"
     examples_per_shard: int = 256
     shard_file_type: ShardFileTypeT = "tfrec"
