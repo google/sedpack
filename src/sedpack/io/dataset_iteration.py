@@ -30,7 +30,7 @@ import asyncstdlib
 import numpy as np
 import tensorflow as tf
 
-from sedpack.io.dataset_base import DatasetBase
+from sedpack.io.dataset_base import CachedShardInfoIterator, DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
 from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
@@ -69,7 +69,7 @@ class DatasetIteration(DatasetBase):
             non-zero then limit the number of shards with different
             `custom_metadata`. Take only the first `custom_metadata_type_limit`
             shards with the concrete `custom_metadata`. This is best effort for
-            different `custom_metadata` (hashed as a tuple of sorted items).
+            different `custom_metadata` (hashed as `json.dumps`).
 
             shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
@@ -77,44 +77,21 @@ class DatasetIteration(DatasetBase):
 
         Returns: A list of shards filenames.
         """
-        # List of all shard informations
         shards_list: list[ShardInfo] = list(
-            self.shard_info_iterator(split=split))
-
-        # Filter which shards to use.
-        if shard_filter is not None:
-            shards_list = list(filter(shard_filter, shards_list))
-
-            kept_metadata: set[str] = {
-                str(s.custom_metadata) for s in shards_list
-            }
-            self._logger.info(
-                "Filtered shards with custom metadata: %s from split: %s",
-                kept_metadata,
-                split,
-            )
+            CachedShardInfoIterator(
+                split=split,
+                dataset=self,
+                repeat=False,
+                shards=shards,
+                custom_metadata_type_limit=custom_metadata_type_limit,
+                shard_filter=shard_filter,
+                shuffle=0,
+            ))
 
         # Check that there is still something to iterate
         if not shards_list:
             raise ValueError("The list of shards is empty. Try less "
                              "restrictive filtering.")
-
-        # Truncate the shard list
-        if shards:
-            shards_list = shards_list[:shards]
-
-        # Only use a limited amount of shards for each setting of
-        # custom_metadata.
-        if custom_metadata_type_limit:
-            counts: dict[tuple[tuple[str, Any], ...], int] = {}
-            old_shards_list = shards_list
-            shards_list = []
-            for shard_info in old_shards_list:
-                k = tuple(sorted(shard_info.custom_metadata.items()))
-                counts[k] = counts.get(k, 0) + 1
-                if counts[k] <= custom_metadata_type_limit:
-                    shards_list.append(shard_info)
-            self._logger.info("Took %s shards total", len(shards_list))
 
         # Full shard file paths.
         shard_paths = [
@@ -628,9 +605,10 @@ class DatasetIteration(DatasetBase):
 
             custom_metadata_type_limit (int | None): Ignored when None. If
             non-zero then limit the number of shards with different
-            `custom_metadata`. Take only the first `custom_metadata_type_limit`
-            shards with the concrete `custom_metadata`. This is best effort for
-            different `custom_metadata` (hashed as a tuple of sorted items).
+            `custom_metadata`. Take only the first
+            `custom_metadata_type_limit` shards with the concrete
+            `custom_metadata`. This is best effort for different
+            `custom_metadata` (`json.dumps` with `sort_keys`).
 
             shard_filter (Callable[[ShardInfo], bool | None): If present
             this is a function taking the ShardInfo and returning True if the
@@ -646,7 +624,8 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        shard_paths_iterator: Iterable[str] = self.as_numpy_common(
+        shard_iterator: Iterable[ShardInfo] = CachedShardInfoIterator(
+            dataset=self,
             split=split,
             shards=shards,
             custom_metadata_type_limit=custom_metadata_type_limit,
@@ -655,22 +634,55 @@ class DatasetIteration(DatasetBase):
             shuffle=shuffle,
         )
 
+        yield from self.example_iterator_from_shard_iterator(
+            shard_iterator=shard_iterator,
+            process_record=process_record,
+            shuffle=shuffle,
+        )
+
+    def example_iterator_from_shard_iterator(
+        self,
+        *,
+        shard_iterator: Iterable[ShardInfo],
+        process_record: Callable[[ExampleT], T] | None = None,
+        shuffle: int = 1_000,
+    ) -> Iterable[ExampleT] | Iterable[T]:
+        """Low level iterator of examples given an iterator of shard
+        information.
+
+        Args:
+
+          shard_iterator (Iterable[ShardInfo]): These shards are being
+          iterated.
+
+          process_record (Callable[[ExampleT], T] | None): Optional
+          function that processes a single record.
+
+          shuffle (int): How many examples should be shuffled across shards.
+          When set to 0 the iteration is deterministic. It might be faster to
+        """
+        shard_paths_iterator: Iterable[str] = map(
+            lambda shard_info: str(self.path / shard_info.file_infos[0].
+                                   file_path),
+            shard_iterator,
+        )
+
         # Decode the files.
-        shard_iterator: IterateShardBase[ExampleT]
+        shards_iterator: IterateShardBase[ExampleT]
         match self.dataset_structure.shard_file_type:
             case "tfrec":
-                shard_iterator = IterateShardTFRec(
+                shards_iterator = IterateShardTFRec(
                     dataset_structure=self.dataset_structure,
                     process_record=None,
                     num_parallel_calls=os.cpu_count() or 1,
                 )
             case "npz":
-                shard_iterator = IterateShardNP(
+                shards_iterator = IterateShardNP(
                     dataset_structure=self.dataset_structure,
                     process_record=None,
                 )
             case "fb":
-                shard_iterator = IterateShardFlatBuffer(
+                shards_iterator = IterateShardFlatBuffer(
                     dataset_structure=self.dataset_structure,
                     process_record=None,
                 )
@@ -680,7 +692,7 @@ class DatasetIteration(DatasetBase):
 
         example_iterator = itertools.chain.from_iterable(
             map(
-                shard_iterator.iterate_shard,  # type: ignore[arg-type]
+                shards_iterator.iterate_shard,  # type: ignore[arg-type]
                 shard_paths_iterator,
             ))
 
