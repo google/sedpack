@@ -286,7 +286,9 @@ class CachedShardInfoIterator(ShardInfoIterator):
           a function taking the ShardInfo and returning True if the shard shall
           be used for traversal and False otherwise.
 
-          shuffle (int): When set to 0 the iteration is deterministic.
+          shuffle (int): When set to 0 the iteration is deterministic otherwise
+          shuffle the shards with a shuffle buffer of at least `shuffle`
+          elements. Current implementation shuffles all shard information.
         """
         super().__init__(
             split=split,
