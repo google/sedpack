@@ -30,13 +30,14 @@ import asyncstdlib
 import numpy as np
 import tensorflow as tf
 
-from sedpack.io.dataset_base import CachedShardInfoIterator, DatasetBase
+from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
 from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
 from sedpack.io.npz import IterateShardNP
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
+from sedpack.io.shard_info_iterator import CachedShardInfoIterator
 from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
@@ -79,8 +80,9 @@ class DatasetIteration(DatasetBase):
         """
         shards_list: list[ShardInfo] = list(
             CachedShardInfoIterator(
+                dataset_path=self.path,
+                dataset_info=self.dataset_info,
                 split=split,
-                dataset=self,
                 repeat=False,
                 shards=shards,
                 custom_metadata_type_limit=custom_metadata_type_limit,
@@ -625,7 +627,8 @@ class DatasetIteration(DatasetBase):
         `process_record` returns something else). No batching is done.
         """
         shard_iterator: Iterable[ShardInfo] = CachedShardInfoIterator(
-            dataset=self,
+            dataset_path=self.path,
+            dataset_info=self.dataset_info,
             split=split,
             shards=shards,
             custom_metadata_type_limit=custom_metadata_type_limit,
