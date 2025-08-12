@@ -32,7 +32,7 @@ jobs:
         working-directory: ./rust
         run: bash benches/setup.sh
       - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # v1
-      - uses: bencherdev/bencher@main
+      - uses: bencherdev/bencher@f89d454e74a32a81b2eab29fe0afdb2316617342 # v0.5
       - name: Track base branch benchmarks with Bencher
         working-directory: ./rust
         run: |
