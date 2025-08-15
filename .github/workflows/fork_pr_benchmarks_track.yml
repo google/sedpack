@@ -1,5 +1,8 @@
 # Based on https://bencher.dev/docs/how-to/github-actions/
 name: Track Benchmarks with Bencher
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   workflow_run:
