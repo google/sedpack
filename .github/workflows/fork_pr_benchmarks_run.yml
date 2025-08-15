@@ -1,5 +1,8 @@
 # Based on https://bencher.dev/docs/how-to/github-actions/
 name: Run Benchmarks
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   pull_request:
