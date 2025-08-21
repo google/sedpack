@@ -70,7 +70,7 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install sedpack locally
-        run: pip install --editable ".[dev]"
+        run: pip install --editable .
       - name: Running unit tests
         run: python -m pytest
 
