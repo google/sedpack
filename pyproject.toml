@@ -37,7 +37,6 @@ dependencies = [
     "flatbuffers",
     "lz4",
     "numpy",
-    "perfcounters",
     "pydantic",
     "pytest",
     "pytest-asyncio",
@@ -54,6 +53,14 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "maturin[patchelf,zig]",
+    "mypy",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "types-aiofiles",
+    "types-tensorflow",
+    "types-tqdm",
+    "yapf",
 ]
 
 [project.scripts]
