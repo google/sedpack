@@ -59,7 +59,6 @@ jobs:
         # tested by coverage since that is running on ubuntu which is also used
         # to produce the main requirements.txt file.
         run: |
-          pip install -U "pip < 25.1"  # Workaround for https://github.com/jazzband/pip-tools/issues/2176
           pip install pip-tools
           pip-compile --generate-hashes pyproject.toml > requirements.txt
           pip install -r requirements.txt
