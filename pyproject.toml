@@ -47,7 +47,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "maturin[zig]",
+    "maturin",
     "mypy",
     "pylint",
     "pytest",

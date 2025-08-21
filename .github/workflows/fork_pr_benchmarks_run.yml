@@ -37,7 +37,7 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements*.txt') }}
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         # requirements.txt is not reliable since across different platforms and
