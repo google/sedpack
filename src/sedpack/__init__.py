@@ -25,7 +25,9 @@ import importlib
 # compatibility with existing code we dynamically set the __version__ attribute
 # here.
 try:
+    # When package is installed use the version.
     __version__ = importlib.metadata.version("sedpack")
 except importlib.metadata.PackageNotFoundError:
-    # Package is not installed. This is expected for local development.
-    __version__ = "0.0.0-dev"
+    # Package is not installed. The Rust part of this package is probably not
+    # going to work in this case (the Rust binding would be probably missing).
+    __version__ = "0.0.7-dev"
