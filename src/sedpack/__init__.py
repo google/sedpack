@@ -13,9 +13,15 @@
 # limitations under the License.
 """Dataset library.
 
-Format: MAJOR.MINOR.PATCH (see https://pypi.org/project/semver/ for more
-  possibilities)
+Version format: MAJOR.MINOR.PATCH (see https://pypi.org/project/semver/ for
+more possibilities).
 """
-# The version of this package is defined by rust/Cargo.toml but mypy does not
-# see that.
-__version__ = "0.1.3"
+
+import importlib
+
+# The version of this package is defined by rust/Cargo.toml and dynamically
+# deduced by Maturin (see
+# https://www.maturin.rs/metadata.html#dynamic-metadata). To ensure
+# compatibility with existing code we dynamically set the __version__ attribute
+# here.
+__version__ = importlib.metadata.version("sedpack")
