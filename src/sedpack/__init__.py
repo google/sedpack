@@ -24,4 +24,8 @@ import importlib
 # https://www.maturin.rs/metadata.html#dynamic-metadata). To ensure
 # compatibility with existing code we dynamically set the __version__ attribute
 # here.
-__version__ = importlib.metadata.version("sedpack")
+try:
+    __version__ = importlib.metadata.version("sedpack")
+except importlib.metadata.PackageNotFoundError:
+    # Package is not installed. This is expected for local development.
+    __version__ = "0.0.0-dev"
