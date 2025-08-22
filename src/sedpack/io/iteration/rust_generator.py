@@ -119,6 +119,11 @@ class RustGenerator:
         # _shard_chunk_size shard paths at once.
         self._shard_chunk_size: int = 1_000_000
 
+        # Check file_parallelism is positive.
+        if file_parallelism <= 0:
+            raise ValueError("The argument file_parallelism should be "
+                             f"positive but is {file_parallelism}")
+
         self._dataset_path: Path = dataset_path
         self._dataset_structure: DatasetStructure = dataset_structure
         # Make sure that any iteration on shard_iterator advances instead of
