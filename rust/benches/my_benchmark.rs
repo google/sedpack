@@ -37,7 +37,7 @@ pub fn example_iterator_benchmark(c: &mut Criterion) {
     let shard_infos = get_shard_files();
     c.bench_function("ExampleIterator", |b| {
         b.iter(|| {
-            for example in ExampleIterator::new(shard_infos.clone(), false, 12) {
+            for example in ExampleIterator::new(shard_infos.clone(), 12) {
                 let _ = std::hint::black_box(example);
             }
         })
