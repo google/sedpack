@@ -48,8 +48,7 @@ jobs:
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          # The cache key depends on requirements.txt
-          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
+          key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         # requirements.txt is not reliable since across different platforms and
@@ -60,9 +59,8 @@ jobs:
         # to produce the main requirements.txt file.
         run: |
           pip install pip-tools
-          pip-compile --generate-hashes pyproject.toml > requirements.txt
-          pip install -r requirements.txt
-          pip install -r test_requirements.txt
+          pip-compile --generate-hashes --extra dev pyproject.toml > dev_requirements.txt
+          pip install -r dev_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
@@ -72,10 +70,9 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install sedpack locally
-        run: pip install --editable .
+        run: pip install --editable ".[dev]"
       - name: Running unit tests
-        run: |
-          python -m pytest
+        run: python -m pytest
 
   coverage:
     runs-on: ubuntu-22.04
@@ -97,12 +94,11 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}-${{ hashFiles('test_requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
           python -m pip install --require-hashes --no-deps -r requirements.txt
-          pip install -r test_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
@@ -114,7 +110,7 @@ jobs:
       - name: Installing test requirements and sedpack
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
-          pip install --editable .
+          pip install --editable ".[dev]"
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage
