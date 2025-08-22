@@ -161,7 +161,7 @@ class RustGenerator:
             yield from self._single_iter()
 
     def _single_iter(self) -> Iterable[ExampleT] | Iterable[T]:
-        """Iterate the dataset once.
+        """Iterate over a single chunk of shards.
         """
         if self._rust_iter is None:
             shard_paths: list[str] = [
@@ -169,7 +169,7 @@ class RustGenerator:
                 for s in itertools.islice(
                     self._shard_iterator,
                     # Workaround until RustIter supports an Iterable[ShardInfo].
-                    1_000_000 * (self._file_parallelism**2),
+                    1_000_000,
                 )
             ]
 
