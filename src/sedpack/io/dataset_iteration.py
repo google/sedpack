@@ -764,14 +764,22 @@ class DatasetIteration(DatasetBase):
                 f"The compression {self.dataset_structure.compression} is not "
                 "among the supported compressions: {supported_compressions}")
 
+        shard_iterator = CachedShardInfoIterator(
+            dataset_path=self.path,
+            dataset_info=self.dataset_info,
+            split=split,
+            repeat=repeat,
+            shards=shards,
+            custom_metadata_type_limit=None,
+            shard_filter=shard_filter,
+            shuffle=shuffle,
+        )
+
         with RustGenerator(
-                dataset=self,
-                split=split,
+                dataset_path=self.path,
+                dataset_structure=self.dataset_structure,
+                shard_iterator=shard_iterator,
                 process_record=process_record,
-                shards=shards,
-                shard_filter=shard_filter,
-                repeat=repeat,
                 file_parallelism=file_parallelism,
-                shuffle=shuffle,
         ) as rust_generator:
             yield from rust_generator()
