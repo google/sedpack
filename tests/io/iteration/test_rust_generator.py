@@ -24,7 +24,10 @@ from sedpack.io.metadata import DatasetStructure
 
 
 def test_wrong_file_paralelism() -> None:
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(
+            ValueError,
+            match="The argument file_parallelism should be positive.*",
+    ):
         g = RustGenerator(
             dataset_path=Path(),
             dataset_structure=DatasetStructure(),
@@ -35,10 +38,13 @@ def test_wrong_file_paralelism() -> None:
 
 
 def test_wrong_shard_type() -> None:
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(
+            ValueError,
+            match="RustGenerator is implemented only for FlatBuffers.",
+    ):
         g = RustGenerator(
             dataset_path=Path(),
-            dataset_structure=DatasetStructure(shard_file_type="txt"),
+            dataset_structure=DatasetStructure(shard_file_type="tfrec"),
             shard_iterator=[],
             process_record=None,
             file_parallelism=1,
@@ -46,10 +52,17 @@ def test_wrong_shard_type() -> None:
 
 
 def test_wrong_compression() -> None:
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(
+            ValueError,
+            match=
+            "The compression .* is not among the supported compressions: .*",
+    ):
         g = RustGenerator(
             dataset_path=Path(),
-            dataset_structure=DatasetStructure(compression="vice"),
+            dataset_structure=DatasetStructure(
+                shard_file_type="fb",
+                compression="ZIP",
+            ),
             shard_iterator=[],
             process_record=None,
             file_parallelism=1,
