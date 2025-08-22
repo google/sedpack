@@ -115,6 +115,10 @@ class RustGenerator:
         self._rust_iter = None
         self._stopped: bool = False
 
+        # Workaround until RustIter supports an Iterable[ShardInfo]. Take
+        # _SHARD_CHUNK_SIZE shard paths at once.
+        self._SHARD_CHUNK_SIZE: int = 1_000_000
+
         self._dataset_path: Path = dataset_path
         self._dataset_structure: DatasetStructure = dataset_structure
         # Make sure that any iteration on shard_iterator advances instead of
@@ -168,8 +172,7 @@ class RustGenerator:
                 str(self._dataset_path / s.file_infos[0].file_path)
                 for s in itertools.islice(
                     self._shard_iterator,
-                    # Workaround until RustIter supports an Iterable[ShardInfo].
-                    1_000_000,
+                    self._SHARD_CHUNK_SIZE,
                 )
             ]
 
