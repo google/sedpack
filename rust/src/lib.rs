@@ -94,7 +94,7 @@ mod static_iter {
             let compression_type = CompressionType::from_str(&compression).unwrap();
             let shard_infos = files
                 .into_iter()
-                .map(|file_path| ShardInfo { file_path: file_path.clone(), compression_type })
+                .map(|file_path| ShardInfo { file_path: file_path, compression_type })
                 .collect();
             hash_map.insert(static_index, ExampleIterator::new(shard_infos, threads));
 
