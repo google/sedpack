@@ -127,6 +127,17 @@ class RustGenerator:
         self._process_record: Callable[[ExampleT], T] | None = process_record
         self._file_parallelism: int = file_parallelism
 
+        # Only FlatBuffers are supported.
+        if dataset_structure.shard_file_type != "fb":
+            raise ValueError("This method is implemented only for FlatBuffers.")
+
+        # Check if the compression type is supported by Rust.
+        supported_compressions = RustIter.supported_compressions()
+        if dataset_structure.compression not in supported_compressions:
+            raise ValueError(
+                f"The compression {dataset_structure.compression} is not "
+                "among the supported compressions: {supported_compressions}")
+
         def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> ExampleT:
             result: ExampleT = {}
             for np_bytes, attribute in zip(
