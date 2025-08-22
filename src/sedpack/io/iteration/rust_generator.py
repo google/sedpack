@@ -129,7 +129,8 @@ class RustGenerator:
 
         # Only FlatBuffers are supported.
         if dataset_structure.shard_file_type != "fb":
-            raise ValueError("RustGenerator is implemented only for FlatBuffers.")
+            raise ValueError(
+                "RustGenerator is implemented only for FlatBuffers.")
 
         # Check if the compression type is supported by Rust.
         supported_compressions = RustIter.supported_compressions()
