@@ -119,6 +119,11 @@ class RustGenerator:
         # _shard_chunk_size shard paths at once.
         self._shard_chunk_size: int = 1_000_000
 
+        # Check file_parallelism is positive.
+        if file_parallelism <= 0:
+            raise ValueError("The argument file_parallelism should be "
+                             f"positive but is {file_parallelism}")
+
         self._dataset_path: Path = dataset_path
         self._dataset_structure: DatasetStructure = dataset_structure
         # Make sure that any iteration on shard_iterator advances instead of
@@ -126,6 +131,18 @@ class RustGenerator:
         self._shard_iterator: Iterator[ShardInfo] = iter(shard_iterator)
         self._process_record: Callable[[ExampleT], T] | None = process_record
         self._file_parallelism: int = file_parallelism
+
+        # Only FlatBuffers are supported.
+        if dataset_structure.shard_file_type != "fb":
+            raise ValueError(
+                "RustGenerator is implemented only for FlatBuffers.")
+
+        # Check if the compression type is supported by Rust.
+        supported_compressions = RustIter.supported_compressions()
+        if dataset_structure.compression not in supported_compressions:
+            raise ValueError(
+                f"The compression {dataset_structure.compression} is not "
+                "among the supported compressions: {supported_compressions}")
 
         def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> ExampleT:
             result: ExampleT = {}

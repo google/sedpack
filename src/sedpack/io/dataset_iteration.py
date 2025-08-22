@@ -40,8 +40,6 @@ from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
 from sedpack.io.iteration import RustGenerator
 
-from sedpack._sedpack_rs import RustIter
-
 
 class DatasetIteration(DatasetBase):
     """Mixin for sedpack.io.Dataset to do iteration.
@@ -753,17 +751,6 @@ class DatasetIteration(DatasetBase):
         Returns: An iterator over numpy examples (unless the parameter
         `process_record` returns something else). No batching is done.
         """
-        # Only FlatBuffers are supported.
-        if self.dataset_structure.shard_file_type != "fb":
-            raise ValueError("This method is implemented only for FlatBuffers.")
-
-        # Check if the compression type is supported by Rust.
-        supported_compressions = RustIter.supported_compressions()
-        if self.dataset_structure.compression not in supported_compressions:
-            raise ValueError(
-                f"The compression {self.dataset_structure.compression} is not "
-                "among the supported compressions: {supported_compressions}")
-
         shard_iterator = CachedShardInfoIterator(
             dataset_path=self.path,
             dataset_info=self.dataset_info,
