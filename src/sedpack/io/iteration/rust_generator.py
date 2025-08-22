@@ -185,7 +185,6 @@ class RustGenerator:
                 files=shard_paths,
                 threads=self._file_parallelism,
                 compression=self._dataset_structure.compression,
-                repeat=False,
             )
             # Manually calling __enter__ and __exit__ -- see class docstring.
             self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call

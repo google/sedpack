@@ -98,8 +98,7 @@ impl ExampleIterator {
     /// - Iterate over the shards in Rust. This would require having the shard filtering being
     ///   allowed to be called from Rust. But then we could pass an iterator of the following form:
     ///   `files: impl Iterator<Item = &str>`.
-    pub fn new(files: Vec<ShardInfo>, repeat: bool, threads: usize) -> Self {
-        assert!(!repeat, "Not implemented yet: repeat=true");
+    pub fn new(files: Vec<ShardInfo>, threads: usize) -> Self {
         let example_iterator = Box::new(
             parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten(),
         );
