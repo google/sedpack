@@ -12,24 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fs;
-
 use criterion::{criterion_group, criterion_main, Criterion};
+use glob::glob;
 use sedpack_rs::example_iteration::{
     get_shard_progress, CompressionType, ExampleIterator, ShardInfo,
 };
 pub use sedpack_rs::parallel_map::parallel_map;
 
 pub fn get_shard_files() -> Vec<ShardInfo> {
-    let dir = "mnist_fb_gzip/train/";
-    let shard_infos: Vec<_> = fs::read_dir(dir)
-        .unwrap()
+    let shard_infos: Vec<_> = glob("mnist_fb_gzip/**/*.fb")
+        .expect("Failed to load dataset")
         .filter_map(|p| p.ok())
-        .map(|p| p.path().to_str().unwrap().to_string())
-        .filter(|p| p.ends_with(".fb"))
+        .map(|p| p.display().to_string())
         .map(|file_path| ShardInfo { file_path, compression_type: CompressionType::Gzip })
         .collect();
     println!(">> Decoding {} shards", shard_infos.len());
+    assert!(shard_infos.len() == 275);
     shard_infos
 }
 
@@ -57,5 +55,9 @@ pub fn parallel_map_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, parallel_map_benchmark, example_iterator_benchmark);
+criterion_group!(
+    benches,
+    example_iterator_benchmark,
+    parallel_map_benchmark,
+);
 criterion_main!(benches);
