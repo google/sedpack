@@ -27,7 +27,7 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
         .map(|file_path| ShardInfo { file_path, compression_type: CompressionType::Gzip })
         .collect();
     println!(">> Decoding {} shards", shard_infos.len());
-    assert!(shard_infos.len() == 275);
+    assert_eq!(shard_infos.len(), 275);
     shard_infos
 }
 
