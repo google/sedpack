@@ -55,9 +55,5 @@ pub fn parallel_map_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(
-    benches,
-    example_iterator_benchmark,
-    parallel_map_benchmark,
-);
+criterion_group!(benches, example_iterator_benchmark, parallel_map_benchmark,);
 criterion_main!(benches);
