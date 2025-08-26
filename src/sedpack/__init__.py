@@ -17,7 +17,7 @@ Version format: MAJOR.MINOR.PATCH (see https://pypi.org/project/semver/ for
 more possibilities).
 """
 
-import importlib
+from importlib.metadata import version
 
 # The version of this package is defined by rust/Cargo.toml and dynamically
 # deduced by Maturin (see
@@ -26,7 +26,7 @@ import importlib
 # here.
 try:
     # When package is installed use the version.
-    __version__ = importlib.metadata.version("sedpack")
+    __version__ = version("sedpack")
 except importlib.metadata.PackageNotFoundError:
     # Package is not installed. The Rust part of this package is probably not
     # going to work in this case (the Rust binding would be probably missing).
