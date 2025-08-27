@@ -192,7 +192,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
 
         # See `flatbuffers.builder.Builder.CreateNumpyVector`.
 
-        byte_representation: bytess
+        byte_representation: bytes
         alignment: int
         match attribute.dtype:
             case "str":

@@ -95,7 +95,7 @@ def end2end_str(
                         batch_size=1,
                     )):
                 assert type(example["strange_strings"]) == type(
-                    array_of_values[i:i+1])
+                    array_of_values[i:i + 1])
                 assert example["strange_strings"] == array_of_values[i:i + 1]
         case "as_numpy_iterator":
             for i, example in enumerate(
