@@ -47,7 +47,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "maturin[patchelf,zig]",
+    "maturin[patchelf,zig] ; platform_system != 'Windows'",
+    "maturin[zig] ; platform_system == 'Windows'",
     "mypy",
     "pylint",
     "pytest",
