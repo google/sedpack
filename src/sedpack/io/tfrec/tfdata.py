@@ -93,11 +93,22 @@ def get_from_tfrecord(
     def from_tfrecord(tf_record: Any) -> Any:
         rec = tf.io.parse_single_example(tf_record, tf_features)
         for attribute in saved_data_description:
-            if attribute.dtype == "float16":
-                rec[attribute.name] = tf.io.parse_tensor(
-                    rec[attribute.name], tf.float16)
-                rec[attribute.name] = tf.ensure_shape(rec[attribute.name],
-                                                      shape=attribute.shape)
+            match attribute.dtype:
+                case "str":
+                    pass
+                    #rec[attribute.name] = rec[attribute.name].decode("utf-8")
+                case "float16":
+                    rec[attribute.name] = tf.io.parse_tensor(
+                        rec[attribute.name],
+                        tf.float16,
+                    )
+                    rec[attribute.name] = tf.ensure_shape(
+                        rec[attribute.name],
+                        shape=attribute.shape,
+                    )
+                case _:
+                    # Nothing extra needs to be done.
+                    pass
         return rec
 
     return from_tfrecord

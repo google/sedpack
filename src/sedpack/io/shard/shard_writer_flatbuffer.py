@@ -101,44 +101,14 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         self._examples.append(fbapi_Example.ExampleEnd(self._builder))
 
     @staticmethod
-    def save_numpy_vector_as_bytearray(  # type: ignore[no-any-unimported]
-            builder: Builder, attribute: Attribute,
-            value: AttributeValueT) -> int:
-        """Save a given array into a FlatBuffer as bytes. This is to ensure
-        compatibility with types which are not supported by FlatBuffers (e.g.,
-        np.float16).  The FlatBuffers schema must mark this vector as type
-        bytes [byte] (see src/sedpack/io/flatbuffer/shard.fbs) since there is a
-        distinction of how the length is being saved. The inverse of this
-        function is
-        `sedpack.io.flatbuffer.iterate.IterateShardFlatBuffer.decode_array`.
-
-        If we have an array of np.int32 of 10 elements the FlatBuffers library
-        would save the length as 10. Which is then impossible to read in Rust
-        since the length and itemsize (sizeof of the type) are private. Thus we
-        could not get the full array back. Thus we are saving the array as 40
-        bytes. This function does not modify the `value`, and saves a flattened
-        version of it. This function also saves the exact dtype as given by
-        `attribute`. Bytes are being saved in little endian ("<") and
-        c_contiguous ("C") order, same as with FlatBuffers. Alignment is set to
-        `dtype.itemsize` as opposed to FlatBuffers choice of `dtype.alignment`.
-
-        Args:
-
-          builder (flatbuffers.Builder): The byte buffer being constructed.
-          Must be initialized.
-
-          attribute (Attribute): Description of this attribute (shape and
-          dtype).
-
-          value (AttributeValueT): The array to be saved. The shape should be
-          as defined in `attribute` (will be flattened).
-
-        Returns: The offset returned by `flatbuffers.Builder.EndVector`.
+    def _np_to_bytes(
+        builder: Builder,
+        attribute: Attribute,
+        value: AttributeValueT,
+    ) -> bytes:
         """
-        # Not sure about flatbuffers.Builder __bool__ semantics.
+        """
         assert builder is not None
-
-        # See `flatbuffers.builder.Builder.CreateNumpyVector`.
 
         # Copy the value in order not to modify the original and flatten for
         # better saving.
@@ -178,7 +148,73 @@ class ShardWriterFlatBuffer(ShardWriterBase):
                                  f" {attribute.name}")
 
         # This is going to be saved, ensure c_contiguous ordering.
-        byte_representation = value_np.tobytes(order="C")
+        return value_np.tobytes(order="C")
+
+    @staticmethod
+    def save_numpy_vector_as_bytearray(  # type: ignore[no-any-unimported]
+        builder: Builder,
+        attribute: Attribute,
+        value: AttributeValueT,
+    ) -> int:
+        """Save a given array into a FlatBuffer as bytes. This is to ensure
+        compatibility with types which are not supported by FlatBuffers (e.g.,
+        np.float16).  The FlatBuffers schema must mark this vector as type
+        bytes [byte] (see src/sedpack/io/flatbuffer/shard.fbs) since there is a
+        distinction of how the length is being saved. The inverse of this
+        function is
+        `sedpack.io.flatbuffer.iterate.IterateShardFlatBuffer.decode_array`.
+
+        If we have an array of np.int32 of 10 elements the FlatBuffers library
+        would save the length as 10. Which is then impossible to read in Rust
+        since the length and itemsize (sizeof of the type) are private. Thus we
+        could not get the full array back. Thus we are saving the array as 40
+        bytes. This function does not modify the `value`, and saves a flattened
+        version of it. This function also saves the exact dtype as given by
+        `attribute`. Bytes are being saved in little endian ("<") and
+        c_contiguous ("C") order, same as with FlatBuffers. Alignment is set to
+        `dtype.itemsize` as opposed to FlatBuffers choice of `dtype.alignment`.
+
+        Args:
+
+          builder (flatbuffers.Builder): The byte buffer being constructed.
+          Must be initialized.
+
+          attribute (Attribute): Description of this attribute (shape and
+          dtype).
+
+          value (AttributeValueT): The array to be saved. The shape should be
+          as defined in `attribute` (will be flattened).
+
+        Returns: The offset returned by `flatbuffers.Builder.EndVector`.
+        """
+        # Not sure about flatbuffers.Builder __bool__ semantics.
+        assert builder is not None
+
+        # See `flatbuffers.builder.Builder.CreateNumpyVector`.
+
+        byte_representation: bytess
+        alignment: int
+        match attribute.dtype:
+            case "str":
+                byte_representation = value.encode("utf-8")
+                alignment = 16
+            case "bytes":
+                byte_representation = bytes(value)
+                alignment = 16
+            case _:
+                try:
+                    dt = np.dtype(attribute.dtype)
+                except:
+                    raise ValueError(f"Unsupported dtype {attribute.dtype}")
+
+                byte_representation = ShardWriterFlatBuffer._np_to_bytes(
+                    builder=builder,
+                    attribute=attribute,
+                    value=value,
+                )
+                value_flattened = np.copy(value).flatten()
+                value_np = np.array(value_flattened, dtype=attribute.dtype)
+                alignment = value_np.dtype.itemsize
 
         # Total length of the array (in bytes).
         length: int = len(byte_representation)
@@ -187,8 +223,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         builder.StartVector(
             elemSize=1,  # Storing bytes.
             numElems=length,
-            alignment=value_np.dtype.
-            itemsize,  # Cautious alignment of the array.
+            alignment=alignment,  # Cautious alignment of the array.
         )
         builder.head = int(builder.Head() - length)
 
