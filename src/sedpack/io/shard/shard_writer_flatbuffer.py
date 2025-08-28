@@ -101,12 +101,25 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         self._examples.append(fbapi_Example.ExampleEnd(self._builder))
 
     @staticmethod
-    def _np_to_bytes(
+    def _np_to_bytes(  # type: ignore[no-any-unimported]
         builder: Builder,
         attribute: Attribute,
         value: AttributeValueT,
     ) -> bytes:
-        """
+        """Turn a single AttributeValueT value into a sequence of bytes to be
+        saved in a FlatBuffer shard.
+
+        Args:
+
+          builder (Builder): The FlatBuffer builder.
+
+          attribute (Attribute): Description of the attribute defining dtype and
+          shape.
+
+          value (AttributeValueT): The actual value which is being represented.
+
+        Raises: ValueError if the value cannot be cast to the correct dtype with
+        the correct byteorder.
         """
         assert builder is not None
 
@@ -186,6 +199,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
           as defined in `attribute` (will be flattened).
 
         Returns: The offset returned by `flatbuffers.Builder.EndVector`.
+
+        Raises: ValueError if the dtype is unknown to NumPy.
         """
         # Not sure about flatbuffers.Builder __bool__ semantics.
         assert builder is not None
@@ -196,16 +211,17 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         alignment: int
         match attribute.dtype:
             case "str":
-                byte_representation = value.encode("utf-8")
+                byte_representation = str(value).encode("utf-8")
                 alignment = 16
             case "bytes":
-                byte_representation = bytes(value)
+                byte_representation = np.array(value).tobytes()
                 alignment = 16
             case _:
                 try:
-                    dt = np.dtype(attribute.dtype)
-                except:
-                    raise ValueError(f"Unsupported dtype {attribute.dtype}")
+                    _ = np.dtype(attribute.dtype)
+                except Exception as exc:
+                    raise ValueError(
+                        f"Unsupported dtype {attribute.dtype}") from exc
 
                 byte_representation = ShardWriterFlatBuffer._np_to_bytes(
                     builder=builder,

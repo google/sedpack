@@ -94,8 +94,11 @@ def end2end_str(
                         repeat=False,
                         batch_size=1,
                     )):
-                #assert type(example["strange_strings"]) == type(
-                #    array_of_values[i:i+1])
+                # No idea how to have an actual string in TensorFlow. Maybe it
+                # is best to leave it as a tensor anyway since that is the
+                # "native" type.
+                #assert type(example["strange_strings"][0]) == type(
+                #    array_of_values[i])
                 assert example["strange_strings"] == array_of_values[i:i + 1]
         case "as_numpy_iterator":
             for i, example in enumerate(

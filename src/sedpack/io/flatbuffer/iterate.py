@@ -26,7 +26,7 @@ import numpy.typing as npt
 
 from sedpack.io.compress import CompressedFile
 from sedpack.io.metadata import Attribute
-from sedpack.io.types import ExampleT
+from sedpack.io.types import AttributeValueT, ExampleT
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.utils import func_or_identity
@@ -87,9 +87,11 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
             yield example_dictionary
 
     @staticmethod
-    def decode_array(np_bytes: npt.NDArray[np.uint8],
-                     attribute: Attribute,
-                     batch_size: int = 0) -> npt.NDArray[np.generic]:
+    def decode_array(
+        np_bytes: npt.NDArray[np.uint8],
+        attribute: Attribute,
+        batch_size: int = 0,
+    ) -> AttributeValueT:
         """Decode an array. See `sedpack.io.shard.shard_writer_flatbuffer
         .ShardWriterFlatBuffer.save_numpy_vector_as_bytearray`
         for format description. The code tries to avoid unnecessary copies.

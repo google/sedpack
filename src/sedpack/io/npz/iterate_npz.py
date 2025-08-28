@@ -21,7 +21,6 @@ from typing import AsyncIterator, Iterable
 
 import aiofiles
 import numpy as np
-import numpy.typing as npt
 
 from sedpack.io.metadata import Attribute
 from sedpack.io.shard import IterateShardBase
@@ -35,13 +34,13 @@ class IterateShardNP(IterateShardBase[T]):
     """
 
     @staticmethod
-    def decode_attribute(np_value: npt.NDArray[np.generic],
+    def decode_attribute(np_value: AttributeValueT,
                          attribute: Attribute) -> AttributeValueT:
         match attribute.dtype:
             case "str":
                 return str(np_value)
             case "bytes":
-                return np_value.tobytes()
+                return bytes(np.array(np_value))
             case _:
                 return np_value
 

@@ -52,7 +52,7 @@ class IterateShardTFRec(IterateShardBase[T]):
                          attribute: Attribute) -> AttributeValueT:
         match attribute.dtype:
             case "str":
-                return value.decode("utf-8")
+                return bytes(value).decode("utf-8")
             case "bytes":
                 return value.tobytes()
             case _:
@@ -78,7 +78,6 @@ class IterateShardTFRec(IterateShardBase[T]):
             num_parallel_calls=self.num_parallel_calls,
         )
 
-        #yield from tf_dataset_examples.as_numpy_iterator()  # type: ignore[misc]
         for example in tf_dataset_examples.as_numpy_iterator():
             yield {
                 name:
@@ -86,7 +85,8 @@ class IterateShardTFRec(IterateShardBase[T]):
                         value=value,
                         attribute=attribute,
                     ) for (name, value), attribute in zip(
-                        example.items(),
+                        # `example` is a dictionary, mypy does not know that.
+                        example.items(),  # type: ignore[attr-defined]
                         self.dataset_structure.saved_data_description,
                     )
             }
