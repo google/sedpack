@@ -21,7 +21,9 @@ from typing import AsyncIterator, Iterable
 
 import aiofiles
 import numpy as np
+import numpy.typing as npt
 
+from sedpack.io.metadata import Attribute
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.types import AttributeValueT, ExampleT
@@ -31,6 +33,17 @@ from sedpack.io.utils import func_or_identity
 class IterateShardNP(IterateShardBase[T]):
     """Iterate a shard saved in the npz format.
     """
+
+    @staticmethod
+    def decode_attribute(np_value: npt.NDArray[np.generic],
+                         attribute: Attribute) -> AttributeValueT:
+        match attribute.dtype:
+            case "str":
+                return str(np_value)
+            case "bytes":
+                return np_value.tobytes()
+            case _:
+                return np_value
 
     def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
         """Iterate a shard saved in the NumPy format npz.
@@ -45,7 +58,16 @@ class IterateShardNP(IterateShardBase[T]):
             break
 
         for i in range(elements):
-            yield {name: value[i] for name, value in shard_content.items()}
+            yield {
+                name:
+                    IterateShardNP.decode_attribute(
+                        np_value=value[i],
+                        attribute=attribute,
+                    ) for (name, value), attribute in zip(
+                        shard_content.items(),
+                        self.dataset_structure.saved_data_description,
+                    )
+            }
 
     # TODO(issue #85) fix and test async iterator typing
     async def iterate_shard_async(  # pylint: disable=invalid-overridden-method

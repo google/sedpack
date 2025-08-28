@@ -82,10 +82,6 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                     attribute=attribute,
                 )
 
-                # Copy otherwise the arrays are immutable and keep the whole
-                # file content from being garbage collected.
-                np_array = np.copy(np_array)
-
                 example_dictionary[attribute.name] = np_array
 
             yield example_dictionary
