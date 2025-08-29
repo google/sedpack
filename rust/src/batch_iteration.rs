@@ -42,13 +42,7 @@ impl Iterator for Batcher {
 
     fn next(&mut self) -> Option<Self::Item> {
         // Collect examples.
-        let mut cache = Vec::<Example>::new();
-        for _ in 0 .. self.batch_size {
-            match self.example_iterator.next() {
-                None => break,
-                Some(e) => cache.push(e),
-            }
-        }
+        let cache: Vec<Example> = self.example_iterator.by_ref().take(self.batch_size).collect();
 
         // Decide if we have enough (the last batch might not have batch_size examples).
         if cache.is_empty() {
