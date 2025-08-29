@@ -19,15 +19,13 @@ import os
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Iterable
 
-import numpy as np
-import numpy.typing as npt
 import tensorflow as tf
 
-from sedpack.io.metadata import Attribute, DatasetStructure
+from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
-from sedpack.io.types import AttributeValueT, ExampleT
+from sedpack.io.types import ExampleT
 from sedpack.io.utils import func_or_identity
 
 
@@ -46,17 +44,6 @@ class IterateShardTFRec(IterateShardBase[T]):
         # This is not pickleable, but can be created on the fly.
         self.from_tfrecord: Callable[[Any], Any] | None = None
         self.num_parallel_calls: int = num_parallel_calls
-
-    @staticmethod
-    def decode_attribute(value: npt.NDArray[np.generic],
-                         attribute: Attribute) -> AttributeValueT:
-        match attribute.dtype:
-            case "str":
-                return bytes(value).decode("utf-8")
-            case "bytes":
-                return value.tobytes()
-            case _:
-                return value
 
     def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
         """Iterate a shard saved in the TFRec format
@@ -78,18 +65,7 @@ class IterateShardTFRec(IterateShardBase[T]):
             num_parallel_calls=self.num_parallel_calls,
         )
 
-        for example in tf_dataset_examples.as_numpy_iterator():
-            yield {
-                name:
-                    IterateShardTFRec.decode_attribute(
-                        value=value,
-                        attribute=attribute,
-                    ) for (name, value), attribute in zip(
-                        # `example` is a dictionary, mypy does not know that.
-                        example.items(),  # type: ignore[attr-defined]
-                        self.dataset_structure.saved_data_description,
-                    )
-            }
+        yield from tf_dataset_examples.as_numpy_iterator()  # type: ignore[misc]
 
     # TODO(issue #85) fix and test async iterator typing
     async def iterate_shard_async(  # pylint: disable=invalid-overridden-method

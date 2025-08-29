@@ -20,8 +20,9 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 from pathlib import Path
 
 import numpy as np
+from numpy import typing as npt
 
-from sedpack.io.metadata import DatasetStructure
+from sedpack.io.metadata import Attribute, DatasetStructure
 from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
 
@@ -50,6 +51,26 @@ class ShardWriterNP(ShardWriterBase):
 
         self._buffer: dict[str, list[AttributeValueT]] = {}
 
+        # A prefix such that prepended it creates a new name without collision
+        # with any attribute name.
+        self._counting_prefix: str = "len" + "_" * max(
+            len(attribute.name)
+            for attribute in dataset_structure.saved_data_description)
+
+    def _value_to_np(
+        self,
+        attribute: Attribute,
+        value: AttributeValueT,
+    ) -> npt.NDArray[np.generic] | str:
+        match attribute.dtype:
+            case "bytes":
+                raise ValueError("Attributes bytes are saved extra")
+            case "str":
+                assert isinstance(value, str)
+                return value
+            case _:
+                return np.copy(value)
+
     def _write(self, values: ExampleT) -> None:
         """Write an example on disk. Writing may be buffered.
 
@@ -59,12 +80,42 @@ class ShardWriterNP(ShardWriterBase):
         """
         # Just buffer all values.
         if not self._buffer:
-            self._buffer = {
-                name: [np.copy(value)] for name, value in values.items()
-            }
-        else:
-            for name, value in values.items():
-                self._buffer[name].append(np.copy(value))
+            self._buffer = {}
+
+        for (name, value), attribute in zip(
+                values.items(),
+                self.dataset_structure.saved_data_description,
+        ):
+            if attribute.dtype != "bytes":
+                current_values = self._buffer.get(name, [])
+                current_values.append(
+                    self._value_to_np(
+                        attribute=attribute,
+                        value=value,
+                    ))
+                self._buffer[name] = current_values
+            else:
+                # Extend and remember the length.  Attributes with dtype "bytes"
+                # may have variable length. Handle this case. We need to avoid
+                # two thigs:
+                # - Having wrong length of the bytes array and ideally also
+                # avoid padding.
+                # - Using allow_pickle when saving since that could lead to code
+                # execution when loading malicious dataset.
+                # We prefix the attribute name by `len_?` such that the new name
+                # is unique and tells us the lengths of the byte arrays.
+                counts = self._buffer.get(self._counting_prefix + name, [0])
+                counts.append(counts[-1] +
+                              len(value)  # type: ignore[arg-type,operator]
+                             )
+                self._buffer[self._counting_prefix + name] = counts
+
+                byte_list: list[list[int]]
+                byte_list = self._buffer.get(  # type: ignore[assignment]
+                    name, [[]])
+                byte_list[0].extend(list(value)  # type: ignore[arg-type]
+                                   )
+                self._buffer[name] = byte_list  # type: ignore[assignment]
 
     def close(self) -> None:
         """Close the shard file(-s).
@@ -73,14 +124,31 @@ class ShardWriterNP(ShardWriterBase):
             assert not self._shard_file.is_file()
             return
 
+        # Deal properly with "bytes" attributes.
+        for attribute in self.dataset_structure.saved_data_description:
+            if attribute.dtype != "bytes":
+                continue
+            self._buffer[attribute.name] = [
+                np.array(
+                    self._buffer[attribute.name][0],
+                    dtype=np.uint8,
+                )
+            ]
+
         # Write the buffer into a file.
         match self.dataset_structure.compression:
             case "ZIP":
-                np.savez_compressed(str(self._shard_file),
-                                    **self._buffer)  # type: ignore[arg-type]
+                np.savez_compressed(
+                    str(self._shard_file),
+                    allow_pickle=False,
+                    **self._buffer,  # type: ignore[arg-type]
+                )
             case "":
-                np.savez(str(self._shard_file),
-                         **self._buffer)  # type: ignore[arg-type]
+                np.savez(
+                    str(self._shard_file),
+                    allow_pickle=False,
+                    **self._buffer,  # type: ignore[arg-type]
+                )
             case _:
                 # Default should never happen since ShardWriterBase checks that
                 # the requested compression type is supported.

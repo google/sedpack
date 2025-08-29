@@ -57,12 +57,12 @@ def dataset_and_values_dynamic_shape(
                 for _ in range(items):
                     # TODO larger range than just int64
                     values[f"attribute_{dtype}"].append(
-                        random.randint(-60**2, 60**2))
+                        random.randint(-2**60, 2**60))
             case "str":
                 long_string = "Ḽơᶉëᶆ ȋṕšᶙṁ ḍỡḽǭᵳ ʂǐť ӓṁệẗ, ĉṓɲṩḙċťᶒțûɾ" \
-                    "https://arxiv.org/abs/2306.07249 ḹẩḇőꝛế" \
-                    "ấɖḯƥĭṩčįɳġ ḝłįʈ, șếᶑ ᶁⱺ ẽḭŭŝḿꝋď ṫĕᶆᶈṓɍ ỉñḉīḑȋᵭṵńť ṷŧ" \
-                    ":(){ :|:& };: éȶ đꝍꞎôꝛȇ ᵯáꞡᶇā ąⱡîɋṹẵ."
+                      "https://arxiv.org/abs/2306.07249 ḹẩḇőꝛế" \
+                      "ấɖḯƥĭṩčįɳġ ḝłįʈ, șếᶑ ᶁⱺ ẽḭŭŝḿꝋď ṫĕᶆᶈṓɍ ỉñḉīḑȋᵭṵńť ṷŧ" \
+                      ":(){ :|:& };: éȶ đꝍꞎôꝛȇ ᵯáꞡᶇā ąⱡîɋṹẵ."
                 for _ in range(items):
                     begin: int = random.randint(0, len(long_string) // 2)
                     end: int = random.randint(begin + 1, len(long_string))
@@ -74,6 +74,7 @@ def dataset_and_values_dynamic_shape(
                             0,
                             256,
                             size=random.randint(5, 20),
+                            dtype=np.uint8,
                         ).tobytes())
 
     dataset_structure = sedpack.io.metadata.DatasetStructure(
@@ -120,18 +121,18 @@ def dataset_and_values_dynamic_shape(
             "dtypes": ["str"],
             "compression": "GZIP",
         },
-        #{
-        #    "dtypes": ["bytes"],
-        #    "compression": "GZIP",
-        #},
-        #{
-        #    "dtypes": ["int"],
-        #    "compression": "GZIP",
-        #},
-        #{
-        #    "dtypes": ["str", "bytes", "int"],
-        #    "compression": "GZIP",
-        #},
+        {
+            "dtypes": ["bytes"],
+            "compression": "GZIP",
+        },
+        {
+            "dtypes": ["int"],
+            "compression": "GZIP",
+        },
+        {
+            "dtypes": ["str", "bytes", "int"],
+            "compression": "GZIP",
+        },
     ],
 )
 def values_and_dataset_tfrec(request, tmpdir_factory) -> None:
@@ -157,14 +158,14 @@ def values_and_dataset_tfrec(request, tmpdir_factory) -> None:
             "dtypes": ["bytes"],
             "compression": "ZIP",
         },
-        #{
-        #    "dtypes": ["int"],
-        #    "compression": "ZIP",
-        #},
-        #{
-        #    "dtypes": ["str", "bytes", "int"],
-        #    "compression": "ZIP",
-        #},
+        {
+            "dtypes": ["int"],
+            "compression": "ZIP",
+        },
+        {
+            "dtypes": ["str", "bytes", "int"],
+            "compression": "ZIP",
+        },
     ],
 )
 def values_and_dataset_npz(request, tmpdir_factory) -> None:
@@ -186,18 +187,18 @@ def values_and_dataset_npz(request, tmpdir_factory) -> None:
             "dtypes": ["str"],
             "compression": "LZ4",
         },
-        #{
-        #    "dtypes": ["bytes"],
-        #    "compression": "LZ4",
-        #},
-        #{
-        #    "dtypes": ["int"],
-        #    "compression": "LZ4",
-        #},
-        #{
-        #    "dtypes": ["str", "bytes", "int"],
-        #    "compression": "LZ4",
-        #},
+        {
+            "dtypes": ["bytes"],
+            "compression": "LZ4",
+        },
+        {
+            "dtypes": ["int"],
+            "compression": "LZ4",
+        },
+        {
+            "dtypes": ["str", "bytes", "int"],
+            "compression": "LZ4",
+        },
     ],
 )
 def values_and_dataset_fb(request, tmpdir_factory) -> None:
@@ -243,8 +244,15 @@ def check_iteration_of_values(
                     )):
                 assert len(example) == len(values)
                 for name, returned_value in example.items():
-                    assert type(returned_value) == type(values[name][i])
-                    assert returned_value == values[name][i]
+                    if dataset.dataset_structure.shard_file_type != "tfrec":
+                        assert returned_value == values[name][i]
+                        assert type(returned_value) == type(values[name][i])
+                    else:
+                        if "attribute_str" == name:
+                            assert returned_value == values[name][i].encode(
+                                "utf-8")
+                        else:
+                            assert returned_value == values[name][i]
         case "as_numpy_iterator_concurrent":
             for i, example in enumerate(
                     dataset.as_numpy_iterator_concurrent(
@@ -254,8 +262,15 @@ def check_iteration_of_values(
                     )):
                 assert len(example) == len(values)
                 for name, returned_value in example.items():
-                    assert type(returned_value) == type(values[name][i])
-                    assert returned_value == values[name][i]
+                    if dataset.dataset_structure.shard_file_type != "tfrec":
+                        assert returned_value == values[name][i]
+                        assert type(returned_value) == type(values[name][i])
+                    else:
+                        if "attribute_str" == name:
+                            assert returned_value == values[name][i].encode(
+                                "utf-8")
+                        else:
+                            assert returned_value == values[name][i]
         case "as_numpy_iterator_rust":
             for i, example in enumerate(
                     dataset.as_numpy_iterator_concurrent(
@@ -265,8 +280,8 @@ def check_iteration_of_values(
                     )):
                 assert len(example) == len(values)
                 for name, returned_value in example.items():
-                    assert type(returned_value) == type(values[name][i])
                     assert returned_value == values[name][i]
+                    assert type(returned_value) == type(values[name][i])
 
     # We tested everything
     if i + 1 != len(next(iter(values.values()))):

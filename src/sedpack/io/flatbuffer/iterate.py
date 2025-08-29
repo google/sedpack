@@ -110,10 +110,20 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
 
         Returns: the parsed np.ndarray of the correct dtype and shape.
         """
-        if attribute.dtype == "str":
-            return np_bytes.tobytes().decode("utf-8")
-        if attribute.dtype == "bytes":
-            return np_bytes.tobytes()
+        match attribute.dtype:
+            case "str":
+                return np_bytes.tobytes().decode("utf-8")
+            case "bytes":
+                return np_bytes.tobytes()
+            case "int":
+                return int(
+                    np.frombuffer(
+                        buffer=np_bytes,
+                        dtype=np.dtype("int64").newbyteorder("<"),
+                    ))
+            case _:
+                # The rest is interpreted as NumPy array.
+                pass
 
         dt = np.dtype(attribute.dtype)
         # FlatBuffers are little-endian. There is no byteswap by

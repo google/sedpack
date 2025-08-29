@@ -70,6 +70,7 @@ def get_from_tfrecord(
     for attribute in saved_data_description:
         dtype = {
             "str": tf.string,
+            "int": tf.int64,
             "bytes": tf.string,
             "uint8": tf.int64,
             "int8": tf.int64,
@@ -93,22 +94,15 @@ def get_from_tfrecord(
     def from_tfrecord(tf_record: Any) -> Any:
         rec = tf.io.parse_single_example(tf_record, tf_features)
         for attribute in saved_data_description:
-            match attribute.dtype:
-                case "str":
-                    pass
-                    #rec[attribute.name] = rec[attribute.name].decode("utf-8")
-                case "float16":
-                    rec[attribute.name] = tf.io.parse_tensor(
-                        rec[attribute.name],
-                        tf.float16,
-                    )
-                    rec[attribute.name] = tf.ensure_shape(
-                        rec[attribute.name],
-                        shape=attribute.shape,
-                    )
-                case _:
-                    # Nothing extra needs to be done.
-                    pass
+            if attribute.dtype == "float16":
+                rec[attribute.name] = tf.io.parse_tensor(
+                    rec[attribute.name],
+                    tf.float16,
+                )
+                rec[attribute.name] = tf.ensure_shape(
+                    rec[attribute.name],
+                    shape=attribute.shape,
+                )
         return rec
 
     return from_tfrecord
@@ -139,6 +133,7 @@ def to_tfrecord(saved_data_description: list[Attribute],
     if len(attribute_names) != len(values):
         raise ValueError(f"There are missing attributes. Got: {values} "
                          f"expected: {attribute_names}")
+    del attribute_names
 
     # Create dictionary of features
     feature = {}
@@ -147,15 +142,19 @@ def to_tfrecord(saved_data_description: list[Attribute],
         value = values[attribute.name]
 
         # Convert the value into a NumPy type.
-        value = np.array(value)
+        #value = np.array(value)
 
         # Check shape
-        if attribute.dtype != "bytes" and value.shape != attribute.shape:
+        if attribute.dtype not in [
+                "bytes",
+                "str",
+                "int",
+        ] and value.shape != attribute.shape:
             raise ValueError(f"Wrong shape of {attribute.name}, expected: "
                              f"{attribute.shape}, got: {value.shape}.")
 
         # Set feature value
-        if attribute.dtype in ["int8", "uint8", "int32", "int64"]:
+        if attribute.dtype in ["int", "int8", "uint8", "int32", "int64"]:
             feature[attribute.name] = int64_feature(values[attribute.name])
         elif attribute.dtype == "float16":
             value = value.astype(dtype=np.float16)

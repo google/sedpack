@@ -34,38 +34,93 @@ class IterateShardNP(IterateShardBase[T]):
     """
 
     @staticmethod
-    def decode_attribute(np_value: AttributeValueT,
-                         attribute: Attribute) -> AttributeValueT:
+    def decode_attribute(
+        np_value: AttributeValueT,
+        attribute: Attribute,
+    ) -> AttributeValueT:
         match attribute.dtype:
             case "str":
                 return str(np_value)
             case "bytes":
-                return bytes(np.array(np_value))
+                raise ValueError("One needs to use decode_bytes_attribute")
+            case "int":
+                return int(np_value)
             case _:
                 return np_value
+
+    @staticmethod
+    def decode_bytes_attribute(
+        value: AttributeValueT,
+        indexes: list[AttributeValueT],
+        attribute: Attribute,
+        index: int,
+    ) -> AttributeValueT:
+        """Decode a bytes attribute. We are saving the byte attributes as a
+        continuous array across multiple examples and on the side we also save
+        the indexes into this array.
+
+        Args:
+
+          value (AttributeValueT): The NumPy array of np.uint8 containing
+          concatenated bytes values.
+
+          indexes (list[AttributeValueT]): Indexes into this array.
+
+          attribute (Attribute): The attribute description.
+
+          index (int): Which example out of this shard to return.
+        """
+        if attribute.dtype != "bytes":
+            raise ValueError("One needs to use decode_attribute")
+        # Help with type-checking:
+        my_value = np.array(value, np.uint8)
+        my_indexes = np.array(indexes, np.int64)
+        del value
+        del indexes
+
+        begin: int = my_indexes[index]
+        end: int = my_indexes[index + 1]
+        return bytes(my_value[begin:end])
 
     def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
         """Iterate a shard saved in the NumPy format npz.
         """
-        shard_content: dict[str, list[AttributeValueT]] = np.load(file_path)
+        # A prefix such that prepended it creates a new name without collision
+        # with any attribute name.
+        self._counting_prefix: str = "len" + "_" * max(
+            len(attribute.name)
+            for attribute in self.dataset_structure.saved_data_description)
+
+        shard_content: dict[str, list[AttributeValueT]] = np.load(
+            file_path,
+            allow_pickle=False,
+        )
 
         # A given shard contains the same number of elements for each
         # attribute.
-        elements: int = 0
-        for values in shard_content.values():
-            elements = len(values)
-            break
+        elements: int
+        for attribute in self.dataset_structure.saved_data_description:
+            if self._counting_prefix + attribute.name in shard_content:
+                elements = len(
+                    shard_content[self._counting_prefix + attribute.name]) - 1
+            else:
+                elements = len(shard_content[attribute.name])
 
         for i in range(elements):
             yield {
-                name:
+                attribute.name:
                     IterateShardNP.decode_attribute(
-                        np_value=value[i],
+                        np_value=shard_content[attribute.name][i],
                         attribute=attribute,
-                    ) for (name, value), attribute in zip(
-                        shard_content.items(),
-                        self.dataset_structure.saved_data_description,
+                    ) if attribute.dtype != "bytes" else
+                    IterateShardNP.decode_bytes_attribute(
+                        value=shard_content[attribute.name][0],
+                        indexes=shard_content[self._counting_prefix +
+                                              attribute.name],
+                        attribute=attribute,
+                        index=i,
                     )
+                for attribute in self.dataset_structure.saved_data_description
             }
 
     # TODO(issue #85) fix and test async iterator typing
@@ -79,7 +134,10 @@ class IterateShardNP(IterateShardBase[T]):
             content_bytes: bytes = await f.read()
             content_io = io.BytesIO(content_bytes)
 
-        shard_content: dict[str, list[AttributeValueT]] = np.load(content_io)
+        shard_content: dict[str, list[AttributeValueT]] = np.load(
+            content_io,
+            allow_pickle=False,
+        )
 
         # A given shard contains the same number of elements for each
         # attribute.
