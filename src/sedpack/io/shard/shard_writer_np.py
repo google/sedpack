@@ -82,10 +82,10 @@ class ShardWriterNP(ShardWriterBase):
         if not self._buffer:
             self._buffer = {}
 
-        for (name, value), attribute in zip(
-                values.items(),
-                self.dataset_structure.saved_data_description,
-        ):
+        for attribute in self.dataset_structure.saved_data_description:
+            name = attribute.name
+            value = values[name]
+
             if attribute.dtype != "bytes":
                 current_values = self._buffer.get(name, [])
                 current_values.append(
