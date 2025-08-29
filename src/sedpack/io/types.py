@@ -13,6 +13,8 @@
 # limitations under the License.
 """Build and load tensorFlow dataset Record wrapper"""
 
+# pylint: disable=invalid-name
+
 from typing import Any, Literal, Union
 
 import numpy as np
@@ -32,7 +34,12 @@ TFModelT: TypeAlias = Any
 TFDatasetT: TypeAlias = Any
 
 # Type of an attribute value.
-AttributeValueT: TypeAlias = Union[str, int, npt.NDArray[np.generic], bytes]
+AttributeValueT: TypeAlias = Union[
+    str,  # UTF-8 string
+    int,
+    npt.NDArray[np.generic],
+    bytes,
+]
 
 # Compression choices.
 CompressionT: TypeAlias = Literal[
