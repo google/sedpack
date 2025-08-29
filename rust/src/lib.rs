@@ -265,7 +265,7 @@ mod static_batched_iter {
                                 slf.py(),
                                 data.into_iter().map(|e| e.into_pyarray(slf.py())),
                             )
-                            .expect("oops")
+                            .unwrap()
                             .into_any(),
                         })
                         .collect();
