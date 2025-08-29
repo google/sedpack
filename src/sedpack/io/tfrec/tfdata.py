@@ -141,9 +141,6 @@ def to_tfrecord(saved_data_description: list[Attribute],
     for attribute in saved_data_description:
         value = values[attribute.name]
 
-        # Convert the value into a NumPy type.
-        #value = np.array(value)
-
         # Check shape
         if attribute.dtype not in [
                 "bytes",
