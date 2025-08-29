@@ -135,17 +135,22 @@ class ShardWriterNP(ShardWriterBase):
                 )
             ]
 
-        # Write the buffer into a file.
+        # Write the buffer into a file. We should not need to allow_pickle while
+        # saving (the default value is True). But on GitHub actions macos-13
+        # runner the tests were failing while reading. The security concern
+        # (code execution) should be more on the side of loading pickled data.
         match self.dataset_structure.compression:
             case "ZIP":
                 np.savez_compressed(
                     str(self._shard_file),
+                    # See comment above.
                     #allow_pickle=False,
                     **self._buffer,  # type: ignore[arg-type]
                 )
             case "":
                 np.savez(
                     str(self._shard_file),
+                    # See comment above.
                     #allow_pickle=False,
                     **self._buffer,  # type: ignore[arg-type]
                 )
