@@ -97,7 +97,7 @@ class ShardWriterNP(ShardWriterBase):
             else:
                 # Extend and remember the length.  Attributes with dtype "bytes"
                 # may have variable length. Handle this case. We need to avoid
-                # two thigs:
+                # two things:
                 # - Having wrong length of the bytes array and ideally also
                 # avoid padding.
                 # - Using allow_pickle when saving since that could lead to code
