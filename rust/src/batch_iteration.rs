@@ -56,7 +56,7 @@ impl Iterator for Batcher {
             let current_batched_attribute = match is_fixed {
                 true => BatchedAttribute::Static {
                     data: numpy::ndarray::Array::<u8, numpy::Ix1>::from_iter(
-                        cache.iter().flat_map(|e| e[attribute_index].clone().into_iter()),
+                        cache.iter().flat_map(|e| e[attribute_index].iter().cloned()),
                     ),
                 },
                 false => BatchedAttribute::Dynamic {
@@ -64,7 +64,7 @@ impl Iterator for Batcher {
                         .iter()
                         .map(|e| {
                             numpy::ndarray::Array::<u8, numpy::Ix1>::from_iter(
-                                e[attribute_index].clone(),
+                                e[attribute_index].iter().cloned(),
                             )
                         })
                         .collect(),
