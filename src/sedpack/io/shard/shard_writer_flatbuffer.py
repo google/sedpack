@@ -228,8 +228,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
                     attribute=attribute,
                     value=value,
                 )
-                value_flattened = np.copy(value).flatten()
-                value_np = np.array(value_flattened, dtype=attribute.dtype)
+                value_np = np.array(value, dtype=attribute.dtype)
                 alignment = value_np.dtype.itemsize
 
         # Total length of the array (in bytes).

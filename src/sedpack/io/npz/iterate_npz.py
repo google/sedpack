@@ -99,12 +99,12 @@ class IterateShardNP(IterateShardBase[T]):
         # A given shard contains the same number of elements for each
         # attribute.
         elements: int
-        for attribute in self.dataset_structure.saved_data_description:
-            if self._counting_prefix + attribute.name in shard_content:
-                elements = len(
-                    shard_content[self._counting_prefix + attribute.name]) - 1
-            else:
-                elements = len(shard_content[attribute.name])
+        first_attribute = self.dataset_structure.saved_data_description[0]
+        if self._counting_prefix + first_attribute.name in shard_content:
+            elements = len(
+                shard_content[self._counting_prefix + first_attribute.name]) - 1
+        else:
+            elements = len(shard_content[first_attribute.name])
 
         for i in range(elements):
             yield {
