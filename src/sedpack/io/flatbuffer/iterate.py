@@ -116,11 +116,12 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
             case "bytes":
                 return np_bytes.tobytes()
             case "int":
-                return int(
-                    np.frombuffer(
-                        buffer=np_bytes,
-                        dtype=np.dtype("int64").newbyteorder("<"),
-                    ))
+                array = np.frombuffer(
+                    buffer=np_bytes,
+                    dtype=np.dtype("int64").newbyteorder("<"),
+                )
+                assert array.shape == (1,), f"{array.shape = }"
+                return int(array[0])
             case _:
                 # The rest is interpreted as NumPy array.
                 pass
