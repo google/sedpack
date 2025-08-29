@@ -143,15 +143,11 @@ class ShardWriterNP(ShardWriterBase):
             case "ZIP":
                 np.savez_compressed(
                     str(self._shard_file),
-                    # See comment above.
-                    #allow_pickle=False,
                     **self._buffer,  # type: ignore[arg-type]
                 )
             case "":
                 np.savez(
                     str(self._shard_file),
-                    # See comment above.
-                    #allow_pickle=False,
                     **self._buffer,  # type: ignore[arg-type]
                 )
             case _:
