@@ -38,7 +38,7 @@ from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
-from sedpack.io.iteration import RustGenerator
+from sedpack.io.iteration import RustBatchedGenerator, RustGenerator
 
 
 class DatasetIteration(DatasetBase):
@@ -718,6 +718,7 @@ class DatasetIteration(DatasetBase):
         shards: int | None = None,
         shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
+        batch_size: int | None = None,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
     ) -> Iterable[ExampleT] | Iterable[T]:
@@ -741,6 +742,9 @@ class DatasetIteration(DatasetBase):
             repeat (bool): Whether to repeat examples and thus create infinite
             dataset.
 
+            batch_size (int | None): If None then no batching is done otherwise
+            batch size for RustBatchedGenerator.
+
             file_parallelism (int): IO parallelism. Defaults to `os.cpu_count()
             or 1`.
 
@@ -762,11 +766,22 @@ class DatasetIteration(DatasetBase):
             shuffle=shuffle,
         )
 
-        with RustGenerator(
-                dataset_path=self.path,
-                dataset_structure=self.dataset_structure,
-                shard_iterator=shard_iterator,
-                process_record=process_record,
-                file_parallelism=file_parallelism,
-        ) as rust_generator:
-            yield from rust_generator()
+        if batch_size:
+            with RustBatchedGenerator(
+                    dataset_path=self.path,
+                    dataset_structure=self.dataset_structure,
+                    shard_iterator=shard_iterator,
+                    batch_size=batch_size,
+                    process_record=process_record,
+                    file_parallelism=file_parallelism,
+            ) as rust_generator:
+                yield from rust_generator()
+        else:
+            with RustGenerator(
+                    dataset_path=self.path,
+                    dataset_structure=self.dataset_structure,
+                    shard_iterator=shard_iterator,
+                    process_record=process_record,
+                    file_parallelism=file_parallelism,
+            ) as rust_generator:
+                yield from rust_generator()
