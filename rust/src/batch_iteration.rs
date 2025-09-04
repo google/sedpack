@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use tracing::{span, Level};
+
 pub use super::example_iteration::{
     get_shard_progress, CompressionType, Example, ExampleIterator, ShardInfo, ShardProgress,
 };
@@ -96,6 +98,9 @@ impl Iterator for BatchIterator {
     type Item = Batch;
 
     fn next(&mut self) -> Option<Self::Item> {
+        let span = span!(Level::TRACE, "BatchIterator.next");
+        let _enter = span.enter();
+
         self.batch_iterator.next()
     }
 }

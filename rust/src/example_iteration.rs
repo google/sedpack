@@ -14,6 +14,7 @@
 
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use tracing::instrument;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
@@ -147,6 +148,7 @@ fn read_to_end(mut reader: impl std::io::Read) -> Vec<u8> {
 }
 
 /// Get ShardProgress.
+#[instrument]
 pub fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
     let file_bytes = get_file_bytes(shard_info);
 
