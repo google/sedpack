@@ -159,6 +159,7 @@ mod static_batched_iter {
     use numpy::IntoPyArray;
     use pyo3::prelude::*;
     use pyo3::{pyclass, pymethods, PyRefMut};
+    use tracing::{span, Level};
 
     use super::batch_iteration::{BatchIterator, BatchedAttribute};
     use super::example_iteration::{CompressionType, ShardInfo};
@@ -252,6 +253,9 @@ mod static_batched_iter {
         ///
         /// - dynamic (unknown shape, e.g., str, bytes) list of numpy arrays.
         fn __next__<'py>(mut slf: PyRefMut<'py, Self>) -> Option<Bound<'py, pyo3::types::PyList>> {
+            let span = span!(Level::TRACE, "BatchedRustIter.__next__");
+            let _enter = span.enter();
+
             match slf.next() {
                 None => None,
                 Some(result) => {
@@ -293,10 +297,37 @@ mod static_batched_iter {
     }
 }
 
+mod sedpack_tracing {
+    use pyo3::{pyclass, pymethods};
+    use tracing_perfetto::PerfettoLayer;
+    use tracing_subscriber::prelude::*;
+
+    #[pyclass]
+    pub struct TracingControl {}
+
+    #[pymethods]
+    impl TracingControl {
+        /// set_perfetto_output(file_name: str) -> None
+        /// --
+        ///
+        /// Set the output file for tracing. The output is a binary file readable either using
+        /// - UI available at: https://ui.perfetto.dev/
+        /// - Python code: https://perfetto.dev/docs/analysis/trace-processor-python
+        #[staticmethod]
+        fn set_perfetto_output(file_name: String) {
+            let layer = PerfettoLayer::new(std::sync::Mutex::new(
+                std::fs::File::create(file_name).unwrap(),
+            ));
+            tracing_subscriber::registry().with(layer).init();
+        }
+    }
+}
+
 /// A Python module implemented in Rust.
 #[pymodule]
 fn _sedpack_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<static_iter::RustIter>()?;
     m.add_class::<static_batched_iter::BatchedRustIter>()?;
+    m.add_class::<sedpack_tracing::TracingControl>()?;
     Ok(())
 }
