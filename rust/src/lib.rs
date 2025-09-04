@@ -313,12 +313,29 @@ mod sedpack_tracing {
         /// Set the output file for tracing. The output is a binary file readable either using
         /// - UI available at: https://ui.perfetto.dev/
         /// - Python code: https://perfetto.dev/docs/analysis/trace-processor-python
+        ///
+        /// # Raises
+        ///
+        /// `IOError`: If the file cannot be created.
         #[staticmethod]
-        fn set_perfetto_output(file_name: String) {
-            let layer = PerfettoLayer::new(std::sync::Mutex::new(
-                std::fs::File::create(file_name).unwrap(),
-            ));
-            tracing_subscriber::registry().with(layer).init();
+        fn set_perfetto_output(file_name: String) -> pyo3::PyResult<()> {
+            let file = std::fs::File::create(&file_name).map_err(|e| {
+                pyo3::exceptions::PyIOError::new_err(format!(
+                    "Failed to create tracing file '{}': {}",
+                    file_name, e
+                ))
+            })?;
+            let layer = PerfettoLayer::new(std::sync::Mutex::new(file));
+            if let Err(e) = tracing_subscriber::registry().with(layer).try_init() {
+                // It's often fine to ignore the error if a subscriber is already set.
+                // We can log it to stderr for debugging purposes.
+                eprintln!(
+                    "Could not initialize tracing subscriber: {}. This is expected if it was \
+                     already initialized.",
+                    e
+                );
+            }
+            Ok(())
         }
     }
 }
