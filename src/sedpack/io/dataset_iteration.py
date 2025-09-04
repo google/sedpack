@@ -39,7 +39,6 @@ from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
 from sedpack.io.iteration import RustGenerator
-from sedpack.io.iteration import RustBatchedGenerator
 
 
 class DatasetIteration(DatasetBase):
@@ -715,7 +714,6 @@ class DatasetIteration(DatasetBase):
         self,
         *,
         split: SplitT,
-        batch_size: int,
         process_record: Callable[[ExampleT], T] | None = None,
         shards: int | None = None,
         shard_filter: Callable[[ShardInfo], bool] | None = None,
@@ -764,12 +762,11 @@ class DatasetIteration(DatasetBase):
             shuffle=shuffle,
         )
 
-        with RustBatchedGenerator(
+        with RustGenerator(
                 dataset_path=self.path,
                 dataset_structure=self.dataset_structure,
                 shard_iterator=shard_iterator,
                 process_record=process_record,
                 file_parallelism=file_parallelism,
-                batch_size=batch_size,
         ) as rust_generator:
             yield from rust_generator()
