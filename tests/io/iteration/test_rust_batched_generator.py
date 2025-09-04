@@ -199,3 +199,39 @@ def test_end_to_end_rust_batched(
                                              i] == attribute_values[i]).all()
 
             index += current_batch_size
+
+
+@pytest.mark.parametrize("batch_size", [1, 3])
+def test_end_to_end_as_numpy_iterator_rust(
+    batch_size,
+    dataset_and_values,
+):
+    dataset, values = dataset_and_values
+    index: int = 0
+
+    for batch in dataset.as_numpy_iterator_rust(
+            split="train",
+            process_record=None,
+            shards=None,
+            shard_filter=None,
+            repeat=False,
+            batch_size=batch_size,
+            file_parallelism=8,
+            shuffle=0,
+    ):
+        current_batch_size: int = -1
+
+        for name, attribute_values in batch.items():
+            if current_batch_size < 0:
+                current_batch_size = len(attribute_values)
+            else:
+                assert len(attribute_values) == current_batch_size
+
+            for i in range(current_batch_size):
+                if name == "dynamic_shape":
+                    assert values[name][index + i] == attribute_values[i]
+                else:
+                    assert (values[name][index +
+                                         i] == attribute_values[i]).all()
+
+        index += current_batch_size
