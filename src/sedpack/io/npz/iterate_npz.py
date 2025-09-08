@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2024-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,40 @@ class IterateShardNP(IterateShardBase[T]):
 
     @staticmethod
     def decode_attribute(
+        attribute: Attribute,
+        example_index: int,
+        counting_prefix: str,
+        shard_content: dict[str, list[AttributeValueT]],
+    ) -> AttributeValueT:
+        """Choose the correct way to decode the given attribute.
+
+        Args:
+
+          attribute (Attribute): Information about the attribute being decoded.
+
+          example_index (int): Which example from this shard is being decoded.
+
+          counting_prefix (str): For the case of `bytes` attributes we need to
+          store them in continuous array otherwise variable length would require
+          allowing pickling and result in a potential arbitrary code execution.
+
+          shard_content (dict[str, list[AttributeValueT]]): The shard values.
+        """
+        if attribute.dtype == "bytes":
+            return IterateShardNP.decode_bytes_attribute(
+                value=shard_content[attribute.name][0],
+                indexes=shard_content[counting_prefix + attribute.name],
+                attribute=attribute,
+                index=example_index,
+            )
+
+        return IterateShardNP.decode_non_bytes_attribute(
+            np_value=shard_content[attribute.name][example_index],
+            attribute=attribute,
+        )
+
+    @staticmethod
+    def decode_non_bytes_attribute(
         np_value: AttributeValueT,
         attribute: Attribute,
     ) -> AttributeValueT:
@@ -106,19 +140,14 @@ class IterateShardNP(IterateShardBase[T]):
         else:
             elements = len(shard_content[first_attribute.name])
 
-        for i in range(elements):
+        for example_index in range(elements):
             yield {
                 attribute.name:
                     IterateShardNP.decode_attribute(
-                        np_value=shard_content[attribute.name][i],
                         attribute=attribute,
-                    ) if attribute.dtype != "bytes" else
-                    IterateShardNP.decode_bytes_attribute(
-                        value=shard_content[attribute.name][0],
-                        indexes=shard_content[self._counting_prefix +
-                                              attribute.name],
-                        attribute=attribute,
-                        index=i,
+                        example_index=example_index,
+                        counting_prefix=self._counting_prefix,
+                        shard_content=shard_content,
                     )
                 for attribute in self.dataset_structure.saved_data_description
             }
@@ -146,8 +175,11 @@ class IterateShardNP(IterateShardBase[T]):
             elements = len(values)
             break
 
-        for i in range(elements):
-            yield {name: value[i] for name, value in shard_content.items()}
+        for example_index in range(elements):
+            yield {
+                name: value[example_index]
+                for name, value in shard_content.items()
+            }
 
     def process_and_list(self, shard_file: Path) -> list[T]:
         process_record = func_or_identity(self.process_record)
