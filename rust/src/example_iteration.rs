@@ -213,17 +213,13 @@ impl ShardProgress {
 
     /// Return the example id which is to be used next. Beware that this method also consumes it
     /// (and thus might consume the ShardProgress for the Iterator::next calls).
-    pub fn next_example_id(&mut self) -> Option<usize> {
-        if self.used_examples < self.total_examples {
-            let result = Some(self.used_examples);
-            self.used_examples += 1;
-            result
-        } else {
-            None
-        }
+    pub fn take_example_ids(&mut self, n: usize) -> std::ops::Range<usize> {
+        let start = self.used_examples;
+        self.used_examples = std::cmp::min(self.total_examples, start + n);
+        start .. self.used_examples
     }
 
-    /// Has more elements either as Iterator::next or ShardProgress::next_example_id?
+    /// Has more elements either as Iterator::next or ShardProgress::take_example_ids?
     pub fn has_next(&self) -> bool {
         self.used_examples < self.total_examples
     }

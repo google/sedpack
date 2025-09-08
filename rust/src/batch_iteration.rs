@@ -58,7 +58,9 @@ impl Batcher {
 
 #[derive(Debug)]
 struct BatchingDataIndex {
+    /// Which shard in BatchingData::shards.
     shards_index: usize,
+    /// Which example in the concrete shard?
     example_index: usize,
 }
 
@@ -161,14 +163,15 @@ impl Iterator for Batcher {
                     let shards_index = batching_data.shards.len();
 
                     // Consume while we can or while the shard is not full.
-                    for _i in batching_data.indexes.len() .. self.batch_size {
-                        match shard_progress.next_example_id() {
-                            Some(example_index) => batching_data
-                                .indexes
-                                .push(BatchingDataIndex { shards_index, example_index }),
-                            None => break,
-                        };
-                    }
+                    let n_remaining_examples = self.batch_size - batching_data.indexes.len();
+                    batching_data.indexes.par_extend(
+                        shard_progress
+                            .take_example_ids(n_remaining_examples)
+                            .into_par_iter()
+                            .map(|example_index| BatchingDataIndex { shards_index, example_index }),
+                    );
+
+                    // Also remember the shard to be used.
                     batching_data.shards.push(shard_progress);
                 }
             };
