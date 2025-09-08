@@ -14,6 +14,7 @@
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use glob::glob;
+use sedpack_rs::batch_iteration::BatchIterator;
 use sedpack_rs::example_iteration::{
     get_shard_progress, CompressionType, ExampleIterator, ShardInfo,
 };
@@ -29,6 +30,17 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
     println!(">> Decoding {} shards", shard_infos.len());
     assert_eq!(shard_infos.len(), 275);
     shard_infos
+}
+
+pub fn batch_iterator_benchmark(c: &mut Criterion) {
+    let shard_infos = get_shard_files();
+    c.bench_function("BatchIterator", |b| {
+        b.iter(|| {
+            for batch in BatchIterator::new(shard_infos.clone(), 12, 32, vec![true, true]) {
+                let _ = std::hint::black_box(batch);
+            }
+        })
+    });
 }
 
 pub fn example_iterator_benchmark(c: &mut Criterion) {
@@ -55,5 +67,10 @@ pub fn parallel_map_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, example_iterator_benchmark, parallel_map_benchmark,);
+criterion_group!(
+    benches,
+    batch_iterator_benchmark,
+    example_iterator_benchmark,
+    parallel_map_benchmark,
+);
 criterion_main!(benches);

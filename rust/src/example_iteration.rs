@@ -14,6 +14,7 @@
 
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use tracing::instrument;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
@@ -100,7 +101,12 @@ impl ExampleIterator {
     ///   `files: impl Iterator<Item = &str>`.
     pub fn new(files: Vec<ShardInfo>, threads: usize) -> Self {
         let example_iterator = Box::new(
-            parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten(),
+            parallel_map(
+                |x| get_shard_progress(&x).collect::<Vec<Example>>(),
+                files.into_iter(),
+                threads,
+            )
+            .flatten(),
         );
         ExampleIterator { example_iterator }
     }
@@ -142,7 +148,8 @@ fn read_to_end(mut reader: impl std::io::Read) -> Vec<u8> {
 }
 
 /// Get ShardProgress.
-pub fn get_shard_progress(shard_info: &ShardInfo) -> Vec<Example> {
+#[instrument]
+pub fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
     let file_bytes = get_file_bytes(shard_info);
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
@@ -156,7 +163,7 @@ pub fn get_shard_progress(shard_info: &ShardInfo) -> Vec<Example> {
     // Number of examples might be different in different shards.
     let total_examples = shard.get().examples().unwrap().len();
 
-    ShardProgress { total_examples, used_examples: 0, shard }.collect()
+    ShardProgress { total_examples, used_examples: 0, shard }
 }
 
 /// Get single example out of a ShardProgress.
