@@ -118,14 +118,13 @@ impl BatchingData {
                                 .indexes
                                 .par_iter()
                                 .map(|batching_index| {
-                                    numpy::ndarray::Array::<u8, numpy::Ix1>::from_iter(
+                                    numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec(
                                         self.shards[batching_index.shards_index]
                                             .borrow_attribute(
                                                 batching_index.example_index,
                                                 attribute_id,
                                             )
-                                            .iter()
-                                            .cloned(),
+                                            .to_vec(),
                                     )
                                 })
                                 .collect(),
