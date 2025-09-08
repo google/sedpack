@@ -64,7 +64,7 @@ struct BatchingDataIndex {
 
 /// Collected ShardProgress and pointers to which example from which shard should be used. This way
 /// we move around pointers without copying from ShardProgress. The tradeoff in case of shuffling
-/// is higher memory usage expecially when a shard contains many examples and is much larger when
+/// is higher memory usage especially when a shard contains many examples and is much larger when
 /// uncompressed and at the same time batch size is very large. The plan is to have two shuffling
 /// modes -- one based on this code and another using a shuffle buffer.
 struct BatchingData {
