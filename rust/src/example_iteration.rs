@@ -191,6 +191,44 @@ fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
     attributes.iter().map(|x| x.attribute_bytes().unwrap().iter().collect()).collect()
 }
 
+impl ShardProgress {
+    /// Return a slice representing the bytes of a single attribute (without copy).
+    pub fn borrow_attribute(&self, example_id: usize, attribute_id: usize) -> &[u8] {
+        assert!(example_id < self.total_examples);
+
+        let examples = self.shard.get().examples().unwrap();
+
+        // Should not happen but there is no control over this invariant in Rust.
+        assert!(!examples.is_empty());
+
+        examples
+            .get(example_id)
+            .attributes()
+            .unwrap()
+            .get(attribute_id)
+            .attribute_bytes()
+            .unwrap()
+            .bytes()
+    }
+
+    /// Return the example id which is to be used next. Beware that this method also consumes it
+    /// (and thus might consume the ShardProgress for the Iterator::next calls).
+    pub fn next_example_id(&mut self) -> Option<usize> {
+        if self.used_examples < self.total_examples {
+            let result = Some(self.used_examples);
+            self.used_examples += 1;
+            result
+        } else {
+            None
+        }
+    }
+
+    /// Has more elements either as Iterator::next or ShardProgress::next_example_id?
+    pub fn has_next(&self) -> bool {
+        self.used_examples < self.total_examples
+    }
+}
+
 impl Iterator for ShardProgress {
     type Item = Example;
 

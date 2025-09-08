@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use rayon::prelude::*;
 use tracing::{span, Level};
 
 pub use super::example_iteration::{
@@ -34,49 +35,160 @@ pub enum BatchedAttribute {
 pub type Batch = Vec<BatchedAttribute>;
 
 struct Batcher {
-    example_iterator: Box<dyn Iterator<Item = Example> + Send>,
+    shard_progress_iterator: Box<dyn Iterator<Item = ShardProgress> + Send>,
+    shard_progress_cache: Vec<ShardProgress>,
     batch_size: usize,
     has_fixed_shape: Vec<bool>,
+}
+
+impl Batcher {
+    pub fn new(
+        files: Vec<ShardInfo>, threads: usize, batch_size: usize, has_fixed_shape: Vec<bool>,
+    ) -> Self {
+        let shard_progress_iterator =
+            Box::new(parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads));
+        Batcher {
+            shard_progress_iterator,
+            shard_progress_cache: vec![],
+            batch_size,
+            has_fixed_shape,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct BatchingDataIndex {
+    shards_index: usize,
+    example_index: usize,
+}
+
+/// Collected ShardProgress and pointers to which example from which shard should be used. This way
+/// we move around pointers without copying from ShardProgress. The tradeoff in case of shuffling
+/// is higher memory usage expecially when a shard contains many examples and is much larger when
+/// uncompressed and at the same time batch size is very large. The plan is to have two shuffling
+/// modes -- one based on this code and another using a shuffle buffer.
+struct BatchingData {
+    shards: Vec<ShardProgress>,
+    indexes: Vec<BatchingDataIndex>,
+}
+
+impl BatchingData {
+    /// Create a batch.
+    pub fn create_batch(&self, has_fixed_shape: &[bool]) -> Batch {
+        let span = span!(Level::TRACE, "create_batch");
+        let _enter = span.enter();
+
+        has_fixed_shape
+            .par_iter()
+            .enumerate()
+            .map(|(attribute_id, is_fixed)| {
+                match is_fixed {
+                    true => BatchedAttribute::Static {
+                        data: numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec({
+                            let span = span!(Level::TRACE, "fill single static attribute");
+                            let _enter = span.enter();
+
+                            // Fixed len attribute.
+                            let attribute_len =
+                                self.shards[0].borrow_attribute(0, attribute_id).len();
+                            let batch_size = self.indexes.len();
+
+                            // Do memcpy in parallel.
+                            let mut v = vec![0; batch_size * attribute_len];
+                            v.par_chunks_exact_mut(attribute_len).enumerate().for_each(
+                                |(batch_i, slice)| {
+                                    slice.copy_from_slice({
+                                        let batching_index = &self.indexes[batch_i];
+                                        self.shards[batching_index.shards_index].borrow_attribute(
+                                            batching_index.example_index,
+                                            attribute_id,
+                                        )
+                                    });
+                                },
+                            );
+                            v
+                        }),
+                    },
+                    false => {
+                        let span = span!(Level::TRACE, "fill single dynamic attribute");
+                        let _enter = span.enter();
+
+                        BatchedAttribute::Dynamic {
+                            data: self
+                                .indexes
+                                .par_iter()
+                                .map(|batching_index| {
+                                    numpy::ndarray::Array::<u8, numpy::Ix1>::from_iter(
+                                        self.shards[batching_index.shards_index]
+                                            .borrow_attribute(
+                                                batching_index.example_index,
+                                                attribute_id,
+                                            )
+                                            .iter()
+                                            .cloned(),
+                                    )
+                                })
+                                .collect(),
+                        }
+                    }
+                }
+            })
+            .collect()
+    }
 }
 
 impl Iterator for Batcher {
     type Item = Batch;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Collect examples.
-        let cache: Vec<Example> = self.example_iterator.by_ref().take(self.batch_size).collect();
+        let span = span!(Level::TRACE, "Batcher.next");
+        let _enter = span.enter();
 
-        // Decide if we have enough (the last batch might not have batch_size examples).
-        if cache.is_empty() {
-            return None;
-        }
+        // Select data for the batch to be filled.
+        let mut batching_data = BatchingData { shards: Vec::new(), indexes: Vec::new() };
+        'batching_data_filling: while batching_data.indexes.len() < self.batch_size {
+            match self.shard_progress_cache.pop() {
+                None => {
+                    // Refill if possible.
+                    match self.shard_progress_iterator.next() {
+                        Some(refill) => self.shard_progress_cache.push(refill),
+                        None => {
+                            // No refill.
+                            break 'batching_data_filling;
+                        }
+                    }
+                }
+                Some(mut shard_progress) => {
+                    let shards_index = batching_data.shards.len();
 
-        // Batch the examples.
-        let mut result = Batch::new();
-        for (attribute_index, is_fixed) in self.has_fixed_shape.iter().enumerate() {
-            // Collect batched version of current attribute across all cached examples.
-            let current_batched_attribute = match is_fixed {
-                true => BatchedAttribute::Static {
-                    data: numpy::ndarray::Array::<u8, numpy::Ix1>::from_iter(
-                        cache.iter().flat_map(|e| e[attribute_index].iter().cloned()),
-                    ),
-                },
-                false => BatchedAttribute::Dynamic {
-                    data: cache
-                        .iter()
-                        .map(|e| {
-                            numpy::ndarray::Array::<u8, numpy::Ix1>::from_iter(
-                                e[attribute_index].iter().cloned(),
-                            )
-                        })
-                        .collect(),
-                },
+                    // Consume while we can or while the shard is not full.
+                    for _i in batching_data.indexes.len() .. self.batch_size {
+                        match shard_progress.next_example_id() {
+                            Some(example_index) => batching_data
+                                .indexes
+                                .push(BatchingDataIndex { shards_index, example_index }),
+                            None => break,
+                        };
+                    }
+                    batching_data.shards.push(shard_progress);
+                }
             };
-
-            // Save the batched attribute.
-            result.push(current_batched_attribute);
         }
-        Some(result)
+
+        if batching_data.shards.is_empty() {
+            None
+        } else {
+            let current_batch = batching_data.create_batch(&self.has_fixed_shape);
+
+            assert!(self.shard_progress_cache.is_empty());
+
+            // Get back the shard progresses which are not fully used.
+            self.shard_progress_cache.extend(
+                batching_data.shards.into_iter().filter(|shard_progress| shard_progress.has_next()),
+            );
+
+            Some(current_batch)
+        }
     }
 }
 
@@ -88,9 +200,9 @@ impl BatchIterator {
     pub fn new(
         files: Vec<ShardInfo>, threads: usize, batch_size: usize, has_fixed_shape: Vec<bool>,
     ) -> Self {
-        let example_iterator = Box::new(ExampleIterator::new(files, threads));
-        let batch_iterator = Box::new(Batcher { example_iterator, batch_size, has_fixed_shape });
-        BatchIterator { batch_iterator }
+        BatchIterator {
+            batch_iterator: Box::new(Batcher::new(files, threads, batch_size, has_fixed_shape)),
+        }
     }
 }
 
