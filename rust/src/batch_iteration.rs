@@ -69,6 +69,10 @@ struct BatchingDataIndex {
 /// is higher memory usage especially when a shard contains many examples and is much larger when
 /// uncompressed and at the same time batch size is very large. The plan is to have two shuffling
 /// modes -- one based on this code and another using a shuffle buffer.
+///
+/// When shuffling it is expected that each ShardProgress contributes only a couple of examples
+/// (in the ideal case just one). This implementation is optimized for that case (thus not having
+/// `BatchingData { shards_and_indexes: Vec<(ShardProgress, Vec<usize>)> }`.
 struct BatchingData {
     shards: Vec<ShardProgress>,
     indexes: Vec<BatchingDataIndex>,
