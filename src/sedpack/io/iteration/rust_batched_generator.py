@@ -112,7 +112,7 @@ class RustBatchedGenerator:
             result: ExampleT = {}
             for np_bytes, attribute in zip(
                     example, dataset_structure.saved_data_description):
-                result[attribute.name] = IterateShardFlatBuffer.decode_array(
+                result[attribute.name] = IterateShardFlatBuffer.decode_batched(
                     np_bytes=np_bytes,
                     attribute=attribute,
                     batch_size=-1,
