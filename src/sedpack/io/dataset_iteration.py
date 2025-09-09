@@ -724,7 +724,7 @@ class DatasetIteration(DatasetBase):
         shards: int | None = None,
         shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
-        batch_size: int | None = None,
+        batch_size: int = 1,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
     ) -> Iterable[ExampleT] | Iterable[T]:
