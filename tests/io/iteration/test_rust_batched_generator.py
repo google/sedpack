@@ -35,15 +35,16 @@ def dataset_and_values(tmpdir_factory) -> None:
 
     # Values saved in the dataset.
     values = {
-        "fixed": np.random.random((data_points, 138)).astype(dtype),
-        "fixed_2d": np.random.random((data_points, 3, 5)).astype(dtype),
+        "fixed":
+            np.random.random((data_points, 138)).astype(dtype),
+        "fixed_2d":
+            np.random.random((data_points, 3, 5)).astype(dtype),
         "dynamic_shape_bytes": [
             uuid.uuid4().hex[:random.randint(11, 19)].encode("ascii")
             for _ in range(data_points)
         ],
         "dynamic_shape_int": [
-            random.randint(-2**60, 2**60)
-            for _ in range(data_points)
+            random.randint(-2**60, 2**60) for _ in range(data_points)
         ],
         "dynamic_shape_str": [
             uuid.uuid4().hex[:random.randint(15, 25)]
