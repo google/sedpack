@@ -135,7 +135,7 @@ def test_wrong_file_paralelism() -> None:
             dataset_path=Path(),
             dataset_structure=DatasetStructure(),
             shard_iterator=[],
-            process_record=None,
+            process_batch=None,
             file_parallelism=0,
             batch_size=1,
         )
@@ -150,7 +150,7 @@ def test_wrong_shard_type() -> None:
             dataset_path=Path(),
             dataset_structure=DatasetStructure(shard_file_type="tfrec"),
             shard_iterator=[],
-            process_record=None,
+            process_batch=None,
             file_parallelism=1,
             batch_size=1,
         )
@@ -169,7 +169,7 @@ def test_wrong_compression() -> None:
                 compression="ZIP",
             ),
             shard_iterator=[],
-            process_record=None,
+            process_batch=None,
             file_parallelism=1,
             batch_size=1,
         )
@@ -196,7 +196,7 @@ def test_end_to_end_rust_batched(
                 shuffle=0,
             ),
             batch_size=batch_size,
-            process_record=None,
+            process_batch=None,
             file_parallelism=8,
     ) as g:
         index: int = 0
@@ -227,9 +227,9 @@ def test_end_to_end_as_numpy_iterator_rust(
     dataset, values = dataset_and_values
     index: int = 0
 
-    for batch in dataset.as_numpy_iterator_rust(
+    for batch in dataset.as_numpy_iterator_rust_batched(
             split="train",
-            process_record=None,
+            process_batch=None,
             shards=None,
             shard_filter=None,
             repeat=False,

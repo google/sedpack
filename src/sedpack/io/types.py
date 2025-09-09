@@ -89,4 +89,4 @@ ShardFileTypeT: TypeAlias = Literal[
 # Type alias for example, this is what gets iterated or saved.
 ExampleT: TypeAlias = dict[str, AttributeValueT]
 
-Batch: TypeAlias = dict[str, BatchedAttributeValueT]
+BatchT: TypeAlias = dict[str, BatchedAttributeValueT]

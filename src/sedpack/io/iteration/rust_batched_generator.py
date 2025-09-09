@@ -31,7 +31,7 @@ from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.shard_file_metadata import ShardInfo
-from sedpack.io.types import ExampleT
+from sedpack.io.types import BatchT, ExampleT
 
 from sedpack._sedpack_rs import BatchedRustIter
 
@@ -48,7 +48,7 @@ class RustBatchedGenerator:
         dataset_structure: DatasetStructure,
         shard_iterator: Iterable[ShardInfo],
         batch_size: int,
-        process_record: Callable[[ExampleT], T] | None = None,
+        process_batch: Callable[[BatchT], T] | None = None,
         file_parallelism: int = os.cpu_count() or 1,
     ) -> None:
         """A reentrant generator.
@@ -64,8 +64,8 @@ class RustBatchedGenerator:
 
           batch_size (int): Size of the batches.
 
-          process_record (Callable[[ExampleT], T] | None): Optional
-          transformation of each example.
+          process_batch (Callable[[BatchT], T] | None): Optional transformation
+          of whole batch of examples.
 
           file_parallelism (int): How many files to read in parallel.
         """
@@ -87,7 +87,7 @@ class RustBatchedGenerator:
         # Make sure that any iteration on shard_iterator advances instead of
         # starting again.
         self._shard_iterator: Iterator[ShardInfo] = iter(shard_iterator)
-        self._process_record: Callable[[ExampleT], T] | None = process_record
+        self._process_batch: Callable[[BatchT], T] | None = process_batch
         self._batch_size: int = batch_size
         self._file_parallelism: int = file_parallelism
 
@@ -108,8 +108,8 @@ class RustBatchedGenerator:
                 f"The compression {dataset_structure.compression} is not "
                 "among the supported compressions: {supported_compressions}")
 
-        def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> ExampleT:
-            result: ExampleT = {}
+        def to_dict(example: list[np.typing.NDArray[np.uint8]]) -> BatchT:
+            result: BatchT = {}
             for np_bytes, attribute in zip(
                     example, dataset_structure.saved_data_description):
                 result[attribute.name] = IterateShardFlatBuffer.decode_batched(
@@ -175,8 +175,8 @@ class RustBatchedGenerator:
             self._iter.__enter__()  # pylint: disable=unnecessary-dunder-call
 
         example_iterator = map(self._to_dict, iter(self._iter))
-        if self._process_record:
-            yield from map(self._process_record, example_iterator)
+        if self._process_batch:
+            yield from map(self._process_batch, example_iterator)
         else:
             yield from example_iterator
 
