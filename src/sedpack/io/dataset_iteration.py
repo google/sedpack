@@ -37,7 +37,13 @@ from sedpack.io.shard_info_iterator import CachedShardInfoIterator
 from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
-from sedpack.io.types import ExampleT, ShardFileTypeT, SplitT, TFDatasetT
+from sedpack.io.types import (
+    BatchT,
+    ExampleT,
+    ShardFileTypeT,
+    SplitT,
+    TFDatasetT,
+)
 from sedpack.io.iteration import RustBatchedGenerator, RustGenerator
 
 
@@ -710,6 +716,71 @@ class DatasetIteration(DatasetBase):
 
         yield from example_iterator
 
+    def as_numpy_iterator_rust_batched(  # pylint: disable=too-many-arguments
+        self,
+        *,
+        split: SplitT,
+        process_batch: Callable[[BatchT], T] | None = None,
+        shards: int | None = None,
+        shard_filter: Callable[[ShardInfo], bool] | None = None,
+        repeat: bool = True,
+        batch_size: int = 1,
+        file_parallelism: int = os.cpu_count() or 1,
+        shuffle: int = 1_000,
+    ) -> Iterable[ExampleT] | Iterable[T]:
+        """"Dataset as a numpy iterator (no batching). Experimental
+        implementation using the Rust code.
+
+        Args:
+
+            split (SplitT): Split, see SplitT.
+
+            process_batch (Callable[[BatchT], T] | None): Optional function
+            that processes a batch of records.
+
+            shards (int | None): If specified limits the dataset to the
+            first `shards` shards.
+
+            shard_filter (Callable[[ShardInfo], bool | None): If present
+            this is a function taking the ShardInfo and returning True if the
+            shard shall be used for traversal and False otherwise.
+
+            repeat (bool): Whether to repeat examples and thus create infinite
+            dataset.
+
+            batch_size (int): The batch size for RustBatchedGenerator.
+
+            file_parallelism (int): IO parallelism. Defaults to `os.cpu_count()
+            or 1`.
+
+            shuffle (int): How many examples should be shuffled across shards.
+            When set to 0 the iteration is deterministic. It might be faster to
+            iterate over shuffled dataset.
+
+        Returns: An iterator over batches (unless the parameter `process_batch`
+        returns something else).
+        """
+        shard_iterator = CachedShardInfoIterator(
+            dataset_path=self.path,
+            dataset_info=self.dataset_info,
+            split=split,
+            repeat=repeat,
+            shards=shards,
+            custom_metadata_type_limit=None,
+            shard_filter=shard_filter,
+            shuffle=shuffle,
+        )
+
+        with RustBatchedGenerator(
+                dataset_path=self.path,
+                dataset_structure=self.dataset_structure,
+                shard_iterator=shard_iterator,
+                batch_size=batch_size,
+                process_batch=process_batch,
+                file_parallelism=file_parallelism,
+        ) as rust_generator:
+            yield from rust_generator()
+
     def as_numpy_iterator_rust(  # pylint: disable=too-many-arguments
         self,
         *,
@@ -718,7 +789,6 @@ class DatasetIteration(DatasetBase):
         shards: int | None = None,
         shard_filter: Callable[[ShardInfo], bool] | None = None,
         repeat: bool = True,
-        batch_size: int | None = None,
         file_parallelism: int = os.cpu_count() or 1,
         shuffle: int = 1_000,
     ) -> Iterable[ExampleT] | Iterable[T]:
@@ -742,9 +812,6 @@ class DatasetIteration(DatasetBase):
             repeat (bool): Whether to repeat examples and thus create infinite
             dataset.
 
-            batch_size (int | None): If None then no batching is done otherwise
-            batch size for RustBatchedGenerator.
-
             file_parallelism (int): IO parallelism. Defaults to `os.cpu_count()
             or 1`.
 
@@ -766,22 +833,11 @@ class DatasetIteration(DatasetBase):
             shuffle=shuffle,
         )
 
-        if batch_size:
-            with RustBatchedGenerator(
-                    dataset_path=self.path,
-                    dataset_structure=self.dataset_structure,
-                    shard_iterator=shard_iterator,
-                    batch_size=batch_size,
-                    process_record=process_record,
-                    file_parallelism=file_parallelism,
-            ) as rust_generator:
-                yield from rust_generator()
-        else:
-            with RustGenerator(
-                    dataset_path=self.path,
-                    dataset_structure=self.dataset_structure,
-                    shard_iterator=shard_iterator,
-                    process_record=process_record,
-                    file_parallelism=file_parallelism,
-            ) as rust_generator:
-                yield from rust_generator()
+        with RustGenerator(
+                dataset_path=self.path,
+                dataset_structure=self.dataset_structure,
+                shard_iterator=shard_iterator,
+                process_record=process_record,
+                file_parallelism=file_parallelism,
+        ) as rust_generator:
+            yield from rust_generator()

@@ -273,7 +273,7 @@ def check_iteration_of_values(
                             assert returned_value == values[name][i]
         case "as_numpy_iterator_rust":
             for i, example in enumerate(
-                    dataset.as_numpy_iterator_concurrent(
+                    dataset.as_numpy_iterator_rust(
                         split=TRAIN_SPLIT,
                         shuffle=0,
                         repeat=False,

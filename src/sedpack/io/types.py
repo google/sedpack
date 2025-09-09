@@ -37,8 +37,17 @@ TFDatasetT: TypeAlias = Any
 AttributeValueT: TypeAlias = Union[
     str,  # UTF-8 string
     int,
-    npt.NDArray[np.generic],
     bytes,
+    npt.NDArray[np.generic],
+]
+
+# Type of a batch of attribute values.
+BatchedAttributeValueT: TypeAlias = Union[
+    list[str],  # UTF-8 string
+    list[int],
+    list[bytes],
+    # NP has the first dimension as the batch dimension.
+    npt.NDArray[np.generic],
 ]
 
 # Compression choices.
@@ -79,3 +88,5 @@ ShardFileTypeT: TypeAlias = Literal[
 
 # Type alias for example, this is what gets iterated or saved.
 ExampleT: TypeAlias = dict[str, AttributeValueT]
+
+BatchT: TypeAlias = dict[str, BatchedAttributeValueT]

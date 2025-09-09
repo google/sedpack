@@ -151,7 +151,6 @@ class RustGenerator:
                 result[attribute.name] = IterateShardFlatBuffer.decode_array(
                     np_bytes=np_bytes,
                     attribute=attribute,
-                    batch_size=0,
                 )
             return result
 
