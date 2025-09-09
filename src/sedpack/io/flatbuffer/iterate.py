@@ -91,7 +91,7 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
         np_bytes: npt.NDArray[np.uint8],
         attribute: Attribute,
         batch_size: int = 0,
-    ) -> AttributeValueT:
+    ) -> AttributeValueT | list[AttributeValueT]:
         """Decode an array. See `sedpack.io.shard.shard_writer_flatbuffer
         .ShardWriterFlatBuffer.save_numpy_vector_as_bytearray`
         for format description. The code tries to avoid unnecessary copies.
@@ -108,18 +108,27 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
           `np.reshape` auto-deduces the dimension. Otherwise we received
           exactly one value of this attribute.
 
-        Returns: the parsed np.ndarray of the correct dtype and shape.
+        Returns: the parsed np.ndarray of the correct dtype and shape. Or a
+        list in case of `batch_size > 0` and dynamic size attributes.
         """
         match attribute.dtype:
             case "str":
+                if batch_size:
+                    return [
+                        value.tobytes().decode("utf-8") for value in np_bytes
+                    ]
                 return np_bytes.tobytes().decode("utf-8")
             case "bytes":
+                if batch_size:
+                    return [value.tobytes() for value in np_bytes]
                 return np_bytes.tobytes()
             case "int":
                 array = np.frombuffer(
                     buffer=np_bytes,
                     dtype=np.dtype("int64").newbyteorder("<"),
                 )
+                if batch_size:
+                    return array.tolist()
                 assert array.shape == (1,), f"{array.shape = }"
                 return int(array[0])
             case _:

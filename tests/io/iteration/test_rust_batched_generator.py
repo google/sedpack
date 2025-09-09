@@ -37,12 +37,18 @@ def dataset_and_values(tmpdir_factory) -> None:
     values = {
         "fixed": np.random.random((data_points, 138)).astype(dtype),
         "fixed_2d": np.random.random((data_points, 3, 5)).astype(dtype),
-        # TODO(reintroduce) when https://github.com/google/sedpack/pull/227 is
-        # merged
-        #"dynamic_shape": [
-        #    uuid.uuid4().hex[:random.randint(15, 25)]
-        #    for _ in range(data_points)
-        #],
+        "dynamic_shape_bytes": [
+            uuid.uuid4().hex[:random.randint(11, 19)].encode("ascii")
+            for _ in range(data_points)
+        ],
+        "dynamic_shape_int": [
+            random.randint(-2**60, 2**60)
+            for _ in range(data_points)
+        ],
+        "dynamic_shape_str": [
+            uuid.uuid4().hex[:random.randint(15, 25)]
+            for _ in range(data_points)
+        ],
     }
     tmpdir = tmpdir_factory.mktemp("end_2_end_data")
 
@@ -62,12 +68,23 @@ def dataset_and_values(tmpdir_factory) -> None:
             dtype=str(dtype),
             shape=values["fixed_2d"][0].shape,
         ),
-        #sedpack.io.metadata.Attribute(
-        #    name="dynamic_shape",
-        #    dtype="str",
-        #    shape=(),
-        #),
+        sedpack.io.metadata.Attribute(
+            name="dynamic_shape_bytes",
+            dtype="bytes",
+            shape=(),
+        ),
+        sedpack.io.metadata.Attribute(
+            name="dynamic_shape_str",
+            dtype="str",
+            shape=(),
+        ),
+        sedpack.io.metadata.Attribute(
+            name="dynamic_shape_int",
+            dtype="int",
+            shape=(),
+        ),
     ]
+    random.shuffle(example_attributes)
 
     dataset_structure = sedpack.io.metadata.DatasetStructure(
         saved_data_description=example_attributes,
@@ -192,7 +209,7 @@ def test_end_to_end_rust_batched(
                     assert len(attribute_values) == current_batch_size
 
                 for i in range(current_batch_size):
-                    if name == "dynamic_shape":
+                    if name.startswith("dynamic_shape"):
                         assert values[name][index + i] == attribute_values[i]
                     else:
                         assert (values[name][index +
@@ -228,7 +245,7 @@ def test_end_to_end_as_numpy_iterator_rust(
                 assert len(attribute_values) == current_batch_size
 
             for i in range(current_batch_size):
-                if name == "dynamic_shape":
+                if name.startswith("dynamic_shape"):
                     assert values[name][index + i] == attribute_values[i]
                 else:
                     assert (values[name][index +

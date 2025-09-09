@@ -156,9 +156,7 @@ impl Iterator for Batcher {
                     // Refill if possible.
                     match self.shard_progress_iterator.next() {
                         Some(refill) => self.shard_progress_cache.push(refill),
-None => break, // No refill.
-                            break; // No refill.
-                        }
+                        None => break, // No refill.
                     }
                 }
                 Some(mut shard_progress) => {
