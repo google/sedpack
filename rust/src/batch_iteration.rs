@@ -88,57 +88,56 @@ impl BatchingData {
             .par_iter()
             .enumerate()
             .map(|(attribute_id, is_fixed)| {
-                match is_fixed {
-                    true => BatchedAttribute::Static {
-                        data: numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec({
-                            let span = span!(Level::TRACE, "fill single static attribute");
-                            let _enter = span.enter();
-
-                            // Fixed len attribute.
-                            let attribute_len =
-                                self.shards[0].borrow_attribute(0, attribute_id).len();
-                            let batch_size = self.indexes.len();
-
-                            // Do memcpy in parallel.
-                            let mut v = vec![0; batch_size * attribute_len];
-                            v.par_chunks_exact_mut(attribute_len).enumerate().for_each(
-                                |(batch_i, slice)| {
-                                    slice.copy_from_slice({
-                                        let batching_index = &self.indexes[batch_i];
-                                        self.shards[batching_index.shards_index].borrow_attribute(
-                                            batching_index.example_index,
-                                            attribute_id,
-                                        )
-                                    });
-                                },
-                            );
-                            v
-                        }),
-                    },
-                    false => {
-                        let span = span!(Level::TRACE, "fill single dynamic attribute");
-                        let _enter = span.enter();
-
-                        BatchedAttribute::Dynamic {
-                            data: self
-                                .indexes
-                                .par_iter()
-                                .map(|batching_index| {
-                                    numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec(
-                                        self.shards[batching_index.shards_index]
-                                            .borrow_attribute(
-                                                batching_index.example_index,
-                                                attribute_id,
-                                            )
-                                            .to_vec(),
-                                    )
-                                })
-                                .collect(),
-                        }
-                    }
+                if *is_fixed {
+                    self.get_static_attribute(attribute_id)
+                } else {
+                    self.get_dynamic_attribute(attribute_id)
                 }
             })
             .collect()
+    }
+
+    fn get_static_attribute(&self, attribute_id: usize) -> BatchedAttribute {
+        BatchedAttribute::Static {
+            data: numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec({
+                let span = span!(Level::TRACE, "fill single static attribute");
+                let _enter = span.enter();
+
+                // Fixed len attribute.
+                let attribute_len = self.shards[0].borrow_attribute(0, attribute_id).len();
+                let batch_size = self.indexes.len();
+
+                // Do memcpy in parallel.
+                let mut v = vec![0; batch_size * attribute_len];
+                v.par_chunks_exact_mut(attribute_len).enumerate().for_each(|(batch_i, slice)| {
+                    slice.copy_from_slice({
+                        let batching_index = &self.indexes[batch_i];
+                        self.shards[batching_index.shards_index]
+                            .borrow_attribute(batching_index.example_index, attribute_id)
+                    });
+                });
+                v
+            }),
+        }
+    }
+
+    fn get_dynamic_attribute(&self, attribute_id: usize) -> BatchedAttribute {
+        let span = span!(Level::TRACE, "fill single dynamic attribute");
+        let _enter = span.enter();
+
+        BatchedAttribute::Dynamic {
+            data: self
+                .indexes
+                .par_iter()
+                .map(|batching_index| {
+                    numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec(
+                        self.shards[batching_index.shards_index]
+                            .borrow_attribute(batching_index.example_index, attribute_id)
+                            .to_vec(),
+                    )
+                })
+                .collect(),
+        }
     }
 }
 
@@ -151,15 +150,14 @@ impl Iterator for Batcher {
 
         // Select data for the batch to be filled.
         let mut batching_data = BatchingData { shards: Vec::new(), indexes: Vec::new() };
-        'batching_data_filling: while batching_data.indexes.len() < self.batch_size {
+        while batching_data.indexes.len() < self.batch_size {
             match self.shard_progress_cache.pop() {
                 None => {
                     // Refill if possible.
                     match self.shard_progress_iterator.next() {
                         Some(refill) => self.shard_progress_cache.push(refill),
                         None => {
-                            // No refill.
-                            break 'batching_data_filling;
+                            break; // No refill.
                         }
                     }
                 }
