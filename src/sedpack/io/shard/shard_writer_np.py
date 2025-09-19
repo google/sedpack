@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2024-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@ For information how to read and write TFRecord files see
 https://www.tensorflow.org/tutorials/load_data/tfrecord
 """
 
+import concurrent.futures
 from pathlib import Path
 
 import numpy as np
 from numpy import typing as npt
 
 from sedpack.io.metadata import Attribute, DatasetStructure
-from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
+from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
+from sedpack.io.utils import hash_checksums_from_bytes
 
 
 class ShardWriterNP(ShardWriterBase):
@@ -117,12 +119,26 @@ class ShardWriterNP(ShardWriterBase):
                                    )
                 self._buffer[name] = byte_list  # type: ignore[assignment]
 
-    def close(self) -> None:
+    def close(
+        self,
+        concurrent_pool: concurrent.futures.Executor | None = None,
+    ) -> tuple[str, ...]:
         """Close the shard file(-s).
+
+        Args:
+
+          concurrent_pool (concurrent.futures.Executor | None): May use this
+          pool to write the file content. In that case returning from this
+          function does not mean the file exists or that it is fully written.
         """
+        del concurrent_pool  # unused
+
         if not self._buffer:
             assert not self._shard_file.is_file()
-            return
+            return hash_checksums_from_bytes(
+                file_content=b"",
+                hashes=self.dataset_structure.hash_checksum_algorithms,
+            )
 
         # Deal properly with "bytes" attributes.
         for attribute in self.dataset_structure.saved_data_description:
@@ -160,6 +176,7 @@ class ShardWriterNP(ShardWriterBase):
 
         self._buffer = {}
         assert self._shard_file.is_file()
+        return self._compute_file_hash_checksums()
 
     @staticmethod
     def supported_compressions() -> list[CompressionT]:

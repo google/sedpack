@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Google LLC
+# Copyright 2023-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 number."""
 
 from __future__ import annotations
+import concurrent.futures
 import dataclasses
 from pathlib import Path
 from types import TracebackType
@@ -47,11 +48,15 @@ class DatasetFillerContext:
     group_number.
     """
 
-    def __init__(self,
-                 dataset_root_path: Path,
-                 dataset_structure: DatasetStructure,
-                 relative_path_from_split: Path,
-                 write_updates: bool = True) -> None:
+    def __init__(
+        self,
+        dataset_root_path: Path,
+        dataset_structure: DatasetStructure,
+        relative_path_from_split: Path,
+        write_updates: bool = True,
+        *,
+        concurrent_pool: concurrent.futures.Executor | None,
+    ) -> None:
         """Initialize a dataset filler context which writes examples and
         automatically opens and closes shards (except possibly not closing the
         last shard which is closed by `DatasetFiller`).
@@ -72,6 +77,9 @@ class DatasetFillerContext:
           could be faster (not writing the info file after each shard). But
           that way progress may be lost (e.g., when the process is interrupted
           during writing a shard file).
+
+          concurrent_pool (concurrent.futures.Executor | None): Shard file
+          writing concurrently or not.
         """
         # Make sure that we do not accidentally traverse the directory above
         # `dataset_root_path`.
@@ -84,6 +92,8 @@ class DatasetFillerContext:
         self._dataset_root_path: Path = dataset_root_path
         self._dataset_structure: DatasetStructure = dataset_structure
         self._relative_path_from_split: Path = relative_path_from_split
+        self._concurrent_pool: concurrent.futures.Executor | None
+        self._concurrent_pool = concurrent_pool
         self._write_updates: bool = write_updates
 
         # Constants.
@@ -184,7 +194,8 @@ class DatasetFillerContext:
     def close_shard(self, shard: Shard, split: SplitT) -> None:
         """Close shard. Called automatically by DatasetFiller.__exit__."""
         # Finish writing the shard.
-        shard_info: ShardInfo = shard.close()
+        shard_info: ShardInfo = shard.close(
+            concurrent_pool=self._concurrent_pool,)
 
         # Remember this shard info.
         if split not in self._shards_lists:
@@ -223,6 +234,7 @@ class DatasetFiller:
 
     def __init__(self,
                  dataset: DatasetWriting,
+                 concurrency: int = 0,
                  relative_path_from_split: Path = Path("."),
                  auto_update_dataset: bool = True) -> None:
         """Context manager for writing examples into a dataset.
@@ -231,6 +243,9 @@ class DatasetFiller:
 
           dataset (DatasetWriting): Dataset object representing the dataset we
           are filling.
+
+          concurrency (int): Setting to a positive integer allows writing shard
+          files in parallel. Defaults to 0 (sequential).
 
           relative_path_from_split (Path): New shards are created inside
           `dataset_root_path / split / relative_path_from_split` or children.
@@ -244,11 +259,17 @@ class DatasetFiller:
           `DatasetFiller` objects it is advised to set this parameter to
           `False` since this is not thread safe.
         """
+        self._concurrent_pool: concurrent.futures.Executor | None = None
+        if concurrency > 0:
+            self._concurrent_pool = concurrent.futures.ThreadPoolExecutor(
+                max_workers=concurrency,)
+
         self._dataset_filler_context: DatasetFillerContext
         self._dataset_filler_context = DatasetFillerContext(
             dataset_root_path=dataset.path,
             dataset_structure=dataset.dataset_structure,
             relative_path_from_split=relative_path_from_split,
+            concurrent_pool=self._concurrent_pool,
         )
         self._auto_update_dataset: bool = auto_update_dataset
         self._dataset: DatasetWriting = dataset
@@ -285,6 +306,14 @@ class DatasetFiller:
                     shard=shard_progress.shard,
                     split=split,
                 )
+
+        if self._concurrent_pool is not None:
+            # Wait to finish writing of all files (after closing all shards but
+            # before updating metadata files).
+            self._concurrent_pool.shutdown(
+                wait=True,
+                cancel_futures=False,
+            )
 
         # Write updated info files.
         self._update_infos()

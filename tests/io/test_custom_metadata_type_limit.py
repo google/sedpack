@@ -61,7 +61,7 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
 
     # Fill data in the dataset
 
-    with dataset.filler() as filler:
+    with dataset.filler(concurrency=np.random.randint(0, 4),) as filler:
         for attribute_value in array_of_values:
             filler.write_example(
                 values={"attribute_name": attribute_value},

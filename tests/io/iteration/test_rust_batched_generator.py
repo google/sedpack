@@ -107,7 +107,7 @@ def dataset_and_values(tmpdir_factory) -> None:
 
     # Fill data in the dataset
 
-    with dataset.filler() as filler:
+    with dataset.filler(concurrency=np.random.randint(0, 4),) as filler:
         for i in range(data_points):
             filler.write_example(
                 values={
