@@ -17,7 +17,6 @@ For information how to read and write TFRecord files see
 https://www.tensorflow.org/tutorials/load_data/tfrecord
 """
 
-import concurrent.futures
 from pathlib import Path
 
 import numpy as np
@@ -119,20 +118,9 @@ class ShardWriterNP(ShardWriterBase):
                                    )
                 self._buffer[name] = byte_list  # type: ignore[assignment]
 
-    def close(
-        self,
-        concurrent_pool: concurrent.futures.Executor | None = None,
-    ) -> tuple[str, ...]:
-        """Close the shard file(-s).
-
-        Args:
-
-          concurrent_pool (concurrent.futures.Executor | None): May use this
-          pool to write the file content. In that case returning from this
-          function does not mean the file exists or that it is fully written.
+    def close(self) -> tuple[str, ...]:
+        """Close the shard file and return hash check-sums.
         """
-        del concurrent_pool  # unused
-
         if not self._buffer:
             assert not self._shard_file.is_file()
             return hash_checksums_from_bytes(

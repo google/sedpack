@@ -15,7 +15,6 @@
 """
 
 from abc import ABC, abstractmethod
-import concurrent.futures
 from pathlib import Path
 
 import numpy as np
@@ -83,16 +82,8 @@ class ShardWriterBase(ABC):
         """
 
     @abstractmethod
-    def close(
-        self,
-        concurrent_pool: concurrent.futures.Executor | None = None,
-    ) -> tuple[str, ...]:
+    def close(self) -> tuple[str, ...]:
         """Close the shard file(-s).
-
-        Args:
-
-          concurrent_pool (concurrent.futures.Executor | None): May use this
-          pool to write the file content.
         """
 
     @staticmethod

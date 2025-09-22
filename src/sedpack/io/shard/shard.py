@@ -14,7 +14,6 @@
 """Dataset shard manipulation.
 """
 
-import concurrent.futures
 from pathlib import Path
 
 from sedpack.io.metadata import DatasetStructure
@@ -64,23 +63,13 @@ class Shard():
         self._shard_writer.write(values)
         self.shard_info.number_of_examples += 1
 
-    def close(
-        self,
-        concurrent_pool: concurrent.futures.Executor | None = None,
-    ) -> ShardInfo:
+    def close(self) -> ShardInfo:
         """Close shard and return statistics.
-
-        Args:
-
-          concurrent_pool (concurrent.futures.Executor | None): May use this
-          pool to write the file content. In that case returning from this
-          function does not mean the file exists or that it is fully written.
         """
         if self._shard_writer is None:
             raise ValueError("Closing a shard which has not been open.")
 
-        hash_checksums: tuple[str, ...] = self._shard_writer.close(
-            concurrent_pool=concurrent_pool,)
+        hash_checksums: tuple[str, ...] = self._shard_writer.close()
         self._shard_writer = None
 
         # Compute sha256 checksum.

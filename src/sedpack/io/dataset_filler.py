@@ -32,6 +32,13 @@ if TYPE_CHECKING:
     from sedpack.io.dataset_writing import DatasetWriting
 
 
+def _close_shard(shard: Shard) -> ShardInfo:
+    """Helper function to close a shard. This can be pickled and thus sent to
+    another process.
+    """
+    return shard.close()
+
+
 @dataclasses.dataclass
 class ShardProgress:
     """Internal information about a shard progress. Since we do not want to
@@ -53,9 +60,9 @@ class DatasetFillerContext:
         dataset_root_path: Path,
         dataset_structure: DatasetStructure,
         relative_path_from_split: Path,
-        write_updates: bool = True,
         *,
-        concurrent_pool: concurrent.futures.Executor | None,
+        concurrent_pool: concurrent.futures.Executor,
+        write_updates: bool = True,
     ) -> None:
         """Initialize a dataset filler context which writes examples and
         automatically opens and closes shards (except possibly not closing the
@@ -72,14 +79,13 @@ class DatasetFillerContext:
           `dataset_root_path / split / relative_path_from_split`. May not
           contain "..".
 
+          concurrent_pool (concurrent.futures.Executor): Shard file writing.
+
           write_updates (bool): Whether to save progress of written shard info
           files. Defaults to `True`. In theory when set to `False` writing
           could be faster (not writing the info file after each shard). But
           that way progress may be lost (e.g., when the process is interrupted
           during writing a shard file).
-
-          concurrent_pool (concurrent.futures.Executor | None): Shard file
-          writing concurrently or not.
         """
         # Make sure that we do not accidentally traverse the directory above
         # `dataset_root_path`.
@@ -92,8 +98,7 @@ class DatasetFillerContext:
         self._dataset_root_path: Path = dataset_root_path
         self._dataset_structure: DatasetStructure = dataset_structure
         self._relative_path_from_split: Path = relative_path_from_split
-        self._concurrent_pool: concurrent.futures.Executor | None
-        self._concurrent_pool = concurrent_pool
+        self._concurrent_pool: concurrent.futures.Executor = concurrent_pool
         self._write_updates: bool = write_updates
 
         # Constants.
@@ -104,6 +109,8 @@ class DatasetFillerContext:
 
         # Cumulated shard infos.
         self._shards_lists: dict[SplitT, ShardsList] = {}
+        self._future_shard_infos: dict[
+            SplitT, list[concurrent.futures.Future[ShardInfo]]] = {}
 
         # Random path generator.
         self._path_generator = PathGenerator()
@@ -113,6 +120,34 @@ class DatasetFillerContext:
         """Return information about all shards written by this
         DatasetFillerContext.
         """
+        if not self._future_shard_infos:
+            return self._shards_lists
+
+        for split, shard_info_futures in self._future_shard_infos.items():
+            for future_info in shard_info_futures:
+                shard_info: ShardInfo = future_info.result()
+
+                # Remember this shard info.
+                if split not in self._shards_lists:
+                    # Load if exists.
+                    self._shards_lists[split] = ShardsList.load_or_create(
+                        dataset_root_path=self._dataset_root_path,
+                        relative_path_self=shard_info.file_infos[0].file_path.
+                        parent / "shards_list.json",
+                    )
+                self._shards_lists[split].shard_files.append(shard_info)
+                self._shards_lists[
+                    split].number_of_examples += shard_info.number_of_examples
+
+        # Write down which shard files have been saved.
+        if self._write_updates:
+            for shards_list in self._shards_lists.values():
+                shards_list.write_config(
+                    dataset_root_path=self._dataset_root_path,
+                    hashes=(),  # We forget these now.
+                )
+
+        self._future_shard_infos = {}
         return self._shards_lists
 
     def _get_new_shard(self, split: SplitT) -> Shard:
@@ -194,27 +229,13 @@ class DatasetFillerContext:
     def close_shard(self, shard: Shard, split: SplitT) -> None:
         """Close shard. Called automatically by DatasetFiller.__exit__."""
         # Finish writing the shard.
-        shard_info: ShardInfo = shard.close(
-            concurrent_pool=self._concurrent_pool,)
-
-        # Remember this shard info.
-        if split not in self._shards_lists:
-            # Load if exists.
-            self._shards_lists[split] = ShardsList.load_or_create(
-                dataset_root_path=self._dataset_root_path,
-                relative_path_self=shard_info.file_infos[0].file_path.parent /
-                "shards_list.json",
-            )
-        self._shards_lists[split].shard_files.append(shard_info)
-        self._shards_lists[
-            split].number_of_examples += shard_info.number_of_examples
-
-        # Write down which shard files have been saved.
-        if self._write_updates:
-            self._shards_lists[split].write_config(
-                dataset_root_path=self._dataset_root_path,
-                hashes=(),  # We forget these now.
-            )
+        if split not in self._future_shard_infos:
+            self._future_shard_infos[split] = []
+        self._future_shard_infos[split].append(
+            self._concurrent_pool.submit(
+                _close_shard,
+                shard=shard,
+            ))
 
 
 class DatasetFiller:
@@ -259,10 +280,13 @@ class DatasetFiller:
           `DatasetFiller` objects it is advised to set this parameter to
           `False` since this is not thread safe.
         """
-        self._concurrent_pool: concurrent.futures.Executor | None = None
-        if concurrency > 0:
+        self._concurrent_pool: concurrent.futures.Executor
+        if dataset.dataset_structure.shard_file_type == "tfrec":
             self._concurrent_pool = concurrent.futures.ThreadPoolExecutor(
-                max_workers=concurrency,)
+                max_workers=1)
+        else:
+            self._concurrent_pool = concurrent.futures.ProcessPoolExecutor(
+                max_workers=max(1, concurrency),)
 
         self._dataset_filler_context: DatasetFillerContext
         self._dataset_filler_context = DatasetFillerContext(
@@ -307,13 +331,12 @@ class DatasetFiller:
                     split=split,
                 )
 
-        if self._concurrent_pool is not None:
-            # Wait to finish writing of all files (after closing all shards but
-            # before updating metadata files).
-            self._concurrent_pool.shutdown(
-                wait=True,
-                cancel_futures=False,
-            )
+        # Wait to finish writing of all files (after closing all shards but
+        # before updating metadata files).
+        self._concurrent_pool.shutdown(
+            wait=True,
+            cancel_futures=False,
+        )
 
         # Write updated info files.
         self._update_infos()

@@ -16,7 +16,6 @@
 For information about FlatBuffers see https://flatbuffers.dev/
 """
 
-import concurrent.futures
 from pathlib import Path
 import sys
 
@@ -260,17 +259,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         # Return the vector offset.
         return builder.EndVector()  # type: ignore[no-any-return]
 
-    def close(
-        self,
-        concurrent_pool: concurrent.futures.Executor | None = None,
-    ) -> tuple[str, ...]:
+    def close(self) -> tuple[str, ...]:
         """Close the shard file(-s).
-
-        Args:
-
-          concurrent_pool (concurrent.futures.Executor | None): May use this
-          pool to write the file content. In that case returning from this
-          function does not mean the file exists or that it is fully written.
         """
         if not self._examples:
             # Nothing to save.
@@ -308,17 +298,10 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         )
 
         # Write the buffer into a file.
-        if concurrent_pool is not None:
-            concurrent_pool.submit(
-                _write_compressed,
-                file_path=self._shard_file,
-                file_content=file_content,
-            )
-        else:
-            _write_compressed(
-                file_path=self._shard_file,
-                file_content=file_content,
-            )
+        _write_compressed(
+            file_path=self._shard_file,
+            file_content=file_content,
+        )
 
         return hash_checksums
 

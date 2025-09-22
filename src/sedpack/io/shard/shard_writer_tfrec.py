@@ -17,7 +17,6 @@ For information how to read and write TFRecord files see
 https://www.tensorflow.org/tutorials/load_data/tfrecord
 """
 
-import concurrent.futures
 from pathlib import Path
 from typing import Any
 
@@ -81,20 +80,9 @@ class ShardWriterTFRec(ShardWriterBase):
         )
         self._tf_shard_writer.write(example)
 
-    def close(
-        self,
-        concurrent_pool: concurrent.futures.Executor | None = None,
-    ) -> tuple[str, ...]:
+    def close(self) -> tuple[str, ...]:
         """Close the shard file(-s).
-
-        Args:
-
-          concurrent_pool (concurrent.futures.Executor | None): May use this
-          pool to write the file content. In that case returning from this
-          function does not mean the file exists or that it is fully written.
         """
-        del concurrent_pool  # unused
-
         if not self._tf_shard_writer:
             raise ValueError("Trying to close a shard that was not open")
         self._tf_shard_writer.close()
