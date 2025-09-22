@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 @tenacity.retry(
-    wait=wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
+    wait=tenacity.wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
     stop=tenacity.stop_after_attempt(10),
     reraise=True,
 )
