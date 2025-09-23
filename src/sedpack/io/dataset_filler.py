@@ -22,16 +22,22 @@ from types import TracebackType
 from typing import Any, Type, TYPE_CHECKING
 
 from sedpack.io.file_info import PathGenerator, FileInfo
-from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
-from sedpack.io.shard import Shard
-from sedpack.io.types import ExampleT, SplitT
 from sedpack.io.metadata import DatasetStructure
+from sedpack.io.shard import Shard
+from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
+from sedpack.io.types import ExampleT, SplitT
+from sedpack.io.utils import retry
 
 if TYPE_CHECKING:
     # Avoid cyclical import.
     from sedpack.io.dataset_writing import DatasetWriting
 
 
+@retry(
+    stop_after_attempt=10,
+    sleep_min_s=60.0,
+    sleep_max_s=180.0,
+)
 def _close_shard(shard: Shard) -> ShardInfo:
     """Helper function to close a shard. This can be pickled and thus sent to
     another process.
