@@ -13,10 +13,17 @@
 # limitations under the License.
 """Utils for sedpack.io"""
 
+import functools
 import hashlib
 from pathlib import Path
+import random
 import time
-from typing import Callable, Protocol, TypeVar
+from typing import (
+    Callable,
+    Protocol,
+    ParamSpec,
+    TypeVar,
+)
 import uuid
 
 import xxhash
@@ -179,3 +186,106 @@ def func_or_identity(f: Callable[..., T] | None) -> Callable[..., T]:
     if f is None:
         return identity
     return f
+
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def retry(
+    maybe_f: Callable[P, R] | None = None,
+    *,
+    stop_after_attempt: int = 50,
+    sleep_min_s: float = 1.0,
+    sleep_max_s: float = 4.0,
+) -> Callable[P, R]:
+    """Retry decorator. For this simple use-case no need to add another package
+    as a dependency. When more functionality would be required consider using a
+    package, e.g., https://tenacity.readthedocs.io/en/latest/.
+
+    Args:
+
+      maybe_f (Callable[P, R] | None): The decorated function when called
+      without any parameter specification or None when parameters are
+      specified.
+
+      *: The rest is kwargs.
+
+      stop_after_attempt (int): Maximal number of attempts (at least 1).
+
+      sleep_min_s (float): Minimal sleep time in seconds (at least 0.0).
+
+      sleep_max_s (float): Minimal sleep time in seconds (at least
+      `sleep_min_s`).
+
+    Example use:
+
+    ```python
+    @retry
+    def foo():
+        if not random.randint(0, 9):
+            raise ValueError
+        return 0
+    ```
+
+    or with different parameters (here just single retry call)
+
+    ```python
+    @retry(stop_after_attempt=2)
+    def foo():
+        if not random.randint(0, 9):
+            raise ValueError
+        return 0
+    ```
+    """
+    # Fix nonsense values.
+    stop_after_attempt = max(stop_after_attempt, 1)
+    sleep_min_s = max(sleep_min_s, 0.0)
+    sleep_max_s = max(sleep_min_s, sleep_max_s)
+
+    # Capture retrying values and take just the function to be wrapped as a
+    # parameter.
+    def wrapper_with_defaults(f: Callable[P, R]) -> Callable[P, R]:
+        # Do not forget name and docstring.
+        @functools.wraps(f)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            # Keep trying without re-raising.
+            for _ in range(stop_after_attempt - 1):
+                try:
+                    return f(*args, **kwargs)
+                except:  # pylint: disable=bare-except
+                    # Catch all exception silently.
+                    time.sleep(random.uniform(sleep_min_s, sleep_max_s))
+
+            # Final try with possible re-raise.
+            return f(*args, **kwargs)
+        return wrapper
+
+    # See https://peps.python.org/pep-0318/#current-syntax
+    if maybe_f is None:
+        # When parameters are specified:
+        # @retry(stop_after_attempt=10)
+        # def foo():
+        #    ...
+        # # sugar for:
+        # foo = retry(
+        #     maybe_f=None,
+        #     stop_after_attempt=10,
+        #     sleep_min_s=1.0,
+        #     sleep_max_s=4.0,
+        # )(foo)
+        # This case seems hard for type-checking.
+        return wrapper_with_defaults  # type: ignore[return-value]
+    else:
+        # Default parameters:
+        # @retry
+        # def foo():
+        #    ...
+        # # sugar for:
+        # foo = retry(
+        #     foo,
+        #     stop_after_attempt=50,
+        #     sleep_min_s=1.0,
+        #     sleep_max_s=4.0,
+        # )
+        return wrapper_with_defaults(maybe_f)
