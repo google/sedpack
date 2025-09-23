@@ -15,6 +15,7 @@
 
 import functools
 import hashlib
+import logging
 from pathlib import Path
 import random
 import time
@@ -211,7 +212,8 @@ def retry(
 
       *: The rest is kwargs.
 
-      stop_after_attempt (int): Maximal number of attempts (at least 1).
+      stop_after_attempt (int): Maximal number of attempts (at least 1). The
+      first `stop_after_attempt - 1` errors are logged at the `DEBUG` level.
 
       sleep_min_s (float): Minimal sleep time in seconds (at least 0.0).
 
@@ -242,6 +244,7 @@ def retry(
     stop_after_attempt = max(stop_after_attempt, 1)
     sleep_min_s = max(sleep_min_s, 0.0)
     sleep_max_s = max(sleep_min_s, sleep_max_s)
+    logger = logging.getLogger("sedpack.io.utils.retry")
 
     # Capture retrying values and take just the function to be wrapped as a
     # parameter.
@@ -250,11 +253,17 @@ def retry(
         @functools.wraps(f)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # Keep trying without re-raising.
-            for _ in range(stop_after_attempt - 1):
+            for attempt in range(stop_after_attempt - 1):
                 try:
                     return f(*args, **kwargs)
-                except:  # pylint: disable=bare-except
-                    # Catch all exception silently.
+                except Exception as e:
+                    logger.debug(
+                        "Retrying %s (attempt %d/%d) after error: %s",
+                        f.__name__,
+                        attempt,
+                        stop_after_attempt,
+                        e,
+                    )
                     time.sleep(random.uniform(sleep_min_s, sleep_max_s))
 
             # Final try with possible re-raise.
