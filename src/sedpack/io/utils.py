@@ -259,6 +259,7 @@ def retry(
 
             # Final try with possible re-raise.
             return f(*args, **kwargs)
+
         return wrapper
 
     # See https://peps.python.org/pep-0318/#current-syntax
