@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Google LLC
+# Copyright 2023-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 from pathlib import Path
 
-import sedpack
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.types import ExampleT
@@ -65,16 +64,16 @@ class Shard():
         self.shard_info.number_of_examples += 1
 
     def close(self) -> ShardInfo:
-        """Close shard and return statistics."""
+        """Close shard and return statistics.
+        """
         if self._shard_writer is None:
             raise ValueError("Closing a shard which has not been open.")
 
-        self._shard_writer.close()
+        hash_checksums: tuple[str, ...] = self._shard_writer.close()
         self._shard_writer = None
 
         # Compute sha256 checksum.
-        self.shard_info.file_infos[
-            0].hash_checksums = self._compute_file_hash_checksums()
+        self.shard_info.file_infos[0].hash_checksums = hash_checksums
 
         # Return shard info.
         return self.shard_info
@@ -83,16 +82,3 @@ class Shard():
         """Return full path to the shard file.
         """
         return self._dataset_path / self.shard_info.file_infos[0].file_path
-
-    def _compute_file_hash_checksums(self) -> tuple[str, ...]:
-        """Compute hash checksums of the shard file(-s).
-
-        TODO This method should return a list of checksums defined by the user
-        in `self.dataset_structure`.
-        """
-        # Compute sha256 checksum.
-        shard_path = self._get_full_path()
-        return sedpack.io.utils.hash_checksums(
-            file_path=shard_path,
-            hashes=self.dataset_structure.hash_checksum_algorithms,
-        )

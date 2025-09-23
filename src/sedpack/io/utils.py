@@ -60,6 +60,35 @@ def _get_hash_function(name: HashChecksumT) -> HashProtocol:
             return hashlib.new(name)
 
 
+def hash_checksums_from_bytes(
+    file_content: bytes,
+    hashes: tuple[HashChecksumT, ...],
+) -> tuple[str, ...]:
+    """Compute the hex-encoded hash checksums. An alternative to
+    `hash_checksums` to avoid reading the file again.
+
+    Args:
+
+        file_content (bytes): The whole file content.
+
+        hashes (tuple[HashChecksumT, ...]): A tuple of hash algorithm names to
+        be computed.
+
+    Returns: hex-encoded hash checksums of the file in the order given by
+    `hashes`.
+    """
+    # Actual hash functions, same order as hashes.
+    hash_functions = tuple(
+        _get_hash_function(hash_name) for hash_name in hashes)
+
+    # Update all hashes.
+    for hash_function in hash_functions:
+        hash_function.update(file_content)
+
+    # Hex-encoded results, same order as hashes.
+    return tuple(hash_function.hexdigest() for hash_function in hash_functions)
+
+
 def hash_checksums(file_path: Path, hashes: tuple[HashChecksumT,
                                                   ...]) -> tuple[str, ...]:
     """Compute the hex-encoded hash checksums.

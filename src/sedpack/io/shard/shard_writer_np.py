@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2024-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import numpy as np
 from numpy import typing as npt
 
 from sedpack.io.metadata import Attribute, DatasetStructure
-from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
+from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
 
 
 class ShardWriterNP(ShardWriterBase):
@@ -117,12 +117,12 @@ class ShardWriterNP(ShardWriterBase):
                                    )
                 self._buffer[name] = byte_list  # type: ignore[assignment]
 
-    def close(self) -> None:
-        """Close the shard file(-s).
+    def close(self) -> tuple[str, ...]:
+        """Close the shard file and return hash check-sums.
         """
         if not self._buffer:
             assert not self._shard_file.is_file()
-            return
+            return ()
 
         # Deal properly with "bytes" attributes.
         for attribute in self.dataset_structure.saved_data_description:
@@ -160,6 +160,7 @@ class ShardWriterNP(ShardWriterBase):
 
         self._buffer = {}
         assert self._shard_file.is_file()
+        return self._compute_file_hash_checksums()
 
     @staticmethod
     def supported_compressions() -> list[CompressionT]:

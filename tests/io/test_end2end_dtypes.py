@@ -97,7 +97,7 @@ def dataset_and_values_dynamic_shape(
 
     # Fill data in the dataset
 
-    with dataset.filler() as filler:
+    with dataset.filler(concurrency=np.random.randint(0, 4),) as filler:
         for i in range(items):
             filler.write_example(
                 values={

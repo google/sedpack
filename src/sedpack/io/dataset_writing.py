@@ -140,8 +140,13 @@ class DatasetWriting(DatasetBase):
         # Return user-defined results.
         return results
 
-    def filler(self) -> DatasetFiller:
+    def filler(self, concurrency: int = 1) -> DatasetFiller:
         """Return a dataset filler context manager for writing examples.
+
+        Args:
+
+          concurrency (int): Setting to a positive integer allows writing shard
+          files in parallel. Defaults to 1 (sequential writes).
 
         Example use:
         # Context manager properly opens and closes shards.
@@ -153,7 +158,7 @@ class DatasetWriting(DatasetBase):
                     split=split,
                 )
         """
-        return DatasetFiller(self)
+        return DatasetFiller(dataset=self, concurrency=concurrency)
 
     def write_config(
         self,
@@ -279,7 +284,8 @@ class DatasetWriting(DatasetBase):
                     if real_hashes != file_info.hash_checksums:
                         raise ValueError(
                             f"Hash checksum miss-match in {file_info.file_path}"
-                        )
+                            f"got: {real_hashes} but expected "
+                            f"{file_info.hash_checksums}")
 
 
 # We want to get results back.

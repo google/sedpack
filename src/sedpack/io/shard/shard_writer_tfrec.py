@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2024-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -80,13 +80,14 @@ class ShardWriterTFRec(ShardWriterBase):
         )
         self._tf_shard_writer.write(example)
 
-    def close(self) -> None:
+    def close(self) -> tuple[str, ...]:
         """Close the shard file(-s).
         """
         if not self._tf_shard_writer:
             raise ValueError("Trying to close a shard that was not open")
         self._tf_shard_writer.close()
         self._tf_shard_writer = None
+        return self._compute_file_hash_checksums()
 
     @staticmethod
     def supported_compressions() -> list[CompressionT]:

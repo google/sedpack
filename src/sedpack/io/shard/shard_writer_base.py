@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2024-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
+import sedpack
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.types import ExampleT, CompressionT
 
@@ -81,7 +82,7 @@ class ShardWriterBase(ABC):
         """
 
     @abstractmethod
-    def close(self) -> None:
+    def close(self) -> tuple[str, ...]:
         """Close the shard file(-s).
         """
 
@@ -90,3 +91,10 @@ class ShardWriterBase(ABC):
     def supported_compressions() -> list[CompressionT]:
         """Return a list of supported compression types.
         """
+
+    def _compute_file_hash_checksums(self) -> tuple[str, ...]:
+        """Compute hash checksums of the shard file(-s). """
+        return sedpack.io.utils.hash_checksums(
+            file_path=self._shard_file,
+            hashes=self.dataset_structure.hash_checksum_algorithms,
+        )
