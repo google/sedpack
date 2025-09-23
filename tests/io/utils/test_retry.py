@@ -23,11 +23,11 @@ from sedpack.io.utils import retry
     sleep_min_s=0.0,
     sleep_max_s=0.1,
 )
-def always_raise():
+def always_raise() -> None:
     raise ValueError
 
 
-def test_retry_raises():
+def test_retry_raises() -> None:
     with pytest.raises(ValueError):
         always_raise()
 
@@ -41,7 +41,7 @@ def success_add(a: int, b: int) -> int:
     return a + b
 
 
-def test_success():
+def test_success() -> None:
     start = time.time()
     assert success_add(3, 4) == 7
     elapsed = time.time() - start
@@ -60,7 +60,7 @@ def flaky_mul(a: int, b: int) -> int:
         raise ValueError
 
 
-def test_flaky_mul():
+def test_flaky_mul() -> None:
     start = time.time()
     assert flaky_mul(3, 4) == 12
     elapsed = time.time() - start
@@ -72,7 +72,7 @@ def pure_retry_max(a: int, b: int, c: int) -> int:
     return max(a, b, c)
 
 
-def test_pure_retry_max():
+def test_pure_retry_max() -> None:
     start = time.time()
     assert pure_retry_max(3, 7, 4) == 7
     elapsed = time.time() - start
@@ -89,27 +89,43 @@ def pure_retry_flaky_max(a: int, b: int, c: int) -> int:
     return max(a, b, c)
 
 
-def test_pure_retry_flaky_max():
+def test_pure_retry_flaky_max() -> None:
     assert pure_retry_flaky_max(3, 7, 4) == 7
 
 
 @retry
-def default_decorated_fn():
+def default_decorated_fn() -> None:
     """expected default docstring"""
     pass
 
 
 @retry(stop_after_attempt=3)
-def nondefault_decorated_fn():
+def nondefault_decorated_fn() -> None:
     """expected non-default docstring"""
     pass
 
 
-def test_wraps_nicely():
+def default_nosugar_fn() -> None:
+    """nosugar expected default docstring"""
+    pass
+default_nosugar_fn = retry(default_nosugar_fn)
+
+
+def nondefault_nosugar_fn() -> None:
+    """nosugar expected non-default docstring"""
+    pass
+nondefault_nosugar_fn = retry(stop_after_attempt=3)(nondefault_nosugar_fn)
+
+
+def test_wraps_nicely() -> None:
     # Names match.
     assert default_decorated_fn.__name__ == "default_decorated_fn"
     assert nondefault_decorated_fn.__name__ == "nondefault_decorated_fn"
+    assert default_nosugar_fn.__name__ == "default_nosugar_fn"
+    assert nondefault_nosugar_fn.__name__ == "nondefault_nosugar_fn"
 
     # Docstring matches.
     assert default_decorated_fn.__doc__ == "expected default docstring"
     assert nondefault_decorated_fn.__doc__ == "expected non-default docstring"
+    assert default_nosugar_fn.__doc__ == "nosugar expected default docstring"
+    assert nondefault_nosugar_fn.__doc__ == "nosugar expected non-default docstring"

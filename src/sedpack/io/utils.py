@@ -20,6 +20,7 @@ from pathlib import Path
 import random
 import time
 from typing import (
+    Any,
     Callable,
     Protocol,
     ParamSpec,
@@ -189,8 +190,8 @@ def func_or_identity(f: Callable[..., T] | None) -> Callable[..., T]:
     return f
 
 
-P = ParamSpec("P")
-R = TypeVar("R")
+P = ParamSpec("P", default=Any)  # pylint: disable=unexpected-keyword-arg
+R = TypeVar("R", default=Any)  # pylint: disable=unexpected-keyword-arg
 
 
 def retry(

@@ -59,4 +59,4 @@ jobs:
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
           mkdir -p .mypy_cache
           mypy --version
-          mypy --no-color-output --install-types --non-interactive src docs
+          mypy --no-color-output --install-types --non-interactive src docs tests/io/utils/test_retry.py
