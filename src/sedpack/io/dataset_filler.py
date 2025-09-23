@@ -21,8 +21,6 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Type, TYPE_CHECKING
 
-import tenacity
-
 from sedpack.io.file_info import PathGenerator, FileInfo
 from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
 from sedpack.io.shard import Shard
@@ -34,11 +32,6 @@ if TYPE_CHECKING:
     from sedpack.io.dataset_writing import DatasetWriting
 
 
-@tenacity.retry(
-    wait=tenacity.wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
-    stop=tenacity.stop_after_attempt(10),
-    reraise=True,
-)
 def _close_shard(shard: Shard) -> ShardInfo:
     """Helper function to close a shard. This can be pickled and thus sent to
     another process.
