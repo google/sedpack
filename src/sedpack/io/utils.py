@@ -24,6 +24,7 @@ from typing import (
     Callable,
     Protocol,
     ParamSpec,
+    TYPE_CHECKING,
     TypeVar,
 )
 import uuid
@@ -190,8 +191,14 @@ def func_or_identity(f: Callable[..., T] | None) -> Callable[..., T]:
     return f
 
 
-P = ParamSpec("P", default=Any)  # pylint: disable=unexpected-keyword-arg
-R = TypeVar("R", default=Any)  # pylint: disable=unexpected-keyword-arg
+if TYPE_CHECKING:
+    # default is available since 3.13 but otherwise type inference fails to
+    # NEVER.
+    P = ParamSpec("P", default=Any)  # pylint: disable=unexpected-keyword-arg
+    R = TypeVar("R", default=Any)  # pylint: disable=unexpected-keyword-arg
+else:
+    P = ParamSpec("P")
+    R = TypeVar("R")
 
 
 def retry(

@@ -108,12 +108,16 @@ def nondefault_decorated_fn() -> None:
 def default_nosugar_fn() -> None:
     """nosugar expected default docstring"""
     pass
+
+
 default_nosugar_fn = retry(default_nosugar_fn)
 
 
 def nondefault_nosugar_fn() -> None:
     """nosugar expected non-default docstring"""
     pass
+
+
 nondefault_nosugar_fn = retry(stop_after_attempt=3)(nondefault_nosugar_fn)
 
 
