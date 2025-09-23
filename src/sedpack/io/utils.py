@@ -256,7 +256,7 @@ def retry(
             for attempt in range(stop_after_attempt - 1):
                 try:
                     return f(*args, **kwargs)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     logger.debug(
                         "Retrying %s (attempt %d/%d) after error: %s",
                         f.__name__,
