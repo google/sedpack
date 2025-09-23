@@ -25,7 +25,6 @@ from numpy import typing as npt
 from sedpack.io.metadata import Attribute, DatasetStructure
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
 from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
-from sedpack.io.utils import hash_checksums_from_bytes
 
 
 class ShardWriterNP(ShardWriterBase):
