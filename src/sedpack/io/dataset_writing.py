@@ -140,13 +140,13 @@ class DatasetWriting(DatasetBase):
         # Return user-defined results.
         return results
 
-    def filler(self, concurrency: int = 0) -> DatasetFiller:
+    def filler(self, concurrency: int = 1) -> DatasetFiller:
         """Return a dataset filler context manager for writing examples.
 
         Args:
 
           concurrency (int): Setting to a positive integer allows writing shard
-          files in parallel. Defaults to 0 (sequential).
+          files in parallel. Defaults to 1 (sequential writes).
 
         Example use:
         # Context manager properly opens and closes shards.

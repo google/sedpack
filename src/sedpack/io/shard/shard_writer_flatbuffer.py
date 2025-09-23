@@ -34,11 +34,6 @@ import sedpack.io.flatbuffer.shardfile.Example as fbapi_Example
 import sedpack.io.flatbuffer.shardfile.Shard as fbapi_Shard
 
 
-def _write_compressed(file_path: Path, file_content: bytes) -> None:
-    with open(file_path, "wb") as file:
-        file.write(file_content)
-
-
 class ShardWriterFlatBuffer(ShardWriterBase):
     """Shard writing capabilities.
     """
@@ -298,10 +293,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         )
 
         # Write the buffer into a file.
-        _write_compressed(
-            file_path=self._shard_file,
-            file_content=file_content,
-        )
+        with open(self._shard_file, "wb") as file:
+            file.write(file_content)
 
         return hash_checksums
 

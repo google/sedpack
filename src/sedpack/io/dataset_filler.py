@@ -262,7 +262,7 @@ class DatasetFiller:
 
     def __init__(self,
                  dataset: DatasetWriting,
-                 concurrency: int = 0,
+                 concurrency: int = 1,
                  relative_path_from_split: Path = Path("."),
                  auto_update_dataset: bool = True) -> None:
         """Context manager for writing examples into a dataset.
@@ -273,7 +273,8 @@ class DatasetFiller:
           are filling.
 
           concurrency (int): Setting to a positive integer allows writing shard
-          files in parallel. Defaults to 0 (sequential).
+          files in parallel. Defaults to 1 (sequential writes in another thread
+          or process). Thread is used for "tfrec" otherwise process.
 
           relative_path_from_split (Path): New shards are created inside
           `dataset_root_path / split / relative_path_from_split` or children.

@@ -123,10 +123,7 @@ class ShardWriterNP(ShardWriterBase):
         """
         if not self._buffer:
             assert not self._shard_file.is_file()
-            return hash_checksums_from_bytes(
-                file_content=b"",
-                hashes=self.dataset_structure.hash_checksum_algorithms,
-            )
+            return ()
 
         # Deal properly with "bytes" attributes.
         for attribute in self.dataset_structure.saved_data_description:
