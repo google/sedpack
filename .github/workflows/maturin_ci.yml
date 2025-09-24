@@ -162,6 +162,8 @@ jobs:
           path: dist
 
   release:
+    # Run only on the upstream repository.
+    if: github.repository == 'google/sedpack'
     # https://www.maturin.rs/distribution.html Using PyPI's trusted publishing
     name: Release
     runs-on: ubuntu-latest
