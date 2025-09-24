@@ -39,6 +39,7 @@ dependencies = [
     "numpy",
     "pydantic",
     "semver",
+    "tenacity",
     "tensorflow",
     "tqdm",
     "xxhash",
