@@ -174,7 +174,7 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                     buffer=np_bytes,
                     dtype=np.dtype("int64").newbyteorder("<"),
                 )
-                return list(array.tolist())
+                return [int(x) for x in array.tolist()]
             case _:
                 # The rest is interpreted as NumPy array.
                 pass
