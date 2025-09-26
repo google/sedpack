@@ -406,7 +406,9 @@ pub mod sedpack {
                 /// catch every error, or be maximally performant. For the
                 /// previous, unchecked, behavior use
                 /// `root_as_shard_unchecked`.
-                pub fn root_as_shard(buf: &[u8]) -> Result<Shard<'_>, flatbuffers::InvalidFlatbuffer> {
+                pub fn root_as_shard(
+                    buf: &[u8],
+                ) -> Result<Shard<'_>, flatbuffers::InvalidFlatbuffer> {
                     flatbuffers::root::<Shard>(buf)
                 }
                 #[inline]

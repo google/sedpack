@@ -175,6 +175,70 @@ def test_wrong_compression() -> None:
         )
 
 
+# We are testing that the batches are not original order -- need at least
+# batch_size > 10 for this to be not flaky.
+@pytest.mark.parametrize("batch_size", [10])
+def test_end_to_end_rust_batched_shuffled(
+    batch_size,
+    dataset_and_values,
+):
+    dataset, values = dataset_and_values
+
+    remembered_values = {name: [] for name in values}
+
+    with RustBatchedGenerator(
+            dataset_path=dataset.path,
+            dataset_structure=dataset.dataset_structure,
+            shard_iterator=CachedShardInfoIterator(
+                dataset_path=dataset.path,
+                dataset_info=dataset.dataset_info,
+                split="train",
+                repeat=False,
+                shards=None,
+                custom_metadata_type_limit=None,
+                shard_filter=None,
+                shuffle=0,  # Shard shuffle could introduce unwanted randomness.
+            ),
+            batch_size=batch_size,
+            process_batch=None,
+            file_parallelism=8,
+            shuffle_buffer_size=10 * batch_size,
+    ) as g:
+        index: int = 0
+        for batch in g():
+            current_batch_size: int = -1
+
+            # Check that the batch is not deterministic.
+            for name, attribute_values in batch.items():
+                if current_batch_size < 0:
+                    current_batch_size = len(attribute_values)
+                else:
+                    assert len(attribute_values) == current_batch_size
+
+                for i in range(current_batch_size):
+                    if name.startswith("dynamic_shape"):
+                        if values[name][index + i] != attribute_values[i]:
+                            break
+                    else:
+                        if (values[name][index + i]
+                                != attribute_values[i]).all():
+                            break
+                else:
+                    raise ValueError("This batch was deterministic")
+
+            index += current_batch_size
+
+            # Remember seen values to compare later.
+            for name, attribute_values in batch.items():
+                remembered_values[name].extend(attribute_values)
+
+    # Test that we have seen everything.
+    for name, original in values.items():
+        original = np.sort(original, axis=0)
+        batched = np.sort(remembered_values[name], axis=0)
+        np.testing.assert_equal(batched, original)
+
+
 @pytest.mark.parametrize("batch_size", [1, 2, 7])
 def test_end_to_end_rust_batched(
     batch_size,
