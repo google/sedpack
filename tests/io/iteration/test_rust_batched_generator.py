@@ -184,7 +184,7 @@ def test_end_to_end_rust_batched_shuffled(
 ):
     dataset, values = dataset_and_values
 
-    remembered_values = { name: [] for name in values }
+    remembered_values = {name: [] for name in values}
 
     with RustBatchedGenerator(
             dataset_path=dataset.path,
@@ -220,7 +220,8 @@ def test_end_to_end_rust_batched_shuffled(
                         if values[name][index + i] != attribute_values[i]:
                             break
                     else:
-                        if (values[name][index + i] != attribute_values[i]).all():
+                        if (values[name][index + i]
+                                != attribute_values[i]).all():
                             break
                 else:
                     raise ValueError("This shard was deterministic")
@@ -230,7 +231,6 @@ def test_end_to_end_rust_batched_shuffled(
             # Remember seen values to compare later.
             for name, attribute_values in batch.items():
                 remembered_values[name].extend(attribute_values)
-
 
     # Test that we have seen everything.
     for name, original in values.items():
