@@ -224,7 +224,7 @@ def test_end_to_end_rust_batched_shuffled(
                                 != attribute_values[i]).all():
                             break
                 else:
-                    raise ValueError("This shard was deterministic")
+                    raise ValueError("This batch was deterministic")
 
             index += current_batch_size
 
