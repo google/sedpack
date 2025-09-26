@@ -32,11 +32,22 @@ pub fn get_shard_files() -> Vec<ShardInfo> {
     shard_infos
 }
 
-pub fn batch_iterator_benchmark(c: &mut Criterion) {
+pub fn batch_iterator_benchmark_deterministic(c: &mut Criterion) {
     let shard_infos = get_shard_files();
     c.bench_function("BatchIterator", |b| {
         b.iter(|| {
-            for batch in BatchIterator::new(shard_infos.clone(), 12, 32, vec![true, true]) {
+            for batch in BatchIterator::new(shard_infos.clone(), 12, 32, vec![true, true], 0) {
+                let _ = std::hint::black_box(batch);
+            }
+        })
+    });
+}
+
+pub fn batch_iterator_benchmark_shuffled(c: &mut Criterion) {
+    let shard_infos = get_shard_files();
+    c.bench_function("BatchIterator", |b| {
+        b.iter(|| {
+            for batch in BatchIterator::new(shard_infos.clone(), 12, 32, vec![true, true], 256) {
                 let _ = std::hint::black_box(batch);
             }
         })
@@ -69,7 +80,8 @@ pub fn parallel_map_benchmark(c: &mut Criterion) {
 
 criterion_group!(
     benches,
-    batch_iterator_benchmark,
+    batch_iterator_benchmark_deterministic,
+    batch_iterator_benchmark_shuffled,
     example_iterator_benchmark,
     parallel_map_benchmark,
 );
