@@ -230,7 +230,7 @@ impl ShuffleBufferBatcher {
 
         // Transposing examples_to_batch[example_id][attribute_id] into
         // transposed[attribute_id][example_id] (where transposed[attribute_id][example_id]
-        // containst the attribute value which is Vec<u8>).
+        // contains the attribute value which is Vec<u8>).
         let mut transposed: Vec<Vec<Vec<u8>>> = vec![vec![]; examples_to_batch[0].len()];
         examples_to_batch.into_iter().for_each(|example| {
             example.into_iter().enumerate().for_each(|(attribute_id, attribute_value)| {
