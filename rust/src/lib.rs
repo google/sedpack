@@ -231,7 +231,13 @@ mod static_batched_iter {
                 .collect();
             hash_map.insert(
                 static_index,
-                BatchIterator::new(shard_infos, threads, batch_size, has_fixed_shape, shuffle_buffer_size),
+                BatchIterator::new(
+                    shard_infos,
+                    threads,
+                    batch_size,
+                    has_fixed_shape,
+                    shuffle_buffer_size,
+                ),
             );
 
             BatchedRustIter { static_index, can_iterate: false }
