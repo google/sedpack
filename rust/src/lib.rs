@@ -220,7 +220,7 @@ mod static_batched_iter {
         #[new]
         fn new(
             files: Vec<String>, threads: usize, compression: String, batch_size: usize,
-            has_fixed_shape: Vec<bool>,
+            has_fixed_shape: Vec<bool>, shuffle_buffer_size: usize,
         ) -> Self {
             let static_index = rand::random();
             let mut hash_map = STATIC_ITERATORS.lock().unwrap();
@@ -231,7 +231,7 @@ mod static_batched_iter {
                 .collect();
             hash_map.insert(
                 static_index,
-                BatchIterator::new(shard_infos, threads, batch_size, has_fixed_shape),
+                BatchIterator::new(shard_infos, threads, batch_size, has_fixed_shape, shuffle_buffer_size),
             );
 
             BatchedRustIter { static_index, can_iterate: false }

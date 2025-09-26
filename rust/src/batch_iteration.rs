@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use rand::Rng;
 use rayon::prelude::*;
-use tracing::{span, Level};
+use tracing::{instrument, span, Level};
 
 pub use super::example_iteration::{
     get_shard_progress, CompressionType, Example, ExampleIterator, ShardInfo, ShardProgress,
@@ -34,20 +35,20 @@ pub enum BatchedAttribute {
 
 pub type Batch = Vec<BatchedAttribute>;
 
-struct Batcher {
+struct DeterministicBatcher {
     shard_progress_iterator: Box<dyn Iterator<Item = ShardProgress> + Send>,
     shard_progress_cache: Vec<ShardProgress>,
     batch_size: usize,
     has_fixed_shape: Vec<bool>,
 }
 
-impl Batcher {
+impl DeterministicBatcher {
     pub fn new(
         files: Vec<ShardInfo>, threads: usize, batch_size: usize, has_fixed_shape: Vec<bool>,
     ) -> Self {
         let shard_progress_iterator =
             Box::new(parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads));
-        Batcher {
+        DeterministicBatcher {
             shard_progress_iterator,
             shard_progress_cache: vec![],
             batch_size,
@@ -141,11 +142,11 @@ impl BatchingData {
     }
 }
 
-impl Iterator for Batcher {
+impl Iterator for DeterministicBatcher {
     type Item = Batch;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let span = span!(Level::TRACE, "Batcher.next");
+        let span = span!(Level::TRACE, "DeterministicBatcher.next");
         let _enter = span.enter();
 
         // Select data for the batch to be filled.
@@ -194,6 +195,138 @@ impl Iterator for Batcher {
     }
 }
 
+struct ShuffleBufferBatcher {
+    example_iterator: Box<dyn Iterator<Item = Example> + Send>,
+    example_shuffled_buffer: Vec<Example>,
+    has_fixed_shape: Vec<bool>,
+    shuffle_buffer_size: usize,
+    batch_size: usize,
+}
+
+impl ShuffleBufferBatcher {
+    pub fn new(
+        files: Vec<ShardInfo>, threads: usize, batch_size: usize, has_fixed_shape: Vec<bool>,
+        shuffle_buffer_size: usize,
+    ) -> Self {
+        let example_iterator = Box::new(
+            parallel_map(
+                |x| get_shard_progress(&x).collect::<Vec<Example>>(),
+                files.into_iter(),
+                threads,
+            )
+            .flatten(),
+        );
+        ShuffleBufferBatcher {
+            example_iterator,
+            example_shuffled_buffer: vec![],
+            has_fixed_shape,
+            shuffle_buffer_size: std::cmp::max(batch_size, shuffle_buffer_size),
+            batch_size,
+        }
+    }
+
+    fn vec_to_batch(&self, examples_to_batch: Vec<Example>) -> Batch {
+        assert!(!examples_to_batch.is_empty(), "examples_to_batch cannot be empty");
+
+        // Transposing examples_to_batch[example_id][attribute_id] into
+        // transposed[attribute_id][example_id] (where transposed[attribute_id][example_id]
+        // containst the attribute value which is Vec<u8>).
+        let mut transposed: Vec<Vec<Vec<u8>>> = vec![vec![]; examples_to_batch[0].len()];
+        examples_to_batch.into_iter().for_each(|example| {
+            example.into_iter().enumerate().for_each(|(attribute_id, attribute_value)| {
+                transposed[attribute_id].push(attribute_value);
+            });
+        });
+
+        // Turn attribute by attribute into BatchedAttribute and collect a Batch.
+        transposed
+            .into_par_iter()
+            .zip(&self.has_fixed_shape)
+            .map(|(attribute_values, is_fixed)| {
+                if *is_fixed {
+                    Self::get_static_attribute(attribute_values)
+                } else {
+                    Self::get_dynamic_attribute(attribute_values)
+                }
+            })
+            .collect()
+    }
+
+    /// Copy the static attribute values into a new continuous numpy array.
+    #[instrument]
+    fn get_static_attribute(attribute_values: Vec<Vec<u8>>) -> BatchedAttribute {
+        BatchedAttribute::Static {
+            data: numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec({
+                // Fixed len attribute.
+                let attribute_len = attribute_values[0].len();
+                let batch_size = attribute_values.len();
+
+                // Do memcpy in parallel.
+                let mut v = vec![0; batch_size * attribute_len];
+                v.par_chunks_exact_mut(attribute_len).enumerate().for_each(|(batch_i, slice)| {
+                    slice.copy_from_slice(&attribute_values[batch_i]);
+                });
+                v
+            }),
+        }
+    }
+
+    /// Collect dynamic attribute values as numpy arrays this does not copy memory (from_vec takes
+    /// ownership).
+    #[instrument]
+    fn get_dynamic_attribute(attribute_values: Vec<Vec<u8>>) -> BatchedAttribute {
+        BatchedAttribute::Dynamic {
+            data: attribute_values
+                .into_par_iter()
+                .map(numpy::ndarray::Array::<u8, numpy::Ix1>::from_vec)
+                .collect(),
+        }
+    }
+
+    fn refill_shuffled_buffer(&mut self) {
+        let span = span!(Level::TRACE, "ShuffleBufferBatcher.refill_shuffled_buffer");
+        let _enter = span.enter();
+
+        // Fill the shuffle buffer if needed. (Do not move box.)
+        let mut rng = rand::rng();
+        while self.example_shuffled_buffer.len() < self.shuffle_buffer_size {
+            match self.example_iterator.next() {
+                None => break,
+                Some(example) => {
+                    self.example_shuffled_buffer.push(example);
+
+                    // Random swap to do Fisher-Yates.
+                    let a = self.example_shuffled_buffer.len() - 1;
+                    let b = rng.random_range(0 ..= a);
+                    self.example_shuffled_buffer.swap(a, b);
+                }
+            }
+        }
+    }
+}
+
+impl Iterator for ShuffleBufferBatcher {
+    type Item = Batch;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let span = span!(Level::TRACE, "ShuffleBufferBatcher.next");
+        let _enter = span.enter();
+
+        self.refill_shuffled_buffer();
+
+        // If nothing to batch return.
+        if self.example_shuffled_buffer.is_empty() {
+            return None;
+        }
+
+        // Cut batch_size examples from the back of the buffer.
+        let back = self
+            .example_shuffled_buffer
+            .split_off(self.example_shuffled_buffer.len().saturating_sub(self.batch_size));
+        Some(self.vec_to_batch(back))
+    }
+}
+
 pub struct BatchIterator {
     batch_iterator: Box<dyn Iterator<Item = Batch> + Send>,
 }
@@ -201,9 +334,27 @@ pub struct BatchIterator {
 impl BatchIterator {
     pub fn new(
         files: Vec<ShardInfo>, threads: usize, batch_size: usize, has_fixed_shape: Vec<bool>,
+        shuffle_size: usize,
     ) -> Self {
-        BatchIterator {
-            batch_iterator: Box::new(Batcher::new(files, threads, batch_size, has_fixed_shape)),
+        if shuffle_size > 0 {
+            BatchIterator {
+                batch_iterator: Box::new(ShuffleBufferBatcher::new(
+                    files,
+                    threads,
+                    batch_size,
+                    has_fixed_shape,
+                    shuffle_size,
+                )),
+            }
+        } else {
+            BatchIterator {
+                batch_iterator: Box::new(DeterministicBatcher::new(
+                    files,
+                    threads,
+                    batch_size,
+                    has_fixed_shape,
+                )),
+            }
         }
     }
 }
