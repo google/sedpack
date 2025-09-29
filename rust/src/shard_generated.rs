@@ -53,9 +53,9 @@ pub mod sedpack {
                 impl<'a> flatbuffers::Follow<'a> for Attribute<'a> {
                     type Inner = Attribute<'a>;
                     #[inline]
-                    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner { unsafe {
                         Self { _tab: flatbuffers::Table::new(buf, loc) }
-                    }
+                    }}
                 }
 
                 impl<'a> Attribute<'a> {
@@ -166,9 +166,9 @@ pub mod sedpack {
                 impl<'a> flatbuffers::Follow<'a> for Example<'a> {
                     type Inner = Example<'a>;
                     #[inline]
-                    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner { unsafe {
                         Self { _tab: flatbuffers::Table::new(buf, loc) }
-                    }
+                    }}
                 }
 
                 impl<'a> Example<'a> {
@@ -288,9 +288,9 @@ pub mod sedpack {
                 impl<'a> flatbuffers::Follow<'a> for Shard<'a> {
                     type Inner = Shard<'a>;
                     #[inline]
-                    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner { unsafe {
                         Self { _tab: flatbuffers::Table::new(buf, loc) }
-                    }
+                    }}
                 }
 
                 impl<'a> Shard<'a> {
@@ -449,16 +449,16 @@ pub mod sedpack {
                 /// Assumes, without verification, that a buffer of bytes contains a Shard and returns it.
                 /// # Safety
                 /// Callers must trust the given bytes do indeed contain a valid `Shard`.
-                pub unsafe fn root_as_shard_unchecked(buf: &[u8]) -> Shard<'_> {
+                pub unsafe fn root_as_shard_unchecked(buf: &[u8]) -> Shard<'_> { unsafe {
                     flatbuffers::root_unchecked::<Shard>(buf)
-                }
+                }}
                 #[inline]
                 /// Assumes, without verification, that a buffer of bytes contains a size prefixed Shard and returns it.
                 /// # Safety
                 /// Callers must trust the given bytes do indeed contain a valid size prefixed `Shard`.
-                pub unsafe fn size_prefixed_root_as_shard_unchecked(buf: &[u8]) -> Shard<'_> {
+                pub unsafe fn size_prefixed_root_as_shard_unchecked(buf: &[u8]) -> Shard<'_> { unsafe {
                     flatbuffers::size_prefixed_root_unchecked::<Shard>(buf)
-                }
+                }}
                 #[inline]
                 pub fn finish_shard_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
                     fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
