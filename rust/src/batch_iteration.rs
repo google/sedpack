@@ -14,7 +14,7 @@
 
 use rand::Rng;
 use rayon::prelude::*;
-use tracing::{instrument, span, Level};
+use tracing::{Level, instrument, span};
 
 pub use super::example_iteration::{
     CompressionType, Example, ExampleIterator, ShardInfo, ShardProgress, get_shard_progress,
