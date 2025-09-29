@@ -13,13 +13,13 @@
 // limitations under the License.
 
 use rayon::prelude::*;
-use tracing::{span, Level};
+use tracing::{Level, span};
 
 pub use super::example_iteration::{
-    get_shard_progress, CompressionType, Example, ExampleIterator, ShardInfo, ShardProgress,
+    CompressionType, Example, ExampleIterator, ShardInfo, ShardProgress, get_shard_progress,
 };
 pub use super::parallel_map::parallel_map;
-pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{root_as_shard, Shard};
+pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{Shard, root_as_shard};
 
 /// Single attribute which has been batched.
 pub enum BatchedAttribute {

@@ -1,7 +1,7 @@
 [package]
 name = "sedpack_rs"
 version = "0.1.4"
-edition = "2021"
+edition = "2024"
 description = "Rust bindings for sedpack a general ML dataset package"
 authors = [
     "Elie Bursztein",

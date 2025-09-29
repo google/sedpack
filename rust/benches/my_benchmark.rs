@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use glob::glob;
 use sedpack_rs::batch_iteration::BatchIterator;
 use sedpack_rs::example_iteration::{
-    get_shard_progress, CompressionType, ExampleIterator, ShardInfo,
+    CompressionType, ExampleIterator, ShardInfo, get_shard_progress,
 };
 pub use sedpack_rs::parallel_map::parallel_map;
 

@@ -14,7 +14,7 @@
 
 use pyo3::prelude::*;
 pub use shard_generated::sedpack::io::flatbuffer::shardfile::{
-    root_as_shard, root_as_shard_unchecked, Attribute, Example, Shard,
+    Attribute, Example, Shard, root_as_shard, root_as_shard_unchecked,
 };
 
 pub mod batch_iteration;
@@ -32,7 +32,7 @@ mod static_iter {
 
     use numpy::IntoPyArray;
     use pyo3::prelude::*;
-    use pyo3::{pyclass, pymethods, PyRefMut};
+    use pyo3::{PyRefMut, pyclass, pymethods};
 
     use super::example_iteration::{CompressionType, ExampleIterator, ShardInfo};
 
@@ -158,8 +158,8 @@ mod static_batched_iter {
 
     use numpy::IntoPyArray;
     use pyo3::prelude::*;
-    use pyo3::{pyclass, pymethods, PyRefMut};
-    use tracing::{span, Level};
+    use pyo3::{PyRefMut, pyclass, pymethods};
+    use tracing::{Level, span};
 
     use super::batch_iteration::{BatchIterator, BatchedAttribute};
     use super::example_iteration::{CompressionType, ShardInfo};

@@ -18,7 +18,7 @@ use tracing::instrument;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
-pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{root_as_shard, Shard};
+pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{Shard, root_as_shard};
 
 pub type Example = Vec<Vec<u8>>;
 type LoadedShard = Yoke<Shard<'static>, Vec<u8>>;
