@@ -50,6 +50,7 @@ class RustBatchedGenerator:
         batch_size: int,
         process_batch: Callable[[BatchT], T] | None = None,
         file_parallelism: int = os.cpu_count() or 1,
+        shuffle_buffer_size: int = 0,
     ) -> None:
         """A reentrant generator.
 
@@ -68,6 +69,9 @@ class RustBatchedGenerator:
           of whole batch of examples.
 
           file_parallelism (int): How many files to read in parallel.
+
+          shuffle_buffer_size (int): How large should the shuffle buffer be.
+          Defaults to 0 for deterministic iteration.
         """
         self._iter: BatchedRustIter | None  # type: ignore[no-any-unimported]
         self._iter = None
@@ -90,6 +94,7 @@ class RustBatchedGenerator:
         self._process_batch: Callable[[BatchT], T] | None = process_batch
         self._batch_size: int = batch_size
         self._file_parallelism: int = file_parallelism
+        self._shuffle_buffer_size: int = shuffle_buffer_size
 
         # Which attributes have fixed shapes and which do not.
         self._has_fixed_shape: tuple[bool, ...] = tuple(
@@ -168,6 +173,7 @@ class RustBatchedGenerator:
                 compression=self._dataset_structure.compression,
                 batch_size=self._batch_size,
                 has_fixed_shape=self._has_fixed_shape,
+                shuffle_buffer_size=self._shuffle_buffer_size,
             )
             # Manually calling __enter__ and __exit__ -- see class docstring.
             self._iter.__enter__()  # pylint: disable=unnecessary-dunder-call
