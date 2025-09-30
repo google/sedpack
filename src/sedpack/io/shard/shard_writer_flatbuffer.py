@@ -21,6 +21,7 @@ import sys
 
 from flatbuffers import Builder
 import numpy as np
+import tenacity
 
 from sedpack.io.compress import CompressedFile
 from sedpack.io.metadata import Attribute, DatasetStructure
@@ -254,6 +255,16 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         # Return the vector offset.
         return builder.EndVector()  # type: ignore[no-any-return]
 
+    @tenacity.retry(
+        wait=tenacity.wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
+        stop=tenacity.stop_after_attempt(10),
+        reraise=True,
+    )
+    def _write_file(self, file_content: bytes) -> None:
+        # Write the buffer into a file.
+        with open(self._shard_file, "wb") as file:
+            file.write(file_content)
+
     def close(self) -> tuple[str, ...]:
         """Close the shard file(-s).
         """
@@ -292,9 +303,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             hashes=self.dataset_structure.hash_checksum_algorithms,
         )
 
-        # Write the buffer into a file.
-        with open(self._shard_file, "wb") as file:
-            file.write(file_content)
+        self._write_file(file_content=file_content)
 
         return hash_checksums
 
