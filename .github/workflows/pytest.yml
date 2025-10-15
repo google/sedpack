@@ -27,8 +27,8 @@ jobs:
         platform:
           - runner: ubuntu-latest  # x64
           - runner: windows-latest  # x64
-          - runner: macos-13  # Intel
           - runner: macos-14  # arm64
+          - runner: macos-15-intel  # Intel
           - runner: macos-latest  # arm64
     if: github.event_name != 'schedule'
     steps:
