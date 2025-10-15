@@ -13,8 +13,10 @@
 # limitations under the License.
 """Dataset iteration."""
 
+from sedpack.io.iteration.rust_batched_generator import RustBatchedGenerator
 from sedpack.io.iteration.rust_generator import RustGenerator
 
 __all__ = [
+    "RustBatchedGenerator",
     "RustGenerator",
 ]

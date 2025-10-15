@@ -14,10 +14,11 @@
 
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use tracing::instrument;
 use yoke::Yoke;
 
 pub use super::parallel_map::parallel_map;
-pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{root_as_shard, Shard};
+pub use super::shard_generated::sedpack::io::flatbuffer::shardfile::{Shard, root_as_shard};
 
 pub type Example = Vec<Vec<u8>>;
 type LoadedShard = Yoke<Shard<'static>, Vec<u8>>;
@@ -100,7 +101,12 @@ impl ExampleIterator {
     ///   `files: impl Iterator<Item = &str>`.
     pub fn new(files: Vec<ShardInfo>, threads: usize) -> Self {
         let example_iterator = Box::new(
-            parallel_map(|x| get_shard_progress(&x), files.into_iter(), threads).flatten(),
+            parallel_map(
+                |x| get_shard_progress(&x).collect::<Vec<Example>>(),
+                files.into_iter(),
+                threads,
+            )
+            .flatten(),
         );
         ExampleIterator { example_iterator }
     }
@@ -142,7 +148,8 @@ fn read_to_end(mut reader: impl std::io::Read) -> Vec<u8> {
 }
 
 /// Get ShardProgress.
-pub fn get_shard_progress(shard_info: &ShardInfo) -> Vec<Example> {
+#[instrument]
+pub fn get_shard_progress(shard_info: &ShardInfo) -> ShardProgress {
     let file_bytes = get_file_bytes(shard_info);
 
     // A shard is a vector of examples (positive number -- invariant kept by Python code).
@@ -156,7 +163,7 @@ pub fn get_shard_progress(shard_info: &ShardInfo) -> Vec<Example> {
     // Number of examples might be different in different shards.
     let total_examples = shard.get().examples().unwrap().len();
 
-    ShardProgress { total_examples, used_examples: 0, shard }.collect()
+    ShardProgress { total_examples, used_examples: 0, shard }
 }
 
 /// Get single example out of a ShardProgress.
@@ -182,6 +189,40 @@ fn get_example(id: usize, shard_progress: &ShardProgress) -> Example {
     // the alignment is at least 8 bytes and moreover NumPy can deal with unaligned arrays (it is
     // a slowdown).
     attributes.iter().map(|x| x.attribute_bytes().unwrap().iter().collect()).collect()
+}
+
+impl ShardProgress {
+    /// Return a slice representing the bytes of a single attribute (without copy).
+    pub fn borrow_attribute(&self, example_id: usize, attribute_id: usize) -> &[u8] {
+        assert!(example_id < self.total_examples);
+
+        let examples = self.shard.get().examples().unwrap();
+
+        // Should not happen but there is no control over this invariant in Rust.
+        assert!(!examples.is_empty());
+
+        examples
+            .get(example_id)
+            .attributes()
+            .unwrap()
+            .get(attribute_id)
+            .attribute_bytes()
+            .unwrap()
+            .bytes()
+    }
+
+    /// Return the example id which is to be used next. Beware that this method also consumes it
+    /// (and thus might consume the ShardProgress for the Iterator::next calls).
+    pub fn take_example_ids(&mut self, n: usize) -> std::ops::Range<usize> {
+        let start = self.used_examples;
+        self.used_examples = std::cmp::min(self.total_examples, start + n);
+        start .. self.used_examples
+    }
+
+    /// Has more elements either as Iterator::next or ShardProgress::take_example_ids?
+    pub fn has_next(&self) -> bool {
+        self.used_examples < self.total_examples
+    }
 }
 
 impl Iterator for ShardProgress {

@@ -26,7 +26,11 @@ import numpy.typing as npt
 
 from sedpack.io.compress import CompressedFile
 from sedpack.io.metadata import Attribute
-from sedpack.io.types import ExampleT
+from sedpack.io.types import (
+    AttributeValueT,
+    BatchedAttributeValueT,
+    ExampleT,
+)
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.utils import func_or_identity
@@ -82,18 +86,65 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                     attribute=attribute,
                 )
 
-                # Copy otherwise the arrays are immutable and keep the whole
-                # file content from being garbage collected.
-                np_array = np.copy(np_array)
-
                 example_dictionary[attribute.name] = np_array
 
             yield example_dictionary
 
     @staticmethod
-    def decode_array(np_bytes: npt.NDArray[np.uint8],
-                     attribute: Attribute,
-                     batch_size: int = 0) -> npt.NDArray[np.generic]:
+    def decode_array(
+        np_bytes: npt.NDArray[np.uint8],
+        attribute: Attribute,
+    ) -> AttributeValueT:
+        """Decode an array. See `sedpack.io.shard.shard_writer_flatbuffer
+        .ShardWriterFlatBuffer.save_numpy_vector_as_bytearray`
+        for format description. The code tries to avoid unnecessary copies.
+
+        Args:
+
+          np_bytes (np.ndarray): The bytes as an np.array of bytes.
+
+          attribute (Attribute): Description of the final array (dtype and
+          shape).
+
+        Returns: the parsed np.ndarray of the correct dtype and shape or the
+        dynamic size type.
+        """
+        match attribute.dtype:
+            case "str":
+                return np_bytes.tobytes().decode("utf-8")
+            case "bytes":
+                return np_bytes.tobytes()
+            case "int":
+                array = np.frombuffer(
+                    buffer=np_bytes,
+                    dtype=np.dtype("int64").newbyteorder("<"),
+                )
+                assert array.shape == (1,), f"{array.shape = }"
+                return int(array[0])
+            case _:
+                # The rest is interpreted as NumPy array.
+                pass
+
+        dt = np.dtype(attribute.dtype)
+        # FlatBuffers are little-endian. There is no byteswap by
+        # `np.frombuffer` but the array will be interpreted correctly.
+        dt = dt.newbyteorder("<")
+        np_array = np.frombuffer(
+            buffer=np_bytes,  # a view into the buffer, not a copy
+            dtype=dt,
+        )
+
+        # Reshape if needed.
+        np_array = np_array.reshape(attribute.shape)
+
+        return np_array
+
+    @staticmethod
+    def decode_batched(
+        np_bytes: npt.NDArray[np.uint8],
+        attribute: Attribute,
+        batch_size: int = -1,
+    ) -> BatchedAttributeValueT:
         """Decode an array. See `sedpack.io.shard.shard_writer_flatbuffer
         .ShardWriterFlatBuffer.save_numpy_vector_as_bytearray`
         for format description. The code tries to avoid unnecessary copies.
@@ -110,8 +161,24 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
           `np.reshape` auto-deduces the dimension. Otherwise we received
           exactly one value of this attribute.
 
-        Returns: the parsed np.ndarray of the correct dtype and shape.
+        Returns: the parsed np.ndarray of the correct dtype and shape. Or a
+        list in case of `batch_size > 0` and dynamic size attributes.
         """
+        match attribute.dtype:
+            case "str":
+                return [value.tobytes().decode("utf-8") for value in np_bytes]
+            case "bytes":
+                return [value.tobytes() for value in np_bytes]
+            case "int":
+                array = np.frombuffer(
+                    buffer=np_bytes,
+                    dtype=np.dtype("int64").newbyteorder("<"),
+                )
+                return array.tolist()  # type: ignore[return-value]
+            case _:
+                # The rest is interpreted as NumPy array.
+                pass
+
         dt = np.dtype(attribute.dtype)
         # FlatBuffers are little-endian. There is no byteswap by
         # `np.frombuffer` but the array will be interpreted correctly.
@@ -121,13 +188,8 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
             dtype=dt,
         )
 
-        # Reshape if needed.
-        if batch_size > 0 or batch_size == -1:
-            np_array = np_array.reshape((batch_size, *attribute.shape))
-        else:
-            np_array = np_array.reshape(attribute.shape)
-
-        return np_array
+        # Reshape as needed.
+        return np_array.reshape((batch_size, *attribute.shape))
 
     def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
         """Iterate a shard.

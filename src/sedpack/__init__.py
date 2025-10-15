@@ -26,8 +26,8 @@ from importlib.metadata import version, PackageNotFoundError
 # here.
 try:
     # When package is installed use the version.
-    __version__ = version("sedpack")
+    __version__ = version("sedpack")  # pylint: disable=invalid-name
 except PackageNotFoundError:
     # Package is not installed. The Rust part of this package is probably not
     # going to work in this case (the Rust binding would be probably missing).
-    __version__ = "0.0.7-dev"
+    __version__ = "0.0.7-dev"  # pylint: disable=invalid-name

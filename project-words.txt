@@ -56,6 +56,7 @@ newbyteorder
 parseable
 patchelf
 perfcounters
+perfetto
 pickleable
 pyarray
 pyclass

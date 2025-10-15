@@ -46,7 +46,7 @@ jobs:
             target: ppc64le
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - name: Build wheels
@@ -77,7 +77,7 @@ jobs:
             target: armv7
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - name: Build wheels
@@ -104,7 +104,7 @@ jobs:
             target: x86
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
@@ -125,13 +125,12 @@ jobs:
     strategy:
       matrix:
         platform:
-          - runner: macos-13
-            target: x86_64
+          - runner: macos-15-intel
           - runner: macos-14
             target: aarch64
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - name: Build wheels
@@ -162,6 +161,8 @@ jobs:
           path: dist
 
   release:
+    # Run only on the upstream repository.
+    if: github.repository == 'google/sedpack'
     # https://www.maturin.rs/distribution.html Using PyPI's trusted publishing
     name: Release
     runs-on: ubuntu-latest
@@ -178,7 +179,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v5
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: 'wheels-*/*'
       - name: Publish to PyPI

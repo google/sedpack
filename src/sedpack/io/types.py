@@ -13,6 +13,8 @@
 # limitations under the License.
 """Build and load tensorFlow dataset Record wrapper"""
 
+# pylint: disable=invalid-name
+
 from typing import Any, Literal, Union
 
 import numpy as np
@@ -32,7 +34,21 @@ TFModelT: TypeAlias = Any
 TFDatasetT: TypeAlias = Any
 
 # Type of an attribute value.
-AttributeValueT: TypeAlias = Union[str, int, npt.NDArray[np.generic], bytes]
+AttributeValueT: TypeAlias = Union[
+    str,  # UTF-8 string
+    int,
+    bytes,
+    npt.NDArray[np.generic],
+]
+
+# Type of a batch of attribute values.
+BatchedAttributeValueT: TypeAlias = Union[
+    list[str],  # UTF-8 string
+    list[int],
+    list[bytes],
+    # NP has the first dimension as the batch dimension.
+    npt.NDArray[np.generic],
+]
 
 # Compression choices.
 CompressionT: TypeAlias = Literal[
@@ -72,3 +88,5 @@ ShardFileTypeT: TypeAlias = Literal[
 
 # Type alias for example, this is what gets iterated or saved.
 ExampleT: TypeAlias = dict[str, AttributeValueT]
+
+BatchT: TypeAlias = dict[str, BatchedAttributeValueT]
