@@ -37,7 +37,7 @@ def test_split_balancing_all() -> None:
             lambda shard_info: shard_info.custom_metadata["id_mod_3_is_zero"]
         ],
         repeat=False,
-        shuffle=True,
+        shuffle=10,
     )
 
     assert set(
@@ -63,7 +63,7 @@ def test_split_balancing_balances() -> None:
             lambda shard_info: shard_info.custom_metadata["id_mod_3_is_zero"]
         ],
         repeat=True,
-        shuffle=True,
+        shuffle=10,
     )
 
     take_n = 1_000
