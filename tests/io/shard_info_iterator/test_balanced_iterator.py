@@ -14,7 +14,6 @@
 
 import itertools
 
-from sedpack.io import Metadata
 from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.shard_info_iterator.balanced_iterator import split_balancing
 
