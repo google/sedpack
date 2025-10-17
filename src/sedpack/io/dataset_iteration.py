@@ -231,13 +231,13 @@ class DatasetIteration(DatasetBase):
                 for attribute in self.dataset_structure.saved_data_description
             }
             tf_dataset = tf.data.Dataset.from_generator(
-                lambda: self.as_numpy_iterator_concurrent(
+                lambda: self.as_numpy_iterator_rust(
                     split=split,
                     process_record=None,  # otherwise unknown tensorspec
                     shards=shards,
                     shard_filter=shard_filter,
                     repeat=repeat,
-                    file_parallelism=file_parallelism or 1,
+                    file_parallelism=file_parallelism // 2 or 1,
                     shuffle=shuffle,
                 ),
                 output_signature=output_signature,

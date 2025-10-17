@@ -13,13 +13,14 @@
 # limitations under the License.
 """The default shard info iterator."""
 from collections import defaultdict
+from collections.abc import Hashable
 import heapq
 import itertools
 import json
 import logging
 from pathlib import Path
 
-from typing import Callable, Hashable, Iterator
+from typing import Callable, Iterator
 
 from sedpack.io.metadata import DatasetInfo
 from sedpack.io.shard_file_metadata import ShardInfo
