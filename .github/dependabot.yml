@@ -12,7 +12,7 @@ updates:
       - "javascript"
     # Run every Monday
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       timezone: "Europe/Zurich"
     # Group PRs to avoid having to rebase/merge too many
     groups:
