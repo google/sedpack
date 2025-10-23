@@ -284,7 +284,7 @@ class DatasetWriting(DatasetBase):
                     if real_hashes != file_info.hash_checksums:
                         raise ValueError(
                             f"Hash checksum miss-match in {file_info.file_path}"
-                            f"got: {real_hashes} but expected "
+                            f" got: {real_hashes} but expected "
                             f"{file_info.hash_checksums}")
 
 
