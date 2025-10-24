@@ -165,7 +165,9 @@ class DatasetIterationTF(DatasetBase):
                 for attribute in self.dataset_structure.saved_data_description
             }
             tf_dataset = tf.data.Dataset.from_generator(
-                lambda: self.as_numpy_iterator_concurrent(
+                # The following method is provided by DatasetIteration.
+                lambda: self.
+                as_numpy_iterator_concurrent(  # type: ignore[attr-defined]
                     split=split,
                     process_record=None,  # otherwise unknown tensorspec
                     shards=shards,
@@ -178,7 +180,7 @@ class DatasetIterationTF(DatasetBase):
             )
             if process_record:
                 tf_dataset = tf_dataset.map(
-                    process_record,  # type: ignore[arg-type]
+                    process_record,
                     num_parallel_calls=parallelism,
                 )
             if shuffle:
@@ -190,7 +192,7 @@ class DatasetIterationTF(DatasetBase):
 
         # The case when shard_file_type == "tfrec":
         # Shard file names.
-        shard_paths: list[str] = self.shard_paths_dataset(
+        shard_paths: list[str] = self.shard_paths_dataset(  # type: ignore[attr-defined]
             split=split,
             shards=shards,
             custom_metadata_type_limit=custom_metadata_type_limit,

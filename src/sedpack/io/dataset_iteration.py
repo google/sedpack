@@ -28,7 +28,7 @@ try:
     # TensorFlow is an optional dependency.
     import tensorflow as tf
 except ImportError:
-    tf = None
+    tf = None  # type: ignore[assignment]
 
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer

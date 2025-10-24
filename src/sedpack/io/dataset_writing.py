@@ -29,7 +29,7 @@ from tqdm.auto import tqdm
 try:
     import tensorflow as tf
 except ImportError:
-    tf = None
+    tf = None  # type: ignore[assignment]
 
 import sedpack
 from sedpack.io.dataset_base import DatasetBase
@@ -302,7 +302,7 @@ def _wrapper_func(
     """
     # Prevent each process from hoarding the whole GPU memory.
     if tf is None:
-        context = contextlib.nullcontext()
+        context = contextlib.nullcontext()  # type: ignore[unreachable]
     else:
         context = tf.device("CPU")
     with context:
