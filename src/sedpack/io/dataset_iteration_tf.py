@@ -192,12 +192,13 @@ class DatasetIterationTF(DatasetBase):
 
         # The case when shard_file_type == "tfrec":
         # Shard file names.
-        shard_paths: list[str] = self.shard_paths_dataset(  # type: ignore[attr-defined]
-            split=split,
-            shards=shards,
-            custom_metadata_type_limit=custom_metadata_type_limit,
-            shard_filter=shard_filter,
-        )
+        shard_paths: list[
+            str] = self.shard_paths_dataset(  # type: ignore[attr-defined]
+                split=split,
+                shards=shards,
+                custom_metadata_type_limit=custom_metadata_type_limit,
+                shard_filter=shard_filter,
+            )
 
         # Dataset creation
         tf_dataset = tf.data.Dataset.from_tensor_slices(shard_paths)
