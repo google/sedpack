@@ -83,9 +83,9 @@ def test_continue_writing_another_split(tmpdir: Union[str, Path]) -> None:
     """Check that we can write more examples into empty / single split. This
     would uncover the bug addressed by merging updates info.
     """
-    data_train = np.random.random((1024, 138))
+    data_train = np.random.random((1024, 138)).astype(dtype=np.float32)
     filled_train: int = 0
-    data_test = np.random.random((1024, 138))
+    data_test = np.random.random((1024, 138)).astype(dtype=np.float32)
     filled_test: int = 0
 
     dataset = get_dataset(tmpdir)
@@ -129,9 +129,9 @@ def test_local_root_path(tmpdir: Union[str, Path]) -> None:
     # Change the working directory to be in the /tmp/pytest-of-user/
     os.chdir(tmpdir)
 
-    data_train = np.random.random((1024, 138))
+    data_train = np.random.random((1024, 138)).astype(dtype=np.float32)
     filled_train: int = 0
-    data_test = np.random.random((1024, 138))
+    data_test = np.random.random((1024, 138)).astype(dtype=np.float32)
     filled_test: int = 0
 
     dataset = get_dataset("my_dataset")

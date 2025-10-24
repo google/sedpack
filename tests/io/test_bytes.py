@@ -72,11 +72,10 @@ def test_attribute_bytes(tmpdir: Union[str, Path]) -> None:
     # Check the data is correct
 
     for i, example in enumerate(
-            dataset.as_tfdataset(
+            dataset.as_numpy_iterator(
                 split=TRAIN_SPLIT,
                 shuffle=0,
                 repeat=False,
-                batch_size=0,
             )):
         if example["attribute_name"] != array_of_values[i]:
             print(example["attribute_name"])
