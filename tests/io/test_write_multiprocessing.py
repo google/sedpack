@@ -62,6 +62,7 @@ def test_write_multiprocessing(tmpdir: Union[str, Path]) -> None:
         saved_data_description=example_attributes,
         compression="GZIP",
         examples_per_shard=256,
+        shard_file_type="fb",
     )
 
     dataset = Dataset.create(
@@ -101,7 +102,7 @@ def test_write_multiprocessing(tmpdir: Union[str, Path]) -> None:
     # Check the data is correct
 
     for i, example in enumerate(
-            dataset.as_tfdataset(
+            dataset.as_numpy_iterator_rust_batched(
                 split=TRAIN_SPLIT,
                 shuffle=0,
                 repeat=False,

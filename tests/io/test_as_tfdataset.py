@@ -23,15 +23,18 @@ import numpy as np
 import numpy.typing as npt
 
 import sedpack
-from sedpack.io import Dataset
-from sedpack.io import Metadata
+from sedpack.io import Dataset, Metadata
+from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.shard.shard_writer_flatbuffer import ShardWriterFlatBuffer
 from sedpack.io.shard.shard_writer_np import ShardWriterNP
 from sedpack.io.shard.shard_writer_tfrec import ShardWriterTFRec
-from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
-
-from sedpack.io.shard.iterate_shard_base import T
-from sedpack.io.types import ExampleT
+from sedpack.io.types import (
+    ExampleT,
+    TRAIN_SPLIT,
+    CompressionT,
+    ShardFileTypeT,
+)
+from sedpack.io.utils import is_module_present
 
 
 def end2end(
@@ -108,6 +111,10 @@ def end2end(
         0], "Not all examples have been iterated"
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 @pytest.mark.parametrize(
     "shard_file_type,compression,dtype,process_record",
     itertools.chain(

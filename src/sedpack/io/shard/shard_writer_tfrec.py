@@ -20,8 +20,6 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 from pathlib import Path
 from typing import Any
 
-import tensorflow as tf
-
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.tfrec.tfdata import to_tfrecord
 from sedpack.io.types import ExampleT, CompressionT
@@ -61,6 +59,9 @@ class ShardWriterTFRec(ShardWriterBase):
 
             values (ExampleT): Attribute values.
         """
+        # TensorFlow is an optional dependency.
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
+
         if (self.dataset_structure.compression
                 not in ShardWriterTFRec.supported_compressions()):
             raise ValueError(

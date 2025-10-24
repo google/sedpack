@@ -22,8 +22,9 @@ from sedpack.io.types import ShardFileTypeT
 
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.npz import IterateShardNP
-from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.shard.get_shard_writer import get_shard_writer
+from sedpack.io.tfrec import IterateShardTFRec
+from sedpack.io.utils import is_module_present
 
 
 def shard_write_and_read(attributes: dict[str, np.ndarray], shard_file: Path,
@@ -99,6 +100,10 @@ def test_npz_mixed(tmp_path):
     shard_write_and_read(attributes, shard_file, shard_file_type="npz")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_tfrec_with_int(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -107,6 +112,10 @@ def test_tfrec_with_int(tmp_path):
     shard_write_and_read(attributes, shard_file, shard_file_type="tfrec")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_tfrec_with_float(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -115,6 +124,10 @@ def test_tfrec_with_float(tmp_path):
     shard_write_and_read(attributes, shard_file, shard_file_type="tfrec")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_tfrec_mixed(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -185,6 +198,10 @@ def test_fb_all_dtypes_np(tmp_path):
     shard_write_and_read(attributes, shard_file, shard_file_type="npz")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_fb_all_dtypes_tfrec(tmp_path):
     # Examples per shard
     E = 111

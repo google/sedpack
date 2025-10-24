@@ -13,20 +13,33 @@
 # limitations under the License.
 
 from pathlib import Path
+import pytest
 from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 
 import sedpack
-from sedpack.io import Dataset
+from sedpack.io import (
+    Dataset,
+    Metadata,
+)
 from sedpack.io.shard_info_iterator import ShardInfoIterator
-from sedpack.io import Metadata
-from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
+from sedpack.io.types import (
+    TRAIN_SPLIT,
+    CompressionT,
+    ShardFileTypeT,
+)
+from sedpack.io.utils import is_module_present
 
 
-def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
-            shard_file_type: ShardFileTypeT, compression: CompressionT) -> None:
+def end2end(
+    tmpdir: Union[str, Path],
+    dtype: npt.DTypeLike,
+    method: str,
+    shard_file_type: ShardFileTypeT,
+    compression: CompressionT,
+) -> None:
     array_of_values = np.random.random((1024, 138))
     array_of_values = array_of_values.astype(dtype)
 
@@ -127,6 +140,10 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
         ).number_of_shards() for split in ["train", "test", "holdout"])
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_end2end_as_tfdataset_tfrec_float32_float32(
         tmpdir: Union[str, Path]) -> None:
     end2end(tmpdir=tmpdir,
@@ -136,6 +153,10 @@ def test_end2end_as_tfdataset_tfrec_float32_float32(
             compression="GZIP")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_end2end_as_tfdataset_tfrec_float16_float16(
         tmpdir: Union[str, Path]) -> None:
     end2end(tmpdir=tmpdir,
@@ -145,6 +166,10 @@ def test_end2end_as_tfdataset_tfrec_float16_float16(
             compression="GZIP")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_end2end_as_numpy_iterator_concurrent_tfrec(
         tmpdir: Union[str, Path]) -> None:
     end2end(tmpdir=tmpdir,
@@ -154,6 +179,10 @@ def test_end2end_as_numpy_iterator_concurrent_tfrec(
             compression="GZIP")
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_end2end_as_numpy_iterator_tfrec(tmpdir: Union[str, Path]) -> None:
     end2end(tmpdir=tmpdir,
             dtype="float32",

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
+import pytest
 
 import numpy as np
 
@@ -21,8 +22,9 @@ from sedpack.io.types import ShardFileTypeT
 
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.npz import IterateShardNP
-from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.shard.get_shard_writer import get_shard_writer
+from sedpack.io.tfrec import IterateShardTFRec
+from sedpack.io.utils import is_module_present
 
 
 def shard_write_and_read(attributes: dict[str, np.ndarray], shard_file: Path,
@@ -111,6 +113,10 @@ def test_process_and_list_npz_mixed(tmp_path):
                          process_record=None)
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_process_and_list_tfrec_with_int(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -122,6 +128,10 @@ def test_process_and_list_tfrec_with_int(tmp_path):
                          process_record=None)
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_process_and_list_tfrec_with_float(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -133,6 +143,10 @@ def test_process_and_list_tfrec_with_float(tmp_path):
                          process_record=None)
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_process_and_list_tfrec_mixed(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -222,6 +236,10 @@ def test_processing_process_and_list_npz_mixed(tmp_path):
                          })
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_processing_process_and_list_tfrec_with_int(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -235,6 +253,10 @@ def test_processing_process_and_list_tfrec_with_int(tmp_path):
                          })
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_processing_process_and_list_tfrec_with_float(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {
@@ -248,6 +270,10 @@ def test_processing_process_and_list_tfrec_with_float(tmp_path):
                          })
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_processing_process_and_list_tfrec_mixed(tmp_path):
     shard_file = tmp_path / "shard_file"
     attributes = {

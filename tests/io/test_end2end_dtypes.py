@@ -21,10 +21,10 @@ import numpy.typing as npt
 import pytest
 
 import sedpack
-from sedpack.io import Dataset
+from sedpack.io import Dataset, Metadata
 from sedpack.io.shard_info_iterator import ShardInfoIterator
-from sedpack.io import Metadata
 from sedpack.io.types import TRAIN_SPLIT, CompressionT, ShardFileTypeT
+from sedpack.io.utils import is_module_present
 
 
 def dataset_and_values_dynamic_shape(
@@ -114,6 +114,10 @@ def dataset_and_values_dynamic_shape(
     return (values, dataset)
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 @pytest.fixture(
     scope="module",
     params=[
@@ -304,6 +308,10 @@ def check_iteration_of_values(
         ).number_of_shards() for split in ["train", "test", "holdout"])
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 @pytest.mark.parametrize("method", [
     "as_tfdataset",
     "as_numpy_iterator",
