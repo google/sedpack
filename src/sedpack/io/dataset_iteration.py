@@ -40,13 +40,11 @@ from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.shard_info_iterator import CachedShardInfoIterator
 from sedpack.io.shard_file_metadata import ShardInfo
 from sedpack.io.tfrec import IterateShardTFRec
-from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import (
     BatchT,
     ExampleT,
     ShardFileTypeT,
     SplitT,
-    TFDatasetT,
 )
 from sedpack.io.iteration import RustBatchedGenerator, RustGenerator
 

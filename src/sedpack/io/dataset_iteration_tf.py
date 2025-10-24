@@ -13,36 +13,18 @@
 # limitations under the License.
 """Optional TensorFlow iteration."""
 
-from concurrent.futures import ThreadPoolExecutor
-import contextlib
-import itertools
 import os
-from typing import (
-    Any,
-    AsyncIterator,
-    Callable,
-    Iterable,
-)
+from typing import Callable
 
 from sedpack.io.dataset_base import DatasetBase
-from sedpack.io.flatbuffer import IterateShardFlatBuffer
-from sedpack.io.itertools import LazyPool
-from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
-from sedpack.io.npz import IterateShardNP
-from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
-from sedpack.io.shard_info_iterator import CachedShardInfoIterator
 from sedpack.io.shard_file_metadata import ShardInfo
-from sedpack.io.tfrec import IterateShardTFRec
 from sedpack.io.tfrec.tfdata import get_from_tfrecord
 from sedpack.io.types import (
-    BatchT,
     ExampleT,
-    ShardFileTypeT,
     SplitT,
     TFDatasetT,
 )
-from sedpack.io.iteration import RustBatchedGenerator, RustGenerator
 
 
 class DatasetIterationTF(DatasetBase):
@@ -68,7 +50,7 @@ class DatasetIterationTF(DatasetBase):
         Returns: tf.data.Dataset containing decoded examples.
         """
         # TensorFlow is an optional dependency.
-        import tensorflow as tf
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
         # If the cycle_length is None it is determined automatically but we do
         # use determinism. See documentation
@@ -172,7 +154,7 @@ class DatasetIterationTF(DatasetBase):
         batched examples.
         """
         # TensorFlow is an optional dependency.
-        import tensorflow as tf
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
         # The user requested a tf.data.Dataset use as_numpy_iterator_concurrent
         # to provide.
