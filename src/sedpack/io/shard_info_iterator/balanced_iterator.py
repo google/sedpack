@@ -141,15 +141,19 @@ def _split_balancing(
     # How do we get weights from the current balancer.
     if (hasattr(current_balancer, "weight") and
             callable(current_balancer.weight)):
-        prepend_weight = lambda shard_info: (
-            current_balancer.weight(shard_info),
-            shard_info,
-        )
+
+        def prepend_weight(shard_info: ShardInfo) -> tuple[float, ShardInfo]:
+            return (
+                current_balancer.weight(shard_info),
+                shard_info,
+            )
     else:
-        prepend_weight = lambda shard_info: (
-            1.0,  # Default just count examples.
-            shard_info,
-        )
+
+        def prepend_weight(shard_info: ShardInfo) -> tuple[float, ShardInfo]:
+            return (
+                1.0,  # Default just count examples.
+                shard_info,
+            )
 
     return _SingleLevelBalancer(
         iterators=[map(prepend_weight, i) for i in iterators])
@@ -196,11 +200,11 @@ class BalancedShardInfoIterator(ShardInfoIterator):
 
           balance_by (tuple[Callable[[ShardInfo], Hashable], ...]): The list of
           priority of balancing. The first will be the most important to be
-          balanced. If this callable is an object with a `weight(self, shard_info)
-          -> float` method then each example from this shard counts for `weight`.
-          Otherwise each example counts as 1. Meaning that setting the weight to
-          0.5 will result into seeing twice as many of these shards. Be careful
-          with weights of zero and negative.
+          balanced. If this callable is an object with a `weight(self,
+          shard_info) -> float` method then each example from this shard counts
+          for `weight`.  Otherwise each example counts as 1. Meaning that
+          setting the weight to 0.5 will result into seeing twice as many of
+          these shards. Be careful with weights of zero and negative.
         """
         super().__init__(
             dataset_path=dataset_path,
