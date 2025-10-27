@@ -52,7 +52,7 @@ jobs:
         run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
-          pip install --require-hashes --no-deps -r requirements/dev_${{ RUNNER_OS }}_py${{ env.PYVERSION }}_requirements.txt
+          pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
@@ -92,7 +92,7 @@ jobs:
         run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
-          pip install --require-hashes --no-deps -r requirements/dev_${{ RUNNER_OS }}_py${{ env.PYVERSION }}_requirements.txt
+          pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
