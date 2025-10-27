@@ -58,7 +58,8 @@ jobs:
         # tested by coverage since that is running on ubuntu which is also used
         # to produce the main requirements.txt file.
         run: |
-          pip install pip-tools==7.4 # TODO(remove the pinning) pip-tools issue 2252
+          pip install pip==25.2 # TODO(remove the pinning) pip-tools issue 2252
+          pip install pip-tools
           pip-compile --generate-hashes --extra dev pyproject.toml > dev_requirements.txt
           pip install -r dev_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
