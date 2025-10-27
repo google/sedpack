@@ -21,9 +21,7 @@ def main():
 
     min_python = pyproject["project"]["requires-python"]
     # Prefix could be <= or ==
-    for _ in range(2):
-        for prefix in [">", "<", "="]:
-            min_python = min_python.removeprefix(prefix)
+    min_python = min_python.lstrip("><= ")
     print(min_python.strip(), end="")
 
 

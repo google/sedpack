@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -euo pipefail
+
 # Make sure uv is installed.
 python -m pip install uv
 
@@ -22,6 +24,7 @@ export MIN_PYTHON_VERSION=$(python tools/get_min_required_version.py)
 # https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
 for PLATFORM in Linux Windows macOS
 do
+	# Compile dev dependencies.
 	# PYTHON_PLATFORM as used by uv pip compile https://docs.astral.sh/uv/reference/cli/#uv-pip-compile
 	export PYTHON_PLATFORM=$(echo ${PLATFORM} | tr '[:upper:]' '[:lower:]')
 	python -m uv pip compile \
@@ -31,12 +34,8 @@ do
 		--upgrade \
 		--all-extras \
 		pyproject.toml > requirements/dev_${PLATFORM}_requirements.txt
-done
 
-# PLATFORM as used by GitHub workflows RUNNER_OS:
-# https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
-for PLATFORM in Linux Windows macOS
-do
+	# Compile minimal dependencies.
 	# PYTHON_PLATFORM as used by uv pip compile https://docs.astral.sh/uv/reference/cli/#uv-pip-compile
 	export PYTHON_PLATFORM=$(echo ${PLATFORM} | tr '[:upper:]' '[:lower:]')
 	python -m uv pip compile \
