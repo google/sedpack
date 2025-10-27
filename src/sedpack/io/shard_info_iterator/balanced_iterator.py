@@ -29,28 +29,31 @@ from sedpack.io.types import SplitT
 from sedpack.io.itertools import shuffle_buffer
 
 
-class SingleLevelBalancer:
+class _SingleLevelBalancer:
     """Take a bunch of iterators of `ShardInfo` and interleave them such that
-    the number of seen examples from each of them is roughly the same. When one
-    or more of the iterators are exhausted continue until all of them are
-    exhausted.
+    the number of seen examples from each of them is roughly the same (or
+    weighted). When one or more of the iterators are exhausted continue until
+    all of them are exhausted.
     """
 
     def __init__(
         self,
-        iterators: list[Iterator[ShardInfo]],
+        iterators: list[Iterator[tuple[float, ShardInfo]]],
     ) -> None:
         """Initialize the balancing.
 
         Args:
 
-          iterators (list[Iterator[ShardInfo]]): The iterators to be
-          interleaved fairly.
+          iterators (list[Iterator[tuple[float, ShardInfo]]]): The iterators to
+          be interleaved fairly. The float is interpreted as the `weight`.
+          Meaning each example counts for `weight`.
         """
-        self.iterators: list[Iterator[ShardInfo]] = [iter(i) for i in iterators]
-        self.balancing_heap: list[tuple[int, int]] = [
-            # (seen examples, id of the iterator)
-            (0, i) for i in range(len(iterators))
+        self.iterators: list[Iterator[tuple[float, ShardInfo]]] = [
+            iter(i) for i in iterators
+        ]
+        self.balancing_heap: list[tuple[float, int]] = [
+            # (weighted seen examples, id of the iterator)
+            (0.0, i) for i in range(len(iterators))
         ]
 
     def __iter__(self) -> Iterator[ShardInfo]:
@@ -59,16 +62,17 @@ class SingleLevelBalancer:
         return self
 
     def __next__(self) -> ShardInfo:
-        """Return the next `ShardInfo`.
+        """Return the next `ShardInfo` and the corresponding weight.
         """
         while self.balancing_heap:
             seen_examples, iterator_id = heapq.heappop(self.balancing_heap)
             try:
-                shard_info: ShardInfo = next(self.iterators[iterator_id])
+                weight, shard_info = next(self.iterators[iterator_id])
                 heapq.heappush(
                     self.balancing_heap,
                     (
-                        seen_examples + shard_info.number_of_examples,
+                        seen_examples +
+                        (weight * shard_info.number_of_examples),
                         iterator_id,
                     ),
                 )
@@ -79,7 +83,7 @@ class SingleLevelBalancer:
         raise StopIteration
 
 
-def split_balancing(
+def _split_balancing(
     shard_list: list[ShardInfo],
     balance_by: tuple[Callable[[ShardInfo], Hashable], ...],
     repeat: bool,
@@ -93,7 +97,11 @@ def split_balancing(
 
       balance_by (tuple[Callable[[ShardInfo], Hashable], ...]): The list of
       priority of balancing. The first will be the most important to be
-      balanced.
+      balanced. If this callable is an object with a `weight(self, shard_info)
+      -> float` method then each example from this shard counts for `weight`.
+      Otherwise each example counts as 1. Meaning that setting the weight to
+      0.5 will result into seeing twice as many of these shards. Be careful
+      with weights of zero and negative.
 
       repeat (bool): Should the `ShardInfo` be repeated indefinitely?
 
@@ -116,17 +124,35 @@ def split_balancing(
         return inner_iterator
 
     classes: defaultdict[Hashable, list[ShardInfo]] = defaultdict(list)
+    current_balancer: Callable[[ShardInfo], Hashable] = balance_by[0]
+
     for shard_info in shard_list:
-        classes[balance_by[0](shard_info)].append(shard_info)
+        classes[current_balancer(shard_info)].append(shard_info)
+
     iterators: list[Iterator[ShardInfo]] = [
-        split_balancing(
+        _split_balancing(
             shard_list=v,
             balance_by=balance_by[1:],
             repeat=repeat,
             shuffle=shuffle,
         ) for v in classes.values()
     ]
-    return SingleLevelBalancer(iterators=iterators)
+
+    # How do we get weights from the current balancer.
+    if (hasattr(current_balancer, "weight") and
+            callable(current_balancer.weight)):
+        prepend_weight = lambda shard_info: (
+            current_balancer.weight(shard_info),
+            shard_info,
+        )
+    else:
+        prepend_weight = lambda shard_info: (
+            1.0,  # Default just count examples.
+            shard_info,
+        )
+
+    return _SingleLevelBalancer(
+        iterators=[map(prepend_weight, i) for i in iterators])
 
 
 class BalancedShardInfoIterator(ShardInfoIterator):
@@ -168,8 +194,13 @@ class BalancedShardInfoIterator(ShardInfoIterator):
           shuffle the shards with a shuffle buffer of at least `shuffle`
           elements. Current implementation shuffles all shard information.
 
-          balance_by (tuple[Callable[[ShardInfo], Hashable], ...]): Balance by
-          these -- most important first.
+          balance_by (tuple[Callable[[ShardInfo], Hashable], ...]): The list of
+          priority of balancing. The first will be the most important to be
+          balanced. If this callable is an object with a `weight(self, shard_info)
+          -> float` method then each example from this shard counts for `weight`.
+          Otherwise each example counts as 1. Meaning that setting the weight to
+          0.5 will result into seeing twice as many of these shards. Be careful
+          with weights of zero and negative.
         """
         super().__init__(
             dataset_path=dataset_path,
@@ -215,7 +246,7 @@ class BalancedShardInfoIterator(ShardInfoIterator):
         self._number_of_shards: int = len(shard_list)
 
         # First balance by file type, and each file type balance by source.
-        self._shard_info_iter = split_balancing(
+        self._shard_info_iter = _split_balancing(
             shard_list=shard_list,
             balance_by=balance_by,
             repeat=repeat,

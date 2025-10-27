@@ -15,7 +15,7 @@
 import itertools
 
 from sedpack.io.shard_file_metadata import ShardInfo
-from sedpack.io.shard_info_iterator.balanced_iterator import split_balancing
+from sedpack.io.shard_info_iterator.balanced_iterator import _split_balancing
 
 
 def test_split_balancing_all() -> None:
@@ -30,7 +30,7 @@ def test_split_balancing_all() -> None:
         ) for i in range(100)
     ]
 
-    balanced = split_balancing(
+    balanced = _split_balancing(
         shard_list=shard_list,
         balance_by=[
             lambda shard_info: shard_info.custom_metadata["id_mod_3_is_zero"]
@@ -56,7 +56,7 @@ def test_split_balancing_balances() -> None:
         ) for i in range(100)
     ]
 
-    balanced = split_balancing(
+    balanced = _split_balancing(
         shard_list=shard_list,
         balance_by=[
             lambda shard_info: shard_info.custom_metadata["id_mod_3_is_zero"]
@@ -68,3 +68,44 @@ def test_split_balancing_balances() -> None:
     take_n = 1_000
     assert sum(shard_info.custom_metadata["id_mod_3_is_zero"] for shard_info in
                list(itertools.islice(balanced, take_n))) == take_n // 2
+
+
+def test_custom_weight() -> None:
+    shard_list: list[ShardInfo] = [
+        ShardInfo(
+            file_infos=(),
+            number_of_examples=1,
+            custom_metadata={
+                "id": i,
+                "id_mod_3_is_zero": i % 3 == 0,
+            },
+        ) for i in range(100)
+    ]
+
+    class BalanceBy:
+        def __call__(self, shard_info: ShardInfo) -> bool:
+            return shard_info.custom_metadata["id_mod_3_is_zero"]
+
+        def weight(self, shard_info: ShardInfo) -> float:
+            if shard_info.custom_metadata["id_mod_3_is_zero"]:
+                # Do four times more of the zeros. Meaning for each non-zero
+                # example there are four zero examples -> 80% of the zero
+                # examples.
+                return 1 / 4
+            else:
+                return 1
+
+    balance_by_top = BalanceBy()
+
+    balanced = _split_balancing(
+        shard_list=shard_list,
+        balance_by=[
+            balance_by_top,
+        ],
+        repeat=True,
+        shuffle=10,
+    )
+
+    take_n = 1_000
+    assert sum(shard_info.custom_metadata["id_mod_3_is_zero"] for shard_info in
+               list(itertools.islice(balanced, take_n))) == take_n * (4 / 5)
