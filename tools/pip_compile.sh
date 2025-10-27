@@ -24,9 +24,10 @@ export MIN_PYTHON_VERSION=$(python tools/get_min_required_version.py)
 # https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
 for PLATFORM in Linux Windows macOS
 do
-	# Compile dev dependencies.
 	# PYTHON_PLATFORM as used by uv pip compile https://docs.astral.sh/uv/reference/cli/#uv-pip-compile
 	export PYTHON_PLATFORM=$(echo ${PLATFORM} | tr '[:upper:]' '[:lower:]')
+
+	# Compile dev dependencies.
 	python -m uv pip compile \
 		--python-platform ${PYTHON_PLATFORM} \
 		--python-version ${MIN_PYTHON_VERSION} \
@@ -36,8 +37,6 @@ do
 		pyproject.toml > requirements/dev_${PLATFORM}_requirements.txt
 
 	# Compile minimal dependencies.
-	# PYTHON_PLATFORM as used by uv pip compile https://docs.astral.sh/uv/reference/cli/#uv-pip-compile
-	export PYTHON_PLATFORM=$(echo ${PLATFORM} | tr '[:upper:]' '[:lower:]')
 	python -m uv pip compile \
 		--python-platform ${PYTHON_PLATFORM} \
 		--python-version ${MIN_PYTHON_VERSION} \
