@@ -48,7 +48,7 @@ updates:
           - "version-update:semver-minor"
 
   - package-ecosystem: "pip"
-    directory: "/"
+    directory: "/requirements/"
     labels:
       - "dependencies"
       - "python"

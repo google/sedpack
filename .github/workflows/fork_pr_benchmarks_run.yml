@@ -42,16 +42,7 @@ jobs:
           key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('requirements.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
-        # requirements.txt is not reliable since across different platforms and
-        # their versions the pip package versions might vary. We regenerate it
-        # again from pyproject.toml every time when pyproject.toml or
-        # requirements.txt changes. The pinned versions in requirements.txt are
-        # tested by coverage since that is running on ubuntu which is also used
-        # to produce the main requirements.txt file.
-        run: |
-          pip install pip-tools
-          pip-compile --generate-hashes --extra dev pyproject.toml > requirements.txt
-          pip install -r requirements.txt
+        run: pip install -r requirements/dev_${{ RUNNER_OS }}_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
@@ -61,7 +52,7 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install sedpack locally
-        run: pip install --editable .
+        run: pip install --editable '.[dev]'
       # end: Use source sedpack package
 
       - name: Prepare benchmarking data
