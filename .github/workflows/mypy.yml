@@ -41,11 +41,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Find out Python version
-        run: echo "PY_VERSION=$(python3 tools/get_min_required_version.py)" >> $GITHUB_ENV
+        run: echo "PYVERSION=$(python3 tools/get_min_required_version.py)" >> $GITHUB_ENV
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
-          pip install --require-hashes --no-deps -r requirements/dev_Linux_py3.${{ env.PY_VERSION }}_requirements.txt
+          pip install --require-hashes --no-deps -r requirements/dev_Linux_py3.${{ env.PYVERSION }}_requirements.txt
           pip install --editable ".[dev]"
       - name: Save cache
         id: cache-save
