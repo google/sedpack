@@ -41,7 +41,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Find out Python version
-        run: echo "PYVERSION=$(python3 tools/get_min_required_version.py)" >> $GITHUB_ENV
+        run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
