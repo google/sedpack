@@ -83,6 +83,7 @@ def test_custom_weight() -> None:
     ]
 
     class BalanceBy:
+
         def __call__(self, shard_info: ShardInfo) -> bool:
             return shard_info.custom_metadata["id_mod_3_is_zero"]
 
