@@ -18,29 +18,35 @@ set -euo pipefail
 # Make sure uv is installed.
 python -m pip install uv
 
+# Remove old versions.
+rm -rf requirements/*.txt
+
 export MIN_PYTHON_VERSION=$(python tools/get_min_required_version.py)
 
 # PLATFORM as used by GitHub workflows RUNNER_OS:
 # https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
-for PLATFORM in Linux Windows macOS
+for PY_VERSION in $(seq $((MIN_PYTHON_VERSION)) 14)
 do
-	# PYTHON_PLATFORM as used by uv pip compile https://docs.astral.sh/uv/reference/cli/#uv-pip-compile
-	export PYTHON_PLATFORM=$(echo ${PLATFORM} | tr '[:upper:]' '[:lower:]')
+	for PLATFORM in Linux Windows macOS
+	do
+		# PYTHON_PLATFORM as used by uv pip compile https://docs.astral.sh/uv/reference/cli/#uv-pip-compile
+		export PYTHON_PLATFORM=$(echo ${PLATFORM} | tr '[:upper:]' '[:lower:]')
 
-	# Compile dev dependencies.
-	python -m uv pip compile \
-		--python-platform ${PYTHON_PLATFORM} \
-		--python-version ${MIN_PYTHON_VERSION} \
-		--generate-hashes \
-		--upgrade \
-		--all-extras \
-		pyproject.toml > requirements/dev_${PLATFORM}_requirements.txt
+		# Compile dev dependencies.
+		python -m uv pip compile \
+			--python-platform ${PYTHON_PLATFORM} \
+			--python-version 3.${PY_VERSION} \
+			--generate-hashes \
+			--upgrade \
+			--all-extras \
+			pyproject.toml > requirements/dev_${PLATFORM}_py3.${PY_VERSION}_requirements.txt
 
-	# Compile minimal dependencies.
-	python -m uv pip compile \
-		--python-platform ${PYTHON_PLATFORM} \
-		--python-version ${MIN_PYTHON_VERSION} \
-		--generate-hashes \
-		--upgrade \
-		pyproject.toml > requirements/${PLATFORM}_requirements.txt
+		# Compile minimal dependencies.
+		python -m uv pip compile \
+			--python-platform ${PYTHON_PLATFORM} \
+			--python-version 3.${PY_VERSION} \
+			--generate-hashes \
+			--upgrade \
+			pyproject.toml > requirements/${PLATFORM}_py3.${PY_VERSION}_requirements.txt
+	done
 done
