@@ -49,8 +49,8 @@ jobs:
           key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Find out Python version
+        shell: bash
         run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
-          shell: bash
       - name: Install dependencies
         run: |
           pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
@@ -90,8 +90,8 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements/dev_Linux_*_requirements.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
       - name: Find out Python version
+        shell: bash
         run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
-          shell: bash
       - name: Install dependencies
         run: |
           pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
