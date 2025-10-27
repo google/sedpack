@@ -27,7 +27,7 @@ Development dependencies:
 #### Development install
 
 1.  Clone the repository: `git clone https://github.com/google/sedpack`
-2.  Install dependencies: `python3 -m pip install --require-hashes -r requirements/Linux_requirements.txt`
+2.  Install dependencies: `python3 -m pip install --require-hashes -r requirements/Linux_py3.13_requirements.txt`
 3.  Install the package in development mode: `python3 -m pip install --editable
     .` (short `pip install -e .` or legacy `python setup.py develop`)
 

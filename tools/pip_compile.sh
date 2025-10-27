@@ -25,7 +25,8 @@ export MIN_PYTHON_VERSION=$(python tools/get_min_required_version.py)
 
 # PLATFORM as used by GitHub workflows RUNNER_OS:
 # https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
-for PY_VERSION in $(seq $((MIN_PYTHON_VERSION)) 14)
+# Fails on the first version which is not available.
+for PY_VERSION in $(seq $((MIN_PYTHON_VERSION)) 1000)
 do
 	for PLATFORM in Linux Windows macOS
 	do
