@@ -50,6 +50,7 @@ jobs:
       # Build a virtualenv, but only if it doesn't already exist
       - name: Find out Python version
         run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
+          shell: bash
       - name: Install dependencies
         run: |
           pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
@@ -90,6 +91,7 @@ jobs:
       # Build a virtualenv, but only if it doesn't already exist
       - name: Find out Python version
         run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
+          shell: bash
       - name: Install dependencies
         run: |
           pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
