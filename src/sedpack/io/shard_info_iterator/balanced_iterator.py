@@ -46,7 +46,9 @@ class _SingleLevelBalancer:
 
           iterators (list[Iterator[tuple[float, ShardInfo]]]): The iterators to
           be interleaved fairly. The float is interpreted as the `weight`.
-          Meaning each example counts for `weight`.
+          Meaning each example counts for `weight`. Note that this is different
+          semantics from that used by `_split_balancing` and
+          `BalancedShardInfoIterator`.
         """
         self.iterators: list[Iterator[tuple[float, ShardInfo]]] = [
             iter(i) for i in iterators
@@ -98,10 +100,10 @@ def _split_balancing(
       balance_by (tuple[Callable[[ShardInfo], Hashable], ...]): The list of
       priority of balancing. The first will be the most important to be
       balanced. If this callable is an object with a `weight(self, shard_info)
-      -> float` method then each example from this shard counts for `weight`.
-      Otherwise each example counts as 1. Meaning that setting the weight to
-      0.5 will result into seeing twice as many of these shards. Be careful
-      with weights of zero and negative.
+      -> float` method then each example from this shard counts for `1 /
+      weight`.  Otherwise each example counts as 1. Meaning that setting the
+      weight to 2.0 will result into seeing twice as many of these shards. The
+      weight must be strictly positive float.
 
       repeat (bool): Should the `ShardInfo` be repeated indefinitely?
 
@@ -143,8 +145,12 @@ def _split_balancing(
             callable(current_balancer.weight)):
 
         def prepend_weight(shard_info: ShardInfo) -> tuple[float, ShardInfo]:
+            current_weight: float = current_balancer.weight(shard_info)
+            if current_weight <= 0.0:
+                raise ValueError("The weight must be positive but for "
+                                 f"{shard_info} it was {current_weight}")
             return (
-                current_balancer.weight(shard_info),
+                1 / current_weight,
                 shard_info,
             )
     else:
@@ -202,9 +208,9 @@ class BalancedShardInfoIterator(ShardInfoIterator):
           priority of balancing. The first will be the most important to be
           balanced. If this callable is an object with a `weight(self,
           shard_info) -> float` method then each example from this shard counts
-          for `weight`.  Otherwise each example counts as 1. Meaning that
-          setting the weight to 0.5 will result into seeing twice as many of
-          these shards. Be careful with weights of zero and negative.
+          for `1 / weight`.  Otherwise each example counts as 1. Meaning that
+          setting the weight to 2.0 will result into seeing twice as many of
+          these shards. The weight must be strictly positive float.
         """
         super().__init__(
             dataset_path=dataset_path,

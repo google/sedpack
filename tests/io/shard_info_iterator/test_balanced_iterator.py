@@ -92,7 +92,7 @@ def test_custom_weight() -> None:
                 # Do four times more of the zeros. Meaning for each non-zero
                 # example there are four zero examples -> 80% of the zero
                 # examples.
-                return 1 / 4
+                return 4
             else:
                 return 1
 
