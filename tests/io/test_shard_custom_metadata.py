@@ -24,7 +24,10 @@ from sedpack.io.types import TRAIN_SPLIT
 
 
 def test_custom_shard_metadata(tmpdir: Union[str, Path]) -> None:
-    array_of_values = np.random.random((32, 138))
+    attribute_dtype = "float32"
+    shard_file_type = "fb"
+
+    array_of_values = np.random.random((32, 138)).astype(dtype=attribute_dtype)
 
     experiment_path: Path = Path(tmpdir) / "custom_shard_metadata_experiment"
 
@@ -34,7 +37,7 @@ def test_custom_shard_metadata(tmpdir: Union[str, Path]) -> None:
     example_attributes = [
         sedpack.io.metadata.Attribute(
             name="attribute_name",
-            dtype="float32",
+            dtype=attribute_dtype,
             shape=array_of_values[0].shape,
         ),
     ]
@@ -43,6 +46,7 @@ def test_custom_shard_metadata(tmpdir: Union[str, Path]) -> None:
         saved_data_description=example_attributes,
         compression="GZIP",
         examples_per_shard=4,
+        shard_file_type=shard_file_type,
     )
 
     dataset = Dataset.create(

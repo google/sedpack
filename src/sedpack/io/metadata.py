@@ -127,7 +127,7 @@ class DatasetStructure(BaseModel):
     saved_data_description: list[Attribute] = []
     compression: CompressionT = "GZIP"
     examples_per_shard: int = 256
-    shard_file_type: ShardFileTypeT = "tfrec"
+    shard_file_type: ShardFileTypeT = "fb"
     hash_checksum_algorithms: tuple[HashChecksumT, ...] = ("sha256",)
 
     def attribute_by_name(self, attribute_name: str) -> Attribute:
