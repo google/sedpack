@@ -13,6 +13,7 @@
 # limitations under the License.
 """Mixin for sedpack.io.Dataset to do writing."""
 from collections import defaultdict
+import contextlib
 import itertools
 from multiprocessing import Pool
 from pathlib import Path
@@ -25,7 +26,10 @@ from typing import (
 import uuid
 
 from tqdm.auto import tqdm
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ImportError:
+    tf = None  # type: ignore[assignment]
 
 import sedpack
 from sedpack.io.dataset_base import DatasetBase
@@ -297,7 +301,11 @@ def _wrapper_func(
     """Helper function for write_multiprocessing. Needs to be pickleable.
     """
     # Prevent each process from hoarding the whole GPU memory.
-    with tf.device("CPU"):
+    if tf is None:
+        context = contextlib.nullcontext()  # type: ignore[unreachable]
+    else:
+        context = tf.device("CPU")
+    with context:
         (
             feed_writer,
             dataset_filler,

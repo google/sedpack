@@ -13,16 +13,21 @@
 # limitations under the License.
 
 from pathlib import Path
+import pytest
 from typing import Union
 
 import numpy as np
 
 import sedpack
-from sedpack.io import Dataset
-from sedpack.io import Metadata
+from sedpack.io import Dataset, Metadata
 from sedpack.io.types import TRAIN_SPLIT
+from sedpack.io.utils import is_module_present
 
 
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
 def test_attribute_bytes(tmpdir: Union[str, Path]) -> None:
     array_of_values = [
         bytes(
@@ -52,6 +57,7 @@ def test_attribute_bytes(tmpdir: Union[str, Path]) -> None:
         saved_data_description=example_attributes,
         compression="GZIP",
         examples_per_shard=256,
+        shard_file_type="tfrec",
     )
 
     dataset = Dataset.create(

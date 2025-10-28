@@ -13,6 +13,7 @@
 # limitations under the License.
 """Utils for sedpack.io"""
 
+import importlib
 import hashlib
 from pathlib import Path
 import time
@@ -179,3 +180,20 @@ def func_or_identity(f: Callable[..., T] | None) -> Callable[..., T]:
     if f is None:
         return identity
     return f
+
+
+def is_module_present(module_name: str) -> bool:
+    """Return True iff `module_name` can be imported. As a side-effect the
+    module is imported.
+
+    Args:
+
+      module_name (str): The module which might or might not be importable.
+
+    Raises: does not raise.
+    """
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False

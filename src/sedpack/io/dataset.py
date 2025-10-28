@@ -18,6 +18,7 @@ from typing import Union
 
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.dataset_iteration import DatasetIteration
+from sedpack.io.dataset_iteration_tf import DatasetIterationTF
 from sedpack.io.dataset_writing import DatasetWriting
 from sedpack.io.errors import DatasetExistsError
 from sedpack.io.metadata import DatasetInfo, DatasetStructure, Metadata
@@ -25,6 +26,7 @@ from sedpack.io.metadata import DatasetInfo, DatasetStructure, Metadata
 
 class Dataset(
         DatasetIteration,
+        DatasetIterationTF,
         DatasetWriting,
 ):
     """Dataset class."""

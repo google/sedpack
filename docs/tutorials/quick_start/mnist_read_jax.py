@@ -118,7 +118,11 @@ def main() -> None:
 
     learning_rate: float = 0.005
     momentum: float = 0.9
-    optimizer = nnx.Optimizer(model, optax.adamw(learning_rate, momentum))
+    optimizer = nnx.Optimizer(
+        model,
+        optax.adamw(learning_rate, momentum),
+        wrt=nnx.Param,
+    )
     metrics = nnx.MultiMetric(
         accuracy=nnx.metrics.Accuracy(),
         loss=nnx.metrics.Average("loss"),
