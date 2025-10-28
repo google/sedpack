@@ -388,9 +388,9 @@ isort==7.0.0 \
     --hash=sha256:1bcabac8bc3c36c7fb7b98a76c8abb18e0f841a3ba81decac7691008592499c1 \
     --hash=sha256:5513527951aadb3ac4292a41a16cbc50dd1642432f5e8c20057d414bdafb4187
     # via pylint
-keras==3.11.3 \
-    --hash=sha256:efda616835c31b7d916d72303ef9adec1257320bc9fd4b2b0138840fc65fb5b7 \
-    --hash=sha256:f484f050e05ee400455b05ec8c36ed35edc34de94256b6073f56cfe68f65491f
+keras==3.12.0 \
+    --hash=sha256:02b69e007d5df8042286c3bcc2a888539e3e487590ffb08f6be1b4354df50aa8 \
+    --hash=sha256:536e3f8385a05ae04e82e08715a1a59988578087e187b04cb0a6fad11743f07f
     # via tensorflow
 libclang==18.1.1 \
     --hash=sha256:0b2e143f0fac830156feb56f9231ff8338c20aecfe72b4ffe96f19e5a1dbb69a \
