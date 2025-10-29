@@ -42,35 +42,32 @@ cd sedpack/  # Change directory to the cloned git repository
 <Tabs syncKey="os_type">
 
   <TabItem label="Linux">
+    For the `x86_64` platform.
     ```bash
-    python3 -m pip install --require-hashes -r requirements.txt
+    python3 -m pip install --require-hashes -r requirements/dev_Linux_py3.13_requirements.txt
     ```
   </TabItem>
 
   <TabItem label="Windows">
-
-    Currently the file `requirements.txt` is compiled for Linux and some
-    versions of PyPI packages might be different or even not existing
-    elsewhere. One can always recreate those:
-
+    For the `x86_64` platform.
     ```bash
-    python3 -m pip install pip-tools
-    python3 -m pip-compile --generate-hashes pyproject.toml > requirements_win.txt
-    python3 -m pip install --require-hashes -r requirements_win.txt
+    python3 -m pip install --require-hashes -r requirements/dev_Windows_py3.13_requirements.txt
     ```
   </TabItem>
 
   <TabItem label="macOS">
-
-    Currently the file `requirements.txt` is compiled for Linux and some
-    versions of PyPI packages might be different or even not existing
-    elsewhere. One can always recreate those:
-
+    For the `aarch64` platform.
     ```bash
-    python3 -m pip install pip-tools
-    python3 -m pip-compile --generate-hashes pyproject.toml > requirements_mac.txt
-    python3 -m pip install --require-hashes -r requirements_mac.txt
+    python3 -m pip install --require-hashes -r requirements/dev_macOS_py3.13_requirements.txt
     ```
+  </TabItem>
+
+
+  <TabItem label="Different architectures and platforms">
+    Currently we do not provide pre-compiled dependencies. For a different CPU
+    architecture see `uv pip compile` options. You may take inspiration from
+    `tools/pip_compile.sh`. For different platforms we are happy if you send
+    us a pull request.
   </TabItem>
 
 </Tabs>

@@ -27,8 +27,6 @@ jobs:
         platform:
           - runner: ubuntu-latest  # x64
           - runner: windows-latest  # x64
-          - runner: macos-14  # arm64
-          - runner: macos-15-intel  # Intel
           - runner: macos-latest  # arm64
     if: github.event_name != 'schedule'
     steps:
@@ -50,18 +48,12 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ matrix.platform.runner }}-pip-${{ hashFiles('pyproject.toml') }}
       # Build a virtualenv, but only if it doesn't already exist
-      - name: Populate pip cache
-        # requirements.txt is not reliable since across different platforms and
-        # their versions the pip package versions might vary. We regenerate it
-        # again from pyproject.toml every time when pyproject.toml or
-        # requirements.txt changes. The pinned versions in requirements.txt are
-        # tested by coverage since that is running on ubuntu which is also used
-        # to produce the main requirements.txt file.
+      - name: Find out Python version
+        shell: bash
+        run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
+      - name: Install dependencies
         run: |
-          pip install pip==25.2 # TODO(remove the pinning) pip-tools issue 2252
-          pip install pip-tools
-          pip-compile --generate-hashes --extra dev pyproject.toml > dev_requirements.txt
-          pip install -r dev_requirements.txt
+          pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
@@ -95,11 +87,14 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/dev_Linux_*_requirements.txt') }}
       # Build a virtualenv, but only if it doesn't already exist
-      - name: Populate pip cache
+      - name: Find out Python version
+        shell: bash
+        run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
+      - name: Install dependencies
         run: |
-          python -m pip install --require-hashes --no-deps -r requirements.txt
+          pip install --require-hashes --no-deps -r requirements/dev_${{ runner.os }}_py${{ env.PYVERSION }}_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save

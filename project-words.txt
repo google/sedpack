@@ -81,4 +81,5 @@ tinyaes
 tobytes
 uoffset
 xored
+ziglang
 zstd

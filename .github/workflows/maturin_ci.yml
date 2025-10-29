@@ -17,7 +17,7 @@ on:
       - '**/*.py'
       - '**/*.rs'
       - 'pyproject.toml'
-      - 'requirements.txt'
+      - 'requirements/*.txt'
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
   merge_group:  # Just to be sure

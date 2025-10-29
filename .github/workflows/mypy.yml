@@ -36,14 +36,16 @@ jobs:
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          # The cache key depends on requirements.txt
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-${{ hashFiles('pyproject.toml') }}
+          # The cache key depends on requirements file.
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/dev_Linux_*_requirements.txt') }}-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      - name: Find out Python version
+        run: echo "PYVERSION=$(python3 tools/py_version.py)" >> $GITHUB_ENV
       # Build a virtualenv, but only if it doesn't already exist
       - name: Populate pip cache
         run: |
-          pip install --require-hashes --no-deps -r requirements.txt
+          pip install --require-hashes --no-deps -r requirements/dev_Linux_py${{ env.PYVERSION }}_requirements.txt
           pip install --editable ".[dev]"
       - name: Save cache
         id: cache-save

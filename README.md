@@ -27,7 +27,7 @@ Development dependencies:
 #### Development install
 
 1.  Clone the repository: `git clone https://github.com/google/sedpack`
-2.  Install dependencies: `python3 -m pip install --require-hashes -r requirements.txt`
+2.  Install dependencies: `python3 -m pip install --require-hashes -r requirements/Linux_py3.13_requirements.txt`
 3.  Install the package in development mode: `python3 -m pip install --editable
     .` (short `pip install -e .` or legacy `python setup.py develop`)
 
@@ -41,12 +41,7 @@ Development dependencies:
 
 ### Update dependencies
 
-Make sure to have: `sudo apt install python3 python3-pip python3-venv` and
-activated the virtual environment.
-
-Install requirements: `pip install --require-hashes -r base-tooling-requirements.txt`
-
-Update: `pip-compile pyproject.toml --generate-hashes --upgrade` and commit requirements.txt.
+Run `tools/pip_compile.sh` (which will install [uv](https://docs.astral.sh/uv/guides/install-python/)).
 
 #### Package install
 
