@@ -138,7 +138,7 @@ def dataset_and_values_dynamic_shape(
 def values_and_dataset_tfrec(request, tmpdir_factory) -> None:
     # Skip if TensorFlow is not present
     if not is_module_present("tensorflow"):
-        return
+        pytest.skipl("TensorFlow is optional, skip test if not present.")
 
     shard_file_type: str = "tfrec"
     yield dataset_and_values_dynamic_shape(
@@ -319,7 +319,7 @@ def test_end2end_dtypes_str_tfrec(
 ) -> None:
     # Skip if TensorFlow is not present
     if not is_module_present("tensorflow"):
-        return
+        pytest.skipl("TensorFlow is optional, skip test if not present.")
 
     values, dataset = values_and_dataset_tfrec
     check_iteration_of_values(
