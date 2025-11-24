@@ -114,10 +114,6 @@ def dataset_and_values_dynamic_shape(
     return (values, dataset)
 
 
-@pytest.mark.skipif(
-    not is_module_present("tensorflow"),
-    reason="TensorFlow is optional, skip test if not present.",
-)
 @pytest.fixture(
     scope="module",
     params=[
@@ -140,6 +136,10 @@ def dataset_and_values_dynamic_shape(
     ],
 )
 def values_and_dataset_tfrec(request, tmpdir_factory) -> None:
+    # Skip if TensorFlow is not present
+    if not is_module_present("tensorflow"):
+        return
+
     shard_file_type: str = "tfrec"
     yield dataset_and_values_dynamic_shape(
         tmpdir=tmpdir_factory.mktemp(f"dtype_{shard_file_type}"),
@@ -308,10 +308,6 @@ def check_iteration_of_values(
         ).number_of_shards() for split in ["train", "test", "holdout"])
 
 
-@pytest.mark.skipif(
-    not is_module_present("tensorflow"),
-    reason="TensorFlow is optional, skip test if not present.",
-)
 @pytest.mark.parametrize("method", [
     "as_tfdataset",
     "as_numpy_iterator",
@@ -321,6 +317,10 @@ def test_end2end_dtypes_str_tfrec(
     method: str,
     values_and_dataset_tfrec,
 ) -> None:
+    # Skip if TensorFlow is not present
+    if not is_module_present("tensorflow"):
+        return
+
     values, dataset = values_and_dataset_tfrec
     check_iteration_of_values(
         method=method,
