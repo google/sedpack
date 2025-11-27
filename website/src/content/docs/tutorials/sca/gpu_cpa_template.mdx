@@ -89,7 +89,7 @@ def jax_finalize(existing_aggregate):
 And the SNR loop as follows:
 
 ```py
-def snr_jax(datasetdef snr_jax(dataset_path: Path, ap_name: str) -> None:
+def snr_jax(dataset_path: Path, ap_name: str) -> None:
     """Compute SNR using NumPy.
     """
     # Load the dataset
@@ -632,7 +632,7 @@ state_vmap = {
    "sum_t": None,  # would be the same
    "sum_tt": None,  # would be the same
 }
-r_update_multiindex = jax.jit(
+r_update_multi_index = jax.jit(
    jax.vmap(
        r_update,  # the function to be vectorized
        in_axes=(
@@ -649,7 +649,7 @@ r_update_multiindex = jax.jit(
 ))
 ```
 
-And finally we use our `r_update_multiindex` inside a scan:
+And finally we use our `r_update_multi_index` inside a scan:
 
 ```py
     for example in tqdm(
@@ -675,7 +675,7 @@ And finally we use our `r_update_multiindex` inside a scan:
             jnp.arange(256, dtype=jnp.uint8).reshape(1, 1, 256))
 
         aggregate, _ = jax.lax.scan(
-            r_update_multiindex,
+            r_update_multi_index,
             aggregate,
             UpdateData(
                 trace=example["trace1"][:, :trace_len],

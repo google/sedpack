@@ -18,10 +18,10 @@ Compute CPA https://wiki.newae.com/Correlation_Power_Analysis.
 Example use:
     python cpa.py --dataset_path "~/datasets/tiny_aes_sedpack/"
 """
+# type: ignore
 import argparse
 from functools import partial
 from pathlib import Path
-import time
 from typing import NamedTuple
 
 import numpy as np
@@ -33,15 +33,6 @@ from jax.typing import ArrayLike
 
 from sedpack.io import Dataset
 from sedpack.io.types import SplitT
-
-from scaaml.stats.cpa import CPA
-from scaaml.stats.attack_points.aes_128.full_aes import encrypt
-from scaaml.stats.attack_points.aes_128.attack_points import SubBytesIn, LeakageModelAES128
-
-# Cut the trace
-trace_len: int = 10_000
-batch_size: int = 64
-split: SplitT = "train"
 
 
 class UpdateData(NamedTuple):
@@ -112,7 +103,7 @@ def get_initial_aggregate(
     }
 
 
-def get_initial_aggregate_multibyte(
+def get_initial_aggregate_multi_byte(
     trace_len: int,
     different_target_secrets: int = 256,
     num_byte_indexes: int = 16,
@@ -191,7 +182,7 @@ def r_update(
 ) -> (dict[str, ArrayLike], jnp.int32):
     """Update the CPA aggregate state.
     """
-    # Check the dimensions if debugging. This will work even across vmaps, jit,
+    # Check the dimensions if debugging. This will work even across vmap, jit,
     # scan, etc.
     assert data.trace.shape == state["sum_t"].shape
     assert data.hypothesis.shape == state["sum_h"].shape
@@ -250,7 +241,7 @@ def r_guess_with_time(
 
 
 @partial(jax.jit, static_argnames=["return_absolute_value"])
-def r_guess_notime(
+def r_guess_no_time(
     state: dict[str, ArrayLike],
     return_absolute_value: bool,
 ) -> ArrayLike:
@@ -271,7 +262,7 @@ def print_ranks(full_guess: ArrayLike, real_key: ArrayLike) -> None:
     Args:
 
       full_guess (ArrayLike): The probabilities of shape (16, 256) as returned
-      by `r_guess_notime`.
+      by `r_guess_no_time`.
 
       real_key (ArrayLike): The real secret value of shape (16,) of np.uint8.
     """
@@ -283,7 +274,11 @@ def print_ranks(full_guess: ArrayLike, real_key: ArrayLike) -> None:
     ])
 
 
-def cpa_single_byte(dataset_path: Path) -> npt.NDArray[np.float32]:
+def cpa_single_byte(
+    dataset_path: Path,
+    split: SplitT,
+    trace_len: int,
+) -> npt.NDArray[np.float32]:
     """Compute SNR using NumPy.
     """
     # Load the dataset
@@ -305,7 +300,7 @@ def cpa_single_byte(dataset_path: Path) -> npt.NDArray[np.float32]:
             desc=f"[JAX] Computing single byte index CPA over {split}",
             total=dataset.dataset_info.splits[split].number_of_examples,
     ):
-        # Simulated lekage guesses.
+        # Simulated leakage guesses.
         simulated_plaintext = example["plaintext"][byte_index] ^ example["key"][
             byte_index]
         hypothesis = jnp.bitwise_count(simulated_plaintext ^
@@ -319,14 +314,21 @@ def cpa_single_byte(dataset_path: Path) -> npt.NDArray[np.float32]:
             ),
         )
 
-    #print(f"{r_guess_notime(aggregate, return_absolute_value=True) = }")
-    guessed = int(np.argmax(r_guess_notime(aggregate, return_absolute_value=True,)))
+    guessed = int(
+        np.argmax(r_guess_no_time(
+            aggregate,
+            return_absolute_value=True,
+        )))
     print(f"{guessed = } (correct answer is: 0 -- simulated key)")
     return guessed
 
 
-def cpa_single_experiment(dataset_path: Path) -> npt.NDArray[np.float32]:
-    """
+def cpa_single_experiment(
+    dataset_path: Path,
+    split: SplitT,
+    trace_len: int,
+) -> npt.NDArray[np.float32]:
+    """Run real CPA on 256 traces with constant key.
     """
     # Load the dataset
     dataset = Dataset(dataset_path)
@@ -334,7 +336,7 @@ def cpa_single_experiment(dataset_path: Path) -> npt.NDArray[np.float32]:
     # AES128
     num_byte_indexes: int = 16
 
-    aggregate = get_initial_aggregate_multibyte(
+    aggregate = get_initial_aggregate_multi_byte(
         trace_len=trace_len,
         different_target_secrets=256,  # Predicting a byte value.
         num_byte_indexes=num_byte_indexes,
@@ -348,7 +350,7 @@ def cpa_single_experiment(dataset_path: Path) -> npt.NDArray[np.float32]:
         "sum_t": None,
         "sum_tt": None,
     }
-    r_update_multiindex = jax.jit(
+    r_update_multi_index = jax.jit(
         jax.vmap(
             r_update,
             in_axes=(
@@ -390,7 +392,7 @@ def cpa_single_experiment(dataset_path: Path) -> npt.NDArray[np.float32]:
             plaintext.reshape(num_byte_indexes, 1) ^
             np.arange(256, dtype=np.uint8).reshape(1, 256))
 
-        aggregate, _ = r_update_multiindex(
+        aggregate, _ = r_update_multi_index(
             aggregate,
             UpdateData(
                 trace=example["trace1"][:trace_len],
@@ -398,7 +400,7 @@ def cpa_single_experiment(dataset_path: Path) -> npt.NDArray[np.float32]:
             ),
         )
     full_guess = jax.vmap(
-        r_guess_notime,
+        r_guess_no_time,
         in_axes=(aggregate_vmap, None),
         out_axes=0,
     )(aggregate, True)
@@ -413,8 +415,13 @@ def cpa_single_experiment(dataset_path: Path) -> npt.NDArray[np.float32]:
     return guessed
 
 
-def cpa(dataset_path: Path) -> npt.NDArray[np.float32]:
-    """
+def cpa(
+    dataset_path: Path,
+    split: SplitT,
+    trace_len: int,
+    batch_size: int,
+) -> npt.NDArray[np.float32]:
+    """Run CPA on all 16 byte indices.
     """
     # Load the dataset
     dataset = Dataset(dataset_path)
@@ -422,7 +429,7 @@ def cpa(dataset_path: Path) -> npt.NDArray[np.float32]:
     # AES128
     num_byte_indexes: int = 16
 
-    aggregate = get_initial_aggregate_multibyte(
+    aggregate = get_initial_aggregate_multi_byte(
         trace_len=trace_len,
         different_target_secrets=256,  # Predicting a byte value.
         num_byte_indexes=num_byte_indexes,
@@ -436,7 +443,7 @@ def cpa(dataset_path: Path) -> npt.NDArray[np.float32]:
         "sum_t": None,
         "sum_tt": None,
     }
-    r_update_multiindex = jax.jit(
+    r_update_multi_index = jax.jit(
         jax.vmap(
             r_update,
             in_axes=(
@@ -464,7 +471,7 @@ def cpa(dataset_path: Path) -> npt.NDArray[np.float32]:
             batch_size,
     ):
         # Since the dataset was not created using a constant key we need to
-        # simulate. Our laekage model is the Hamming weight of S-BOX inputs
+        # simulate. Our leakage model is the Hamming weight of S-BOX inputs
         # which had high SNR. When we would be running with constant secret key
         # our simulated_plaintext would equal the real plaintext (which we
         # assume to know). With changes of the key we could simulate all zero
@@ -475,7 +482,7 @@ def cpa(dataset_path: Path) -> npt.NDArray[np.float32]:
             jnp.arange(256, dtype=jnp.uint8).reshape(1, 1, 256))
 
         aggregate, _ = jax.lax.scan(
-            r_update_multiindex,
+            r_update_multi_index,
             aggregate,
             UpdateData(
                 trace=example["trace1"][:, :trace_len],
@@ -484,7 +491,7 @@ def cpa(dataset_path: Path) -> npt.NDArray[np.float32]:
         )
 
     full_guess = jax.vmap(
-        r_guess_notime,
+        r_guess_no_time,
         in_axes=(aggregate_vmap, None),
         out_axes=0,
     )(aggregate, True)
@@ -510,17 +517,27 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    jax_begin = time.time()
-    result_jax = cpa_single_byte(dataset_path=args.dataset_path)
-    jax_runtime = time.time() - jax_begin
+    # Cut the trace
+    trace_len: int = 10_000
+    batch_size: int = 64
+    split: SplitT = "train"
 
-    jax_begin = time.time()
-    _ = cpa_single_experiment(dataset_path=args.dataset_path)
-    jax_runtime = time.time() - jax_begin
-
-    jax_begin = time.time()
-    result_jax = cpa(dataset_path=args.dataset_path)
-    jax_runtime = time.time() - jax_begin
+    _ = cpa_single_byte(
+        dataset_path=args.dataset_path,
+        split=split,
+        trace_len=trace_len,
+    )
+    _ = cpa_single_experiment(
+        dataset_path=args.dataset_path,
+        split=split,
+        trace_len=trace_len,
+    )
+    _ = cpa(
+        dataset_path=args.dataset_path,
+        split=split,
+        trace_len=trace_len,
+        batch_size=batch_size,
+    )
 
 
 if __name__ == "__main__":

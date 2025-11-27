@@ -20,6 +20,7 @@ International workshop on cryptographic hardware and embedded systems.
 Berlin, Heidelberg: Springer Berlin Heidelberg, 2002.
 """
 
+# type: ignore
 import argparse
 from pathlib import Path
 import math
@@ -56,12 +57,12 @@ class OnlineTemplate(NamedTuple):
       mean (ArrayLike): Running mean for each possible leakage value, shape
       (different_leakage_values, trace_len,).
 
-      C (ArrayLike): Running covariance matrix for each possible leakage value,
+      c (ArrayLike): Running covariance matrix for each possible leakage value,
       shape (different_leakage_values, trace_len, trace_len).
     """
     n: ArrayLike
     mean: ArrayLike
-    C: ArrayLike
+    c: ArrayLike
 
 
 class UpdateData(NamedTuple):
@@ -101,18 +102,18 @@ def _update_state(
 
     prev_n = state.n[update_data.leakage_value]
     prev_mean = state.mean[update_data.leakage_value]
-    prev_C = state.C[update_data.leakage_value]
+    prev_c = state.c[update_data.leakage_value]
 
     n = prev_n + 1
     dm = update_data.trace - prev_mean
     mean = prev_mean + (dm / n)
-    C = prev_C + jnp.einsum("i,j->ij", dm, dm)
+    c = prev_c + jnp.einsum("i,j->ij", dm, dm)
 
     return (
         OnlineTemplate(  # Carry for jax.lax.scan
             n=state.n.at[update_data.leakage_value].set(n),
             mean=state.mean.at[update_data.leakage_value].set(mean),
-            C=state.C.at[update_data.leakage_value].set(C),
+            c=state.c.at[update_data.leakage_value].set(c),
         ),
         n,  # Output for jax.lax.scan
     )
@@ -121,25 +122,25 @@ def _update_state(
 @jax.jit
 def _log_pdf(
     trace: ArrayLike,
-    det_C: ArrayLike,
-    inv_C: ArrayLike,
+    det_c: ArrayLike,
+    inv_c: ArrayLike,
     mean: ArrayLike,
 ) -> jnp.float64:
     """Compute the logarithm of probability density function for the given
     trace and single leakage value.
     """
     assert trace.ndim == 1
-    assert det_C.ndim == 0
-    assert inv_C.ndim == 2
+    assert det_c.ndim == 0
+    assert inv_c.ndim == 2
     assert mean.ndim == 1
 
     centralized_trace = trace - mean
-    return -0.5 * (jnp.log(det_C) + jnp.einsum(
+    return -0.5 * (jnp.log(det_c) + jnp.einsum(
         "i,ij,j",
         centralized_trace,
-        inv_C,
+        inv_c,
         centralized_trace,
-    ) + inv_C.shape[0] * jnp.log(2 * math.pi))
+    ) + inv_c.shape[0] * jnp.log(2 * math.pi))
 
 
 def profile_templates(dataset: Dataset, byte_index: int) -> OnlineTemplate:
@@ -155,7 +156,7 @@ def profile_templates(dataset: Dataset, byte_index: int) -> OnlineTemplate:
     aggregate: OnlineTemplate = OnlineTemplate(
         n=jnp.zeros(different_leakage_values, dtype=jnp.int32),
         mean=jnp.zeros((different_leakage_values, trace_len)),
-        C=jnp.zeros((different_leakage_values, trace_len, trace_len)),
+        c=jnp.zeros((different_leakage_values, trace_len, trace_len)),
     )
 
     for example in tqdm(
@@ -188,9 +189,9 @@ def attack(dataset: Dataset,
            byte_index: int,
            different_target_secrets: int = 256,
            ddof: int = 0) -> None:
-    covariance_matrix = templates.C / (templates.n - ddof).reshape(-1, 1, 1)
-    det_C = jnp.linalg.det(covariance_matrix)
-    inv_C = jnp.linalg.inv(covariance_matrix)
+    covariance_matrix = templates.c / (templates.n - ddof).reshape(-1, 1, 1)
+    det_c = jnp.linalg.det(covariance_matrix)
+    inv_c = jnp.linalg.inv(covariance_matrix)
     mean = templates.mean
 
     probabilities = np.zeros(
@@ -198,13 +199,13 @@ def attack(dataset: Dataset,
         dtype=np.float64,
     )
 
-    vmapped_log_pdf = jax.jit(
+    vmap_log_pdf = jax.jit(
         jax.vmap(
             _log_pdf,
             in_axes=(
                 None,  # trace
-                0,  # det_C
-                0,  # inv_C
+                0,  # det_c
+                0,  # inv_c
                 0,  # mean
             ),
             out_axes=0,
@@ -228,10 +229,10 @@ def attack(dataset: Dataset,
         else:
             assert all(real_key == example["key"])
 
-        local_cache = vmapped_log_pdf(
+        local_cache = vmap_log_pdf(
             example["trace1"][cut_begin:cut_end],  # trace
-            det_C,  # det_C
-            inv_C,  # inv_C
+            det_c,  # det_c
+            inv_c,  # inv_c
             mean,  # mean
         )
         assert local_cache.shape == (different_leakage_values,)

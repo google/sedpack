@@ -20,6 +20,7 @@ Be sure to install SCAAML: python -m pip install scaaml
 Example use:
     python snr.py --dataset_path "~/datasets/tiny_aes_sedpack/"
 """
+# type: ignore
 import argparse
 from pathlib import Path
 import time
