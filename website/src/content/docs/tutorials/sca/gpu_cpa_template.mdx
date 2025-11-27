@@ -643,7 +643,7 @@ r_update_multi_index = jax.jit(
            ),
        ),
        out_axes=(
-           aggregate_vmap,  # same shape input output
+           state_vmap,  # same shape input output
            None,  # jax.lax.scan does not matter
        ),
 ))
@@ -792,8 +792,8 @@ One particularity is that JAX is by default using `float32` instead of
 `float64` for the speed and compatibility reasons. One can read more about this
 decision and how to enable `float64` in the official documentation:
 [Default dtypes and the X64 flag — JAX documentation](https://docs.jax.dev/en/latest/default_dtypes.html).
-Another choice would be to use more numerically precise methods such as th
- [Kahan summation algorithm \- Wikipedia](https://en.wikipedia.org/wiki/Kahan_summation_algorithm).
+Another choice would be to use more numerically precise methods such as the
+[Kahan summation algorithm \- Wikipedia](https://en.wikipedia.org/wiki/Kahan_summation_algorithm).
 Changing a config and then profiling is very easy. Changing the algorithm is a little more
 complicated but also a good exercise in using the JAX ecosystem.
 

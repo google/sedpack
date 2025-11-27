@@ -71,7 +71,7 @@ class UpdateData(NamedTuple):
     Attributes:
 
       leakage_value (jnp.int32): The leakage value. Assumed to be in
-      range(different_leakage_values), see SnrAggregate.
+      range(different_leakage_values), see OnlineTemplate.
 
       trace (ArrayLike): The trace for this example, shape (trace_len,).
     """

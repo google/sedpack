@@ -42,8 +42,8 @@ class UpdateData(NamedTuple):
 
       trace (ArrayLike): The trace for this example, shape (trace_len,).
 
-      leakage_value (ArrayLike): The leakage value given the guess. Assumed to
-      be in range(different_leakage_values). The shape is
+      hypothesis (ArrayLike): The leakage value given the guess. Assumed to be
+      in range(different_leakage_values). The shape is
       (different_target_secrets,).
     """
     trace: ArrayLike
@@ -278,7 +278,7 @@ def cpa_single_byte(
     dataset_path: Path,
     split: SplitT,
     trace_len: int,
-) -> npt.NDArray[np.float32]:
+) -> int:
     """Compute SNR using NumPy.
     """
     # Load the dataset
@@ -420,7 +420,7 @@ def cpa(
     split: SplitT,
     trace_len: int,
     batch_size: int,
-) -> npt.NDArray[np.float32]:
+) -> list[int]:
     """Run CPA on all 16 byte indices.
     """
     # Load the dataset
@@ -507,7 +507,7 @@ def cpa(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description="CPA")
     parser.add_argument(
         "--dataset_path",
         "-d",

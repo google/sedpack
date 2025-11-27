@@ -118,7 +118,7 @@ def jax_finalize(aggregate: SnrAggregate) -> tuple[jax.Array, jax.Array]:
 def jax_update(
     aggregate: SnrAggregate,
     data: UpdateData,
-) -> SnrAggregate:
+) -> tuple[SnrAggregate, jnp.int32]:
     """For a given update of trace and leakage_value update the aggregate
     (single example, not batched). Returns the aggregate update and the total
     number of updates to be directly usable with jax.lax.scan.
@@ -176,7 +176,7 @@ def snr_jax(
     dataset_path: Path,
     ap_name: str,
 ) -> npt.NDArray[np.float32]:
-    """Compute SNR using NumPy.
+    """Compute SNR using JAX.
     """
     # Load the dataset
     dataset = Dataset(dataset_path)
@@ -232,7 +232,7 @@ def snr_jax_batched(
     dataset_path: Path,
     ap_name: str,
 ) -> npt.NDArray[np.float32]:
-    """Compute SNR using NumPy.
+    """Compute SNR using JAX.
     """
     # Load the dataset
     dataset = Dataset(dataset_path)
@@ -286,7 +286,7 @@ def snr_jax_batched(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description="SNR")
     parser.add_argument(
         "--dataset_path",
         "-d",
