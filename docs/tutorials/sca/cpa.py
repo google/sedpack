@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# type: ignore
 """Side channel attack tutorial.
 
 Compute CPA https://wiki.newae.com/Correlation_Power_Analysis.
@@ -18,7 +20,6 @@ Compute CPA https://wiki.newae.com/Correlation_Power_Analysis.
 Example use:
     python cpa.py --dataset_path "~/datasets/tiny_aes_sedpack/"
 """
-# type: ignore
 import argparse
 from functools import partial
 from pathlib import Path

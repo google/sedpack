@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# type: ignore
 """Side channel attack tutorial.
 
 Compute and plot signal to noise ratio.
@@ -20,7 +22,6 @@ Be sure to install SCAAML: python -m pip install scaaml
 Example use:
     python snr.py --dataset_path "~/datasets/tiny_aes_sedpack/"
 """
-# type: ignore
 import argparse
 from pathlib import Path
 import time

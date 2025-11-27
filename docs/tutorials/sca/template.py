@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# type: ignore
 """Template attacks code. Based on
 http://wiki.newae.com/Tutorial_B8_Profiling_Attacks_(Manual_Template_Attack)
 http://wiki.newae.com/Template_Attacks#Points_of_Interest
@@ -19,8 +21,6 @@ Chari, Suresh, Josyula R. Rao, and Pankaj Rohatgi. "Template attacks."
 International workshop on cryptographic hardware and embedded systems.
 Berlin, Heidelberg: Springer Berlin Heidelberg, 2002.
 """
-
-# type: ignore
 import argparse
 from pathlib import Path
 import math
