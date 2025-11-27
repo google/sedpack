@@ -107,7 +107,7 @@ def _update_state(
     # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
     # Welford's online algorithm
     n = prev_n + 1
-    delta = update_data.trace  - prev_mean
+    delta = update_data.trace - prev_mean
     mean = prev_mean + (delta / n)
     delta2 = update_data.trace - mean
     c = prev_c + jnp.einsum("i,j->ij", delta, delta2)
