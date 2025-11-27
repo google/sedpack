@@ -45,7 +45,13 @@ export default defineConfig({
               items: [
                 { label: 'SCA Overview', slug: 'tutorials/sca/overview' },
                 { label: 'Dataset Preparation', slug: 'tutorials/sca/dataset' },
-                { label: 'Signal to Noise Ratio', slug: 'tutorials/sca/snr' },
+                {
+			label: 'Classical Attacks',
+			items: [
+				{ label: 'Signal to Noise Ratio', slug: 'tutorials/sca/snr' },
+				{ label: 'GPU Acceleration of CPA and Template Attacks', slug: 'tutorials/sca/gpu_cpa_template' },
+			],
+		},
                 { label: 'Deep Learning (GPAM)', slug: 'tutorials/sca/gpam' },
               ],
             },
