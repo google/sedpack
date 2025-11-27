@@ -104,10 +104,13 @@ def _update_state(
     prev_mean = state.mean[update_data.leakage_value]
     prev_c = state.c[update_data.leakage_value]
 
+    # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+    # Welford's online algorithm
     n = prev_n + 1
-    dm = update_data.trace - prev_mean
-    mean = prev_mean + (dm / n)
-    c = prev_c + jnp.einsum("i,j->ij", dm, dm)
+    delta = update_data.trace  - prev_mean
+    mean = prev_mean + (delta / n)
+    delta2 = update_data.trace - mean
+    c = prev_c + jnp.einsum("i,j->ij", delta, delta2)
 
     return (
         OnlineTemplate(  # Carry for jax.lax.scan
