@@ -33,6 +33,7 @@ Woudenberg
 Yann
 Yokeable
 arange
+argmax
 argnames
 asyncstdlib
 bldr
@@ -65,6 +66,7 @@ itemsize
 kwarguments
 linalg
 logpdf
+mathbb
 mathjax
 ndarray
 newbyteorder
@@ -96,5 +98,6 @@ tinyaes
 tobytes
 uoffset
 vmap
+vmaps
 xored
 zstd
