@@ -19,7 +19,7 @@ name = "sedpack_rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-criterion = "0.7.0"
+criterion = "0.8.1"
 flatbuffers = "25.9"
 flate2 = { version = "1.1.4" }
 glob = "0.3.3"
