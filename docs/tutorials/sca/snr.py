@@ -110,9 +110,7 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
             desc=f"[JAX] Computing SNR over {split}",
             total=dataset.dataset_info.splits[split].number_of_examples,
     ):
-        current_leakage = int(
-            example[ap_name][0],
-        ).bit_count()
+        current_leakage = int(example[ap_name][0]).bit_count()
         leakage_to_aggregate[current_leakage] = jax_update(
             leakage_to_aggregate[current_leakage],
             example["trace1"],
