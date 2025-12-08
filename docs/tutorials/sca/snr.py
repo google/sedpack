@@ -43,7 +43,7 @@ import jax.numpy as jnp
 AggregateT = tuple[jax.Array, jax.Array, jax.Array]
 
 
-@jax.jit  # type: ignore[misc]
+@jax.jit  # type: ignore[untyped-decorator]
 def jax_update(existing_aggregate: AggregateT,
                new_trace: jax.Array) -> AggregateT:
     """For a given value `new_trace`, compute the new `count`, new `mean`, and
