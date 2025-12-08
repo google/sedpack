@@ -74,7 +74,7 @@ def loss_fn(model: CNN, batch: dict[str, Array]) -> tuple[Array, Array]:
     return loss, logits
 
 
-@nnx.jit  # type: ignore[misc]
+@nnx.jit  # type: ignore[untyped-decorator]
 def train_step(model: CNN, optimizer: nnx.Optimizer, metrics: nnx.MultiMetric,
                batch: dict[str, ArrayLike]) -> None:
     """Train for a single step.
@@ -85,7 +85,7 @@ def train_step(model: CNN, optimizer: nnx.Optimizer, metrics: nnx.MultiMetric,
     optimizer.update(grads)
 
 
-@nnx.jit  # type: ignore[misc]
+@nnx.jit  # type: ignore[untyped-decorator]
 def eval_step(
     model: CNN,
     metrics: nnx.MultiMetric,

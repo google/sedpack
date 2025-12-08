@@ -43,7 +43,7 @@ import jax.numpy as jnp
 AggregateT = tuple[jax.Array, jax.Array, jax.Array]
 
 
-@jax.jit  # type: ignore[misc]
+@jax.jit  # type: ignore[untyped-decorator]
 def jax_update(existing_aggregate: AggregateT,
                new_trace: jax.Array) -> AggregateT:
     """For a given value `new_trace`, compute the new `count`, new `mean`, and
@@ -111,7 +111,7 @@ def snr_jax(dataset_path: Path, ap_name: str) -> npt.NDArray[np.float32]:
             total=dataset.dataset_info.splits[split].number_of_examples,
     ):
         current_leakage = int(
-            example[ap_name][0],  # type: ignore[index]
+            example[ap_name][0],
         ).bit_count()
         leakage_to_aggregate[current_leakage] = jax_update(
             leakage_to_aggregate[current_leakage],
