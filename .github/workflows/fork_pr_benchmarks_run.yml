@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
       - name: Use cached venv or create it
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
@@ -55,7 +55,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
@@ -72,12 +72,12 @@ jobs:
       - name: Benchmarking
         run: (cd rust/ ; cargo bench > benchmark_results.txt)
       - name: Upload Benchmark Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: benchmark_results.txt
           path: ./rust/benchmark_results.txt
       - name: Upload GitHub Pull Request Event
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: event.json
           path: ${{ github.event_path }}
