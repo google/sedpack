@@ -18,7 +18,7 @@ authors = [
 ]
 description = "General ML dataset package"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["machine learning", "dataset"]
 license = {text = "Apache License 2.0"}
 classifiers = [
