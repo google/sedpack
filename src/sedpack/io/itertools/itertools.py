@@ -45,7 +45,10 @@ def next_random_state(r: np.uint32) -> np.uint32:
 
     Returns the next state.
     """
-    return np.uint32(r * 1664525 + 1013904223)
+    with np.testing.suppress_warnings() as sup:
+        sup.filter(RuntimeWarning, "overflow encountered in scalar")
+        r = np.uint32(r * 1664525 + 1013904223)
+    return r
 
 
 T = TypeVar("T")
