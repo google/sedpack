@@ -286,7 +286,7 @@ def train(dataset_path: Path) -> None:
                 process_record=process_record,
                 batch_size=batch_size,
             )
-        case "jax":
+        case "jax" | "torch":
             train_ds = dataset.as_numpy_iterator_rust_batched(
                 split="train",
                 process_batch=process_batch,
