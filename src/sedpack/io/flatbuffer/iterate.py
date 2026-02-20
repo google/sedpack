@@ -18,7 +18,7 @@ information how it is saved.
 
 import logging
 from pathlib import Path
-from typing import AsyncIterator, Iterable
+from typing import AsyncIterator, Iterable, cast
 
 import aiofiles
 import numpy as np
@@ -174,7 +174,7 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
                     buffer=np_bytes,
                     dtype=np.dtype("int64").newbyteorder("<"),
                 )
-                return array.tolist()  # type: ignore[return-value]
+                return cast(list[int], array.tolist())
             case _:
                 # The rest is interpreted as NumPy array.
                 pass
