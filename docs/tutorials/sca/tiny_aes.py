@@ -273,7 +273,6 @@ def train(dataset_path: Path) -> None:
     )
     model.summary()
 
-
     match keras.backend.backend():
         case "tensorflow":
             train_ds = dataset.as_tfdataset(
