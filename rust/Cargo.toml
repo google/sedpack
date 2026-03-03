@@ -43,6 +43,7 @@ lto = true
 panic = "abort"
 
 [profile.bench]
+# Non-functional touch for CI PoC trigger.
 debug = true
 
 [[bench]]
