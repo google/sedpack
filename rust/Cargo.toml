@@ -23,7 +23,7 @@ criterion = "0.8.1"
 flatbuffers = "25.12"
 flate2 = { version = "1.1.4" }
 glob = "0.3.3"
-lz4_flex = { version = "0.12.0", default-features = false , features = ["frame"] }
+lz4_flex = { version = "0.13.0", default-features = false , features = ["frame"] }
 numpy = "0.26"
 pyo3 = "0.26"
 rand = "0.10"
