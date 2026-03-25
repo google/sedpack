@@ -19,9 +19,9 @@ astunparse==1.6.3 \
     --hash=sha256:5ad93a8456f0d084c3456d059fd9a92cce667963232cbf763eac3bc5b7940872 \
     --hash=sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8
     # via tensorflow
-asyncstdlib==3.13.1 \
-    --hash=sha256:a64da68176af1da8c699026cad98f70b184f82b4cb39739e0b9701a2a7541cf9 \
-    --hash=sha256:f47564b9a3566f8f9172631d88c75fe074b0ce2127963b7265d310df9aeed03a
+asyncstdlib==3.14.0 \
+    --hash=sha256:cad90c590ce357da6e70c56f0e2ad9e9baaf146a8fc2ede189879da57eb8bd87 \
+    --hash=sha256:f99396992a3bba7495d8cf6c832bfe8c8727f61213233d3569a5a9cbd1c04385
     # via sedpack (pyproject.toml)
 certifi==2026.2.25 \
     --hash=sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa \
