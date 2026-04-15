@@ -65,6 +65,7 @@ pub fn example_iterator_benchmark(c: &mut Criterion) {
     });
 }
 
+/// Run me
 pub fn parallel_map_benchmark(c: &mut Criterion) {
     let shard_infos = get_shard_files();
     c.bench_function("parallel_map", |b| {
