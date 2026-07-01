@@ -19,10 +19,10 @@ jobs:
     name: Run Fork PR Benchmarks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # begin: Use source sedpack package
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
         with:
@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
       - name: Use cached venv or create it
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
@@ -55,7 +55,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
