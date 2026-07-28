@@ -1,7 +1,4 @@
 name: pytest
-permissions:
-  contents: read
-  pull-requests: write
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -21,6 +18,9 @@ on:
 jobs:
   unittesting:
     runs-on: ${{ matrix.platform.runner }}
+    permissions:
+      contents: read
+      pull-requests: write
     strategy:
       matrix:
         # ubuntu-20.04-arm was not stable enough when testing
@@ -77,6 +77,9 @@ jobs:
 
   coverage:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python 3.11
