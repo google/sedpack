@@ -22,9 +22,9 @@ jobs:
       checks: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           cache: 'pip'
       - name: Installing sedpack pip package
@@ -33,8 +33,8 @@ jobs:
       - name: Prepare benchmarking data
         working-directory: ./rust
         run: bash benches/setup.sh
-      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # v1
-      - uses: bencherdev/bencher@f89d454e74a32a81b2eab29fe0afdb2316617342 # v0.5
+      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48
+      - uses: bencherdev/bencher@f89d454e74a32a81b2eab29fe0afdb2316617342
       - name: Track base branch benchmarks with Bencher
         working-directory: ./rust
         run: |

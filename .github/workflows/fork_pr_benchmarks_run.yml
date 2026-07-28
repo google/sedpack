@@ -19,12 +19,12 @@ jobs:
     name: Run Fork PR Benchmarks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # begin: Use source sedpack package
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python 3.11
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
       - name: Use cached venv or create it
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
@@ -55,7 +55,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
@@ -67,17 +67,17 @@ jobs:
       - name: Prepare benchmarking data
         run: (cd rust/ ; bash benches/setup.sh )
 
-      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # v1
-      - uses: bencherdev/bencher@f89d454e74a32a81b2eab29fe0afdb2316617342 # v0.5
+      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48
+      - uses: bencherdev/bencher@f89d454e74a32a81b2eab29fe0afdb2316617342
       - name: Benchmarking
         run: (cd rust/ ; cargo bench > benchmark_results.txt)
       - name: Upload Benchmark Results
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: benchmark_results.txt
           path: ./rust/benchmark_results.txt
       - name: Upload GitHub Pull Request Event
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: event.json
           path: ${{ github.event_path }}
