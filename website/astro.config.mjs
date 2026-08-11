@@ -1,18 +1,19 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import remarkMath from 'remark-math';
-import rehypeMathJax from 'rehype-mathjax';
+import { satteri } from '@astrojs/markdown-satteri';
+import { satteriMathjax } from 'satteri-mathjax';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://google.github.io/sedpack/',
   base: '/sedpack',
 
-  // Configure `remark-math` and `rehype-mathjax` plugins:
   markdown: {
-    remarkPlugins: [remarkMath],
-    rehypePlugins: [rehypeMathJax],
+    processor: satteri({
+      features: { math: true },
+      mdastPlugins: [satteriMathjax()],
+    }),
   },
 
   integrations: [
