@@ -31,7 +31,7 @@ def test_can_write_and_read():
 
     attributes: dict[str, np.ndarray] = {
         "attribute_bool":
-            np.random.randint(0, 1, size=13, dtype=bool),
+            np.array([False, True] * 6 + [False], dtype=bool),
         "attribute_byte":
             np.random.randint(-120, 120, size=17, dtype=np.int8),
         "attribute_ubyte":
@@ -94,57 +94,57 @@ def test_can_write_and_read():
     # Read back using FlatBuffers API
     parsed_test_vectors = NumPyVectorTest.GetRootAs(byte_buffer)
 
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeBoolAsNumpy(),
             attribute=attribute_description["attribute_bool"],
         ), attributes["attribute_bool"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeByteAsNumpy(),
             attribute=attribute_description["attribute_byte"],
         ), attributes["attribute_byte"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeUbyteAsNumpy(),
             attribute=attribute_description["attribute_ubyte"],
         ), attributes["attribute_ubyte"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeShortAsNumpy(),
             attribute=attribute_description["attribute_short"],
         ), attributes["attribute_short"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeUshortAsNumpy(),
             attribute=attribute_description["attribute_ushort"],
         ), attributes["attribute_ushort"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeIntAsNumpy(),
             attribute=attribute_description["attribute_int"],
         ), attributes["attribute_int"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeUintAsNumpy(),
             attribute=attribute_description["attribute_uint"],
         ), attributes["attribute_uint"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeFloatAsNumpy(),
             attribute=attribute_description["attribute_float"],
         ), attributes["attribute_float"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeLongAsNumpy(),
             attribute=attribute_description["attribute_long"],
         ), attributes["attribute_long"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeUlongAsNumpy(),
             attribute=attribute_description["attribute_ulong"],
         ), attributes["attribute_ulong"])
-    np.array_equal(
+    np.testing.assert_array_equal(
         IterateShardFlatBuffer.decode_array(
             np_bytes=parsed_test_vectors.AttributeDoubleAsNumpy(),
             attribute=attribute_description["attribute_double"],
