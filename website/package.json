@@ -13,7 +13,7 @@
     "@astrojs/starlight": "^0.41.7",
     "astro": "^7.2.0",
     "satteri-mathjax": "^0.1.0",
-    "sharp": "^0.35.2",
+    "sharp": "^0.35.4",
     "typescript": "^7.0.2"
   }
 }
