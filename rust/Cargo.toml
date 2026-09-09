@@ -34,7 +34,7 @@ tracing = "0.1.44"
 tracing-perfetto = "0.1.5"
 tracing-subscriber = "0.3.23"
 yoke = { version = "0.8", features = ["derive"] }
-zstd = "0.13.3"
+zstd = "0.14.0"
 
 # Release performance optimizations.
 [profile.release]
