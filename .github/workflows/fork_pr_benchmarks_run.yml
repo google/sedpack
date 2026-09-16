@@ -67,7 +67,7 @@ jobs:
       - name: Prepare benchmarking data
         run: (cd rust/ ; bash benches/setup.sh )
 
-      - uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f
       - uses: bencherdev/bencher@f89d454e74a32a81b2eab29fe0afdb2316617342
       - name: Benchmarking
         run: (cd rust/ ; cargo bench > benchmark_results.txt)
