@@ -16,6 +16,9 @@ explanations see: https://google.github.io/sedpack/tutorials/mnist
 
 Inspired by https://flax.readthedocs.io/en/latest/mnist_tutorial.html
 
+Note that this script uses `as_tfdataset`, which requires TensorFlow to be
+installed (e.g., via `pip install "sedpack[tf]"`).
+
 Example use:
     python mnist_save.py -d "~/Datasets/my_new_dataset/"
     python mnist_read_jax.py -d "~/Datasets/my_new_dataset/"

@@ -16,6 +16,14 @@ All one should need to install the package from
 pip install sedpack
 ```
 
+If you plan to use [TensorFlow](https://www.tensorflow.org/) features (such as
+the `"tfrec"` shard format or `as_tfdataset`), TensorFlow needs to be installed
+as well:
+
+```bash
+pip install "sedpack[tf]"
+```
+
 Note that this is the latest stable version of the package.
 If you want the bleeding edge features install from source instead.
 
@@ -75,13 +83,19 @@ cd sedpack/  # Change directory to the cloned git repository
 
 </Tabs>
 
-Install sedpack with development dependencies:
+Install sedpack with development dependencies and TensorFlow:
 
 ```bash
-python3 -m pip install --editable '.[dev]'
+python3 -m pip install --editable '.[dev,tf]'
 ```
 
-[optional] Run unit-tests, none should be skipped:
+Or for a minimal installation without development or TensorFlow dependencies:
+
+```bash
+python3 -m pip install --editable .
+```
+
+[optional] Run unit-tests (none should be skipped when TensorFlow is installed):
 
 ```bash
 python -m pytest

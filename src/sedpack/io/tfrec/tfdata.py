@@ -20,13 +20,15 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 from typing import Any, Callable, cast
 
 import numpy as np
-import tensorflow as tf
 
 from sedpack.io.metadata import Attribute
 
 
 def bytes_feature(value: Any) -> Any:
     """Returns a bytes_list from a string / byte."""
+    # TensorFlow is an optional dependency.
+    import tensorflow as tf  # pylint: disable=import-outside-toplevel
+
     if isinstance(value, type(tf.constant(0))):
         # BytesList won't unpack a string from an EagerTensor.
         value = value.numpy()
@@ -35,6 +37,9 @@ def bytes_feature(value: Any) -> Any:
 
 def float_feature(value: Any) -> Any:
     """Returns a float_list from a float / double."""
+    # TensorFlow is an optional dependency.
+    import tensorflow as tf  # pylint: disable=import-outside-toplevel
+
     # Fix shape to 1D
     value = tf.constant([value])  # scalar to list, reshaped anyway
     value = tf.reshape(value, -1)
@@ -47,6 +52,9 @@ def float_feature(value: Any) -> Any:
 
 def int64_feature(value: Any) -> Any:
     """Returns an int64_list from a bool / enum / int / uint."""
+    # TensorFlow is an optional dependency.
+    import tensorflow as tf  # pylint: disable=import-outside-toplevel
+
     # Fix shape to 1D
     value = tf.constant([value])  # scalar to list, reshaped anyway
     value = tf.reshape(value, -1)
@@ -60,6 +68,8 @@ def get_from_tfrecord(
         saved_data_description: list[Attribute]) -> Callable[[Any], Any]:
     """Construct the from_tfrecord function.
     """
+    # TensorFlow is an optional dependency.
+    import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
     # TF_FEATURES construction: must contains all features, it is used in
     # the closure from_tfrecord.
@@ -122,6 +132,8 @@ def to_tfrecord(saved_data_description: list[Attribute],
 
     Returns: TF.train.Example
     """
+    # TensorFlow is an optional dependency.
+    import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
     # Check there are no unexpected values
     attribute_names = {attribute.name for attribute in saved_data_description}

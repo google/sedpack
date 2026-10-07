@@ -14,6 +14,9 @@
 """Download the MNIST dataset and save it in dataset-lib format. For a tutorial
 with explanations see: https://google.github.io/sedpack/tutorials/mnist
 
+Note that this script requires TensorFlow to be installed (e.g., via
+`pip install "sedpack[tf]"`).
+
 Example use:
     python mnist_save.py -d "~/Datasets/mnist_dataset/"
     python mnist_read_keras.py -d "~/Datasets/mnist_dataset/"

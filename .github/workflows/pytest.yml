@@ -60,7 +60,7 @@ jobs:
         run: |
           pip install pip==25.2 # TODO(remove the pinning) pip-tools issue 2252
           pip install pip-tools
-          pip-compile --generate-hashes --extra dev pyproject.toml > dev_requirements.txt
+          pip-compile --generate-hashes --extra dev --extra tf pyproject.toml > dev_requirements.txt
           pip install -r dev_requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
@@ -71,7 +71,62 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install sedpack locally
-        run: pip install --editable ".[dev]"
+        run: pip install --editable ".[dev,tf]"
+      - name: Running unit tests
+        run: python -m pytest
+
+  unittesting_minimal:
+    runs-on: ${{ matrix.platform.runner }}
+    permissions:
+      contents: read
+      pull-requests: write
+    strategy:
+      matrix:
+        # ubuntu-20.04-arm was not stable enough when testing
+        platform:
+          - runner: ubuntu-latest  # x64
+          - runner: windows-latest  # x64
+          - runner: macos-14  # arm64
+          - runner: macos-15-intel  # Intel
+          - runner: macos-latest  # arm64
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Get pip cache directory
+        id: pip-cache
+        shell: bash
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: Use cached venv or create it
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        id: cache
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ matrix.platform.runner }}-pip-minimal
+      # Build a virtualenv, but only if it doesn't already exist
+      - name: Populate pip cache
+        run: |
+          pip install pip==25.2 # TODO(remove the pinning) pip-tools issue 2252
+          pip install pip-tools
+          pip-compile --generate-hashes pyproject.toml > min_requirements.txt
+          pip install -r min_requirements.txt
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Install sedpack locally
+        run: |
+          pip install --editable .
+          pip install pytest pytest-asyncio
       - name: Running unit tests
         run: python -m pytest
 
@@ -114,7 +169,7 @@ jobs:
       - name: Installing test requirements and sedpack
         # Start by "installing" sedpack to be sure all dependencies are listed
         run: |
-          pip install --editable ".[dev]"
+          pip install --editable ".[dev,tf]"
           echo "PYTHONPATH=./src:$PYTHONPATH" >> $GITHUB_ENV
       - name: Install workflow dependencies
         run: pip install --upgrade pytest coverage

@@ -26,10 +26,6 @@ from typing import (
 import uuid
 
 from tqdm.auto import tqdm
-try:
-    import tensorflow as tf
-except ImportError:
-    tf = None  # type: ignore[assignment]
 
 import sedpack
 from sedpack.io.dataset_base import DatasetBase
@@ -301,10 +297,13 @@ def _wrapper_func(
     """Helper function for write_multiprocessing. Needs to be pickleable.
     """
     # Prevent each process from hoarding the whole GPU memory.
-    if tf is None:
-        context = contextlib.nullcontext()  # type: ignore[unreachable]
-    else:
+    context: contextlib.AbstractContextManager[Any]
+    try:
+        # TensorFlow is an optional dependency.
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
         context = tf.device("CPU")
+    except ImportError:
+        context = contextlib.nullcontext()
     with context:
         (
             feed_writer,

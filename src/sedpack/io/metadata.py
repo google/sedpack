@@ -119,7 +119,8 @@ class DatasetStructure(BaseModel):
         compression (str): Which compression to use.
 
         shard_file_type (ShardFileTypeT): Which file-type is used to store
-        shard information.
+        shard information. Using "tfrec" requires TensorFlow to be installed
+        (e.g., via `pip install "sedpack[tf]"`).
 
         hash_checksum_algorithms (tuple[HashChecksumT, ...]): Which hash
         algorithms should be computed for file hash checksums.

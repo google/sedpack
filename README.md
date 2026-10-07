@@ -15,8 +15,9 @@ See the documentation website:
 
 ### Dependencies
 
-To use this library you need to have a working version of [TensorFlow
-2.x](https://www.tensorflow.org/install).
+[TensorFlow 2.x](https://www.tensorflow.org/install) is an optional dependency
+required only when using the `"tfrec"` shard format or `Dataset.as_tfdataset`.
+It can be installed via `pip install "sedpack[tf]"`.
 
 Development dependencies:
 
@@ -28,8 +29,10 @@ Development dependencies:
 
 1.  Clone the repository: `git clone https://github.com/google/sedpack`
 2.  Install dependencies: `python3 -m pip install --require-hashes -r requirements.txt`
-3.  Install the package in development mode: `python3 -m pip install --editable
-    .` (short `pip install -e .` or legacy `python setup.py develop`)
+3.  Install the package in development mode:
+    `python3 -m pip install --editable ".[dev]"` (or
+    `python3 -m pip install --editable .` for a minimal installation without
+    TensorFlow and development tools)
 
 #### Rust install
 
@@ -37,7 +40,8 @@ Development dependencies:
 -   [Install Rust](https://www.rust-lang.org/tools/install)
 -   Run `maturin develop --release`
 -   Run `python -m pytest` from the project root directory -- no tests should
-    be skipped
+    be skipped when TensorFlow is installed (e.g., via
+    `pip install -e ".[dev]"`)
 
 ### Update dependencies
 
@@ -50,7 +54,8 @@ Update: `pip-compile pyproject.toml --generate-hashes --upgrade` and commit requ
 
 #### Package install
 
-`pip install sedpack`
+`pip install sedpack` (or `pip install "sedpack[tf]"` to include optional
+TensorFlow support)
 
 ### Tutorial
 
