@@ -111,7 +111,8 @@ class DatasetIterationTF(DatasetBase):
             file_parallelism: int | None = os.cpu_count(),
             parallelism: int | None = os.cpu_count(),
             shuffle: int = 1_000) -> TFDatasetT:
-        """"Dataset as tfdataset
+        """"Dataset as tfdataset. Requires TensorFlow to be installed (e.g.,
+        via `pip install "sedpack[tf]"`).
 
         Args:
 
@@ -152,6 +153,8 @@ class DatasetIterationTF(DatasetBase):
 
         Returns: A tf.data.Dataset object of infinite stream of shuffled and
         batched examples.
+
+        Raises: ImportError if TensorFlow is not installed.
         """
         # TensorFlow is an optional dependency.
         import tensorflow as tf  # pylint: disable=import-outside-toplevel

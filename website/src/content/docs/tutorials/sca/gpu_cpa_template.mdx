@@ -782,7 +782,8 @@ capable of doing that. Luckily, it is rather easy to change this behaviour
 using a flag. One can read more about it in the official
 [GPU memory allocation — JAX documentation](https://docs.jax.dev/en/latest/gpu_memory_allocation.html).
 
-If one is using TensorFlow shard files (“tfrec”) they would also benefit from
+If one is using TensorFlow shard files (“tfrec”, which requires TensorFlow to be
+installed, e.g., `pip install "sedpack[tf]"`) they would also benefit from
 iterating inside a CPU context using: `with tf.device(“/CPU”):` as noted by
 [`Use a GPU | TensorFlow Core`](https://www.tensorflow.org/guide/gpu#manual_device_placement).
 

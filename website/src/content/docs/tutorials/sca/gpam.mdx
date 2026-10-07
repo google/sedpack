@@ -103,7 +103,8 @@ def process_record(record: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
     return (inputs, outputs)
 ```
 
-And we train using
+And we train using `as_tfdataset` (note that `as_tfdataset` requires TensorFlow
+to be installed, e.g., `pip install "sedpack[tf]"`):
 
 ```python
 train_ds = dataset.as_tfdataset(

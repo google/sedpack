@@ -16,6 +16,7 @@
 
 import itertools
 from pathlib import Path
+import sys
 from typing import Callable, Union
 
 import pytest
@@ -167,3 +168,24 @@ def test_end2end_as_tfdataset(
         compression=compression,
         process_record=process_record,
     )
+
+
+def test_as_tfdataset_missing_tensorflow(
+    tmp_path: Union[str, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(sys.modules, "tensorflow", None)
+    dataset = Dataset.create(
+        path=Path(tmp_path) / "no_tf_experiment",
+        metadata=Metadata(description="Test of the lib"),
+        dataset_structure=sedpack.io.metadata.DatasetStructure(
+            saved_data_description=[
+                sedpack.io.metadata.Attribute(
+                    name="attribute_name",
+                    dtype="float32",
+                    shape=(4,),
+                ),
+            ],),
+    )
+    with pytest.raises(ImportError):
+        dataset.as_tfdataset(split=TRAIN_SPLIT)

@@ -19,8 +19,6 @@ import os
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Iterable
 
-import tensorflow as tf
-
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
@@ -48,6 +46,9 @@ class IterateShardTFRec(IterateShardBase[T]):
     def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
         """Iterate a shard saved in the TFRec format
         """
+        # TensorFlow is an optional dependency.
+        import tensorflow as tf  # pylint: disable=import-outside-toplevel
+
         if not self.from_tfrecord:
             self.from_tfrecord = get_from_tfrecord(
                 self.dataset_structure.saved_data_description)

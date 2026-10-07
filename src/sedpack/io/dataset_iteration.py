@@ -24,11 +24,6 @@ from typing import (
 )
 
 import asyncstdlib
-try:
-    # TensorFlow is an optional dependency.
-    import tensorflow as tf
-except ImportError:
-    tf = None  # type: ignore[assignment]
 
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
@@ -353,9 +348,8 @@ class DatasetIteration(DatasetBase):
         # Do not use GPU with tfrecords to avoid allocating whole GPU memory by
         # each thread.
         if self.dataset_structure.shard_file_type == "tfrec":
-            if tf is None:
-                raise ImportError("To use a TensorFlow record dataset please "
-                                  "install TensorFlow")
+            # TensorFlow is an optional dependency.
+            import tensorflow as tf  # pylint: disable=import-outside-toplevel
             context = tf.device("CPU")
         else:
             context = contextlib.nullcontext()

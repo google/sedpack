@@ -127,7 +127,8 @@ Finally all shards are stored in a given file type. The library supports the fol
 -   "tfrec": stands for
     [TFRecord](https://www.tensorflow.org/tutorials/load_data/tfrecord) is a
     [Protocol Buffer](https://protobuf.dev/) based storage supported by
-    [TensorFlow](https://www.tensorflow.org).
+    [TensorFlow](https://www.tensorflow.org) (requires TensorFlow to be
+    installed, e.g., `pip install "sedpack[tf]"`).
 -   "fb": stands for [FlatBuffer](https://flatbuffers.dev/) a more light-weight
     version of Protocol Buffer format.
 -   "npz": stands for [NumPy](https://numpy.org/) format.
@@ -277,7 +278,9 @@ your own):
 
 ### Load
 
-One can load the dataset and use `as_tfdataset` for Keras/TensorFlow training.
+One can load the dataset and use `as_tfdataset` for Keras/TensorFlow training
+(note that `as_tfdataset` requires TensorFlow to be installed, e.g.,
+`pip install "sedpack[tf]"`).
 It is often the case that your training loop needs other format of data than an
 iterator of examples.
 
