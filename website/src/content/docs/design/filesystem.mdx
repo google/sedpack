@@ -1,0 +1,253 @@
+---
+title: Filesystem and Metadata Structure
+description: Sedpack dataset directory layout, shard files, and metadata
+---
+
+A Sedpack dataset is stored in a dedicated root directory containing a
+top-level `dataset_info.json` file and one subdirectory per populated split
+(`train`, `test`, `holdout`). Both metadata and data files are organized as a
+tree to scale to many examples without overwhelming the underlying filesystem
+or requiring all metadata to be loaded into memory at once.
+
+## Directory Layout
+
+File systems degrade in performance when a single directory contains too many
+entries. When writing shards, `PathGenerator` (with defaults `levels=4`,
+`max_branching=1_000`, `name_length=10`) creates 3 nested subdirectory levels of
+10-character hexadecimal names (at most 1,000 entries per directory) and a
+32-character hexadecimal shard filename at the leaf (when using
+`write_multiprocessing`, each worker process also writes under its own
+32-character UUID subdirectory inside the split):
+
+```text
+tiny_aes_sedpack/
+├── dataset_info.json
+├── train/
+│   ├── shards_list.json
+│   └── 8a745b3853/
+│       ├── shards_list.json
+│       └── 412a5873e4/
+│           ├── shards_list.json
+│           └── 20fd9888f6/
+│               ├── shards_list.json
+│               ├── 062203904722443e82655d5b65650f68.fb
+│               └── 62b497f95ff84c1184fc7f85316967e8.fb
+├── test/
+│   └── ...
+└── holdout/
+    └── ...
+```
+
+All file paths stored inside JSON metadata files are relative to the dataset
+root directory and are validated to prevent directory traversal (`..`).
+
+## Metadata Hierarchy
+
+Sedpack separates dataset-wide configuration from per-directory shard listings
+using [Pydantic](https://docs.pydantic.dev/) models serialized as JSON. Custom
+JSON-serializable metadata (`custom_metadata`) can be attached at three levels:
+the dataset (`Metadata`), individual attributes (`Attribute`), and individual
+shards (`ShardInfo`).
+
+### 1. Root Configuration (`dataset_info.json`)
+
+The root `dataset_info.json` file (represented by `DatasetInfo`) is the entry
+point when loading a dataset and always serializes three top-level sections:
+
+-   `metadata` (`Metadata`): General information about the dataset:
+    -   `description`: Human-readable description (default `""`).
+    -   `dataset_license`: License string or URL.
+    -   `dataset_version`: Semantic version of the dataset (default `"1.0.0"`).
+    -   `download_from`: Source URL for downloading the dataset (default `""`).
+    -   `custom_metadata`: Arbitrary JSON-serializable dictionary (for example,
+        citation info or target implementation in the TinyAES dataset).
+    -   `sedpack_version`: Version of Sedpack used to create the dataset
+        (checked on load to ensure the reader is not older than the dataset).
+-   `dataset_structure` (`DatasetStructure`): Schema and storage parameters:
+    -   `saved_data_description`: List of `Attribute` definitions (`name`,
+        `dtype`, `shape`, and `custom_metadata` such as global `"min"` and
+        `"max"` trace values in TinyAES). When `dtype` is `"bytes"` or `"str"`
+        and `shape` is `()`, the attribute has variable size. When
+        `shard_file_type` is `"fb"`, attributes are stored in this exact order.
+    -   `compression`: Compression algorithm applied to shard files (`""`,
+        `"BZ2"`, `"GZIP"`, `"LZMA"`, `"LZ4"`, `"ZIP"`, `"ZLIB"`, `"ZSTD"`).
+    -   `examples_per_shard`: Maximum number of examples written to a single
+        shard file before opening a new one (default `256`).
+    -   `shard_file_type`: Storage format and file extension for shards (`"fb"`,
+        `"npz"`, or `"tfrec"`).
+    -   `hash_checksum_algorithms`: Tuple of hash algorithms (default
+        `("sha256",)`, also supporting `md5`, `sha1`, `sha224`, `sha384`,
+        `sha512`, `sha3_*`, `xxh32`, `xxh64`, `xxh128`) computed for every file.
+-   `splits` (`dict[SplitT, ShardListInfo]`): Maps each populated split
+    (`train`, `test`, `holdout`) to a `ShardListInfo` pointer referencing
+    `<split>/shards_list.json`.
+
+Example `dataset_info.json` (abbreviated from the TinyAES tutorial dataset):
+
+```json
+{
+  "metadata": {
+    "description": "SCAAML AES side-channel attacks tutorial",
+    "dataset_license": "Apache License 2.0",
+    "dataset_version": "1.0.0",
+    "download_from": "",
+    "custom_metadata": {
+      "implementation": "TinyAES"
+    },
+    "sedpack_version": "0.1.4"
+  },
+  "dataset_structure": {
+    "saved_data_description": [
+      {
+        "name": "trace1",
+        "dtype": "float16",
+        "shape": [80000],
+        "custom_metadata": {"min": -0.42, "max": 0.39}
+      },
+      {
+        "name": "key",
+        "dtype": "uint8",
+        "shape": [16],
+        "custom_metadata": {}
+      }
+    ],
+    "compression": "LZ4",
+    "examples_per_shard": 256,
+    "shard_file_type": "fb",
+    "hash_checksum_algorithms": ["sha256"]
+  },
+  "splits": {
+    "train": {
+      "shard_list_info_file": {
+        "file_path": "train/shards_list.json",
+        "hash_checksums": ["201a27e3..."]
+      },
+      "number_of_examples": 512,
+      "number_of_shards": 2
+    }
+  }
+}
+```
+
+### 2. Shard List Pointers (`ShardListInfo`)
+
+A `ShardListInfo` references a `shards_list.json` file without requiring it to
+be read immediately:
+
+-   `shard_list_info_file` (`FileInfo`): Relative `file_path` (always named
+    `shards_list.json`) and its `hash_checksums`.
+-   `number_of_examples`: Total number of examples in the subtree rooted at that
+    `shards_list.json`.
+-   `number_of_shards`: Total number of shard files in the subtree.
+
+Storing `number_of_examples` and `number_of_shards` in the pointer allows fast
+counting and indexing without traversing or downloading child metadata files.
+
+### 3. Directory Shard Lists (`shards_list.json`)
+
+Each directory in a split's hierarchy contains a `shards_list.json` file
+(represented by `ShardsList` and serialized with `exclude_defaults=True`, so
+empty fields are omitted):
+
+-   `relative_path_self`: Path to this `shards_list.json` relative to the
+    dataset root.
+-   `number_of_examples`: Sum of examples across all shards in this directory
+    and all its subdirectories.
+-   `shard_files`: List of `ShardInfo` objects for shard files located directly
+    in this directory (omitted in intermediate directories that only contain
+    subdirectories).
+-   `children_shard_lists`: List of `ShardListInfo` pointers to
+    `shards_list.json` files in immediate subdirectories (omitted in leaf
+    directories).
+
+Example intermediate `train/shards_list.json`:
+
+```json
+{
+  "relative_path_self": "train/shards_list.json",
+  "number_of_examples": 512,
+  "children_shard_lists": [
+    {
+      "shard_list_info_file": {
+        "file_path": "train/8a745b3853/shards_list.json",
+        "hash_checksums": ["c909e2cc..."]
+      },
+      "number_of_examples": 512,
+      "number_of_shards": 2
+    }
+  ]
+}
+```
+
+When writing examples concurrently or across multiple processes, each writer
+writes into its own directory subtree and produces local `shards_list.json`
+files. Calling `write_config` runs `merge_shard_infos` to recursively merge
+those updates up to `<split>/shards_list.json` and `dataset_info.json`.
+
+### 4. Individual Shard Metadata (`ShardInfo`)
+
+Each `ShardInfo` entry in a leaf `shards_list.json` describes one shard:
+
+-   `file_infos`: Tuple of `FileInfo` objects (`file_path` relative to the
+    dataset root and `hash_checksums`) for the shard file(s).
+-   `number_of_examples`: Number of examples stored in this shard.
+-   `custom_metadata`: Optional JSON-serializable dictionary attached to the
+    shard (omitted when empty). Passing a different `custom_metadata` to
+    `write_example` automatically closes the current shard and opens a new one.
+    In TinyAES, each shard stores 256 traces with the same AES key and records
+    `{"key": [...]}` in `custom_metadata`, enabling `shard_filter` and balanced
+    shard iteration without reading the shard files themselves.
+
+Example leaf `train/8a745b3853/412a5873e4/20fd9888f6/shards_list.json`:
+
+```json
+{
+  "relative_path_self": "train/8a745b3853/412a5873e4/20fd9888f6/shards_list.json",
+  "number_of_examples": 512,
+  "shard_files": [
+    {
+      "file_infos": [
+        {
+          "file_path": "train/8a745b3853/412a5873e4/20fd9888f6/062203904722443e82655d5b65650f68.fb",
+          "hash_checksums": ["00fb1da6..."]
+        }
+      ],
+      "number_of_examples": 256,
+      "custom_metadata": {
+        "key": [43, 126, 21, 22, 40, 174, 210, 166, 171, 247, 21, 136, 9, 207, 79, 60]
+      }
+    }
+  ]
+}
+```
+
+## Integrity and Merkle Tree
+
+Every `FileInfo` stores the hash checksums configured in
+`dataset_structure.hash_checksum_algorithms`:
+
+1.  Each shard file's checksum is stored in its leaf `shards_list.json`.
+2.  Each child `shards_list.json` checksum is stored in its parent's
+    `shards_list.json`.
+3.  Each split's root `shards_list.json` checksum is stored in
+    `dataset_info.json`.
+
+This forms a [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) over all
+metadata and data files in the dataset. Recording
+`expected = dataset.current_metadata_checksums()` and calling
+`dataset.check(hash_checksums_values=expected)` verifies `dataset_info.json`,
+every `shards_list.json` in the tree, and every shard file on disk.
+
+## Shard File Formats
+
+Each shard file stores up to `examples_per_shard` examples compressed with
+`dataset_structure.compression` in one of three formats:
+
+-   `"fb"` ([FlatBuffers](https://flatbuffers.dev/)): Default format. Provides
+    zero-copy-friendly binary serialization and high-throughput concurrent
+    iteration via the Rust backend.
+-   `"npz"` ([NumPy](https://numpy.org/)): Standard NumPy archive format.
+-   `"tfrec"`
+    ([TFRecord](https://www.tensorflow.org/tutorials/load_data/tfrecord)):
+    Protocol Buffer format used by TensorFlow (requires TensorFlow to be
+    installed, e.g., `pip install "sedpack[tf]"`).
