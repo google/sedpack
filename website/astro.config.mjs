@@ -58,6 +58,12 @@ export default defineConfig({
             },
           ],
         },
+        {
+          label: 'Design',
+          items: [
+            { label: 'Filesystem Structure', slug: 'design/filesystem' },
+          ],
+        },
       ],
     }),
   ],
