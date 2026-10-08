@@ -26,7 +26,7 @@ jobs:
     outputs:
       should_run: ${{ steps.filter.outputs.should_run }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           # Full history is needed to diff against origin/main.
           fetch-depth: 0
@@ -59,9 +59,9 @@ jobs:
           - runner: macos-latest  # arm64
     if: github.event_name != 'schedule' && needs.check-changes.outputs.should_run == 'true'
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Python 3.11
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -71,7 +71,7 @@ jobs:
         run: |
           echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
       - name: Use cached venv or create it
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
@@ -92,7 +92,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
@@ -119,9 +119,9 @@ jobs:
           - runner: macos-latest  # arm64
     if: github.event_name != 'schedule' && needs.check-changes.outputs.should_run == 'true'
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Python 3.11
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -131,7 +131,7 @@ jobs:
         run: |
           echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
       - name: Use cached venv or create it
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
@@ -146,7 +146,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
@@ -166,9 +166,9 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Python 3.11
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -178,7 +178,7 @@ jobs:
         run: |
           echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
       - name: Use cached venv or create it
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         id: cache
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
@@ -191,7 +191,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
         id: cache-save
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ steps.cache.outputs.cache-primary-key }}
