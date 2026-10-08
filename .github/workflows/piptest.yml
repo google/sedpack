@@ -8,6 +8,7 @@ on:
     paths:
       - 'docs/**/*.py'
       - 'pytest.ini'
+      - '.github/workflows/piptest.yml'
   schedule:
     - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
 
@@ -24,15 +25,15 @@ jobs:
           - runner: macos-15-intel  # Intel
           - runner: macos-latest  # arm64
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Python 3.11
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
           cache: 'pip'
       - name: Installing sedpack pip package
         run: |
-          pip install sedpack
+          pip install "sedpack[tf]"
       - name: Run tutorial using sedpack pip package
         run: |
           python docs/tutorials/quick_start/mnist_save.py -d mnist_dataset
