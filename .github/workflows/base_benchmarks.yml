@@ -29,7 +29,7 @@ jobs:
           cache: 'pip'
       - name: Installing sedpack pip package
         run: |
-          pip install sedpack
+          pip install "sedpack[tf]"
       - name: Prepare benchmarking data
         working-directory: ./rust
         run: bash benches/setup.sh

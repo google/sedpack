@@ -49,8 +49,9 @@ jobs:
         # tested by coverage since that is running on ubuntu which is also used
         # to produce the main requirements.txt file.
         run: |
+          pip install pip==25.2 # TODO(remove the pinning) pip-tools issue 2252
           pip install pip-tools
-          pip-compile --generate-hashes --extra dev pyproject.toml > requirements.txt
+          pip-compile --generate-hashes --extra dev --extra tf pyproject.toml > requirements.txt
           pip install -r requirements.txt
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Save cache
@@ -61,7 +62,7 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
         if: steps.cache.outputs.cache-hit != 'true'
       - name: Install sedpack locally
-        run: pip install --editable .
+        run: pip install --editable ".[dev,tf]"
       # end: Use source sedpack package
 
       - name: Prepare benchmarking data

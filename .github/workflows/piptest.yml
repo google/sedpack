@@ -32,7 +32,7 @@ jobs:
           cache: 'pip'
       - name: Installing sedpack pip package
         run: |
-          pip install sedpack
+          pip install "sedpack[tf]"
       - name: Run tutorial using sedpack pip package
         run: |
           python docs/tutorials/quick_start/mnist_save.py -d mnist_dataset
