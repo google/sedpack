@@ -6,11 +6,12 @@ permissions:
 
 on:
   pull_request:
-    types: [opened, edited]
+    types: [opened, edited, synchronize, reopened]
     paths:
       - '**/*.rs'
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
+      - '.github/workflows/fork_pr_benchmarks_run.yml'
 
 jobs:
   benchmark_fork_pr_branch:
