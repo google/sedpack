@@ -5,8 +5,9 @@ on:
   # Using a different branch name? Replace `main` with your branch’s name
   push:
     branches: [ main ]
-    paths: [ website ]
-  merge_group:  # Needed for required workflows
+    paths:
+      - 'website/**'
+      - '.github/workflows/deploy.yml'
   # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 

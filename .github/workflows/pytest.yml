@@ -1,22 +1,49 @@
 name: pytest
 on:
+  # Note: Do not filter by `paths:` at the workflow trigger (`on.pull_request`)
+  # level. Because `pytest` jobs are required status checks in repository
+  # settings, skipping the entire workflow leaves required checks in the
+  # "Expected — Waiting for status to be reported" state and blocks merging
+  # non-code PRs (such as website updates). Previously, `pull_request_review`
+  # was used as a workaround to trigger `pytest` upon approval, which caused
+  # the full test suite to run on website-only PRs.
+  #
+  # Instead, we trigger the workflow on all `pull_request` and `merge_group`
+  # events and use the fast `check-changes` job below to conditionally skip the
+  # test jobs via `if:`. GitHub treats jobs skipped via `if:` as passing
+  # required status checks.
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - '**/*.py'
-      - '**/*.rs'
-      - 'pytest.ini'
   schedule:
     - cron: 0 5 * * 1 # Every Monday at 5:00 UTC
   merge_group:  # Needed for required workflows
-  # Run after a review has been submitted (this is a required workflow which
-  # might not be triggered when no code changes -- trigger before going to
-  # merge queue).
-  pull_request_review:
-    types: [submitted]
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_run: ${{ steps.filter.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Full history is needed to diff against origin/main.
+          fetch-depth: 0
+      - name: Check for Python or Rust changes
+        id: filter
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only origin/main...HEAD | grep -E '(\.py$|\.rs$|^pyproject\.toml$|^requirements\.txt$|^pytest\.ini$|^rust/Cargo\.(toml|lock)$|^\.github/workflows/pytest\.yml$)'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   unittesting:
+    needs: check-changes
     runs-on: ${{ matrix.platform.runner }}
     permissions:
       contents: read
@@ -30,7 +57,7 @@ jobs:
           - runner: macos-15  # arm64
           - runner: macos-15-intel  # Intel
           - runner: macos-latest  # arm64
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && needs.check-changes.outputs.should_run == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python 3.11
@@ -76,6 +103,7 @@ jobs:
         run: python -m pytest
 
   unittesting_minimal:
+    needs: check-changes
     runs-on: ${{ matrix.platform.runner }}
     permissions:
       contents: read
@@ -89,7 +117,7 @@ jobs:
           - runner: macos-15  # arm64
           - runner: macos-15-intel  # Intel
           - runner: macos-latest  # arm64
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && needs.check-changes.outputs.should_run == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Python 3.11
@@ -131,6 +159,8 @@ jobs:
         run: python -m pytest
 
   coverage:
+    needs: check-changes
+    if: needs.check-changes.outputs.should_run == 'true'
     runs-on: ubuntu-22.04
     permissions:
       contents: read

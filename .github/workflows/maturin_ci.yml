@@ -7,8 +7,6 @@ name: Maturin CI
 
 on:
   push:
-    branches:
-      - main
     tags:
       - '*'
   pull_request:
@@ -20,7 +18,7 @@ on:
       - 'requirements.txt'
       - 'rust/Cargo.toml'
       - 'rust/Cargo.lock'
-  merge_group:  # Just to be sure
+      - '.github/workflows/maturin_ci.yml'
   workflow_dispatch:
 
 permissions:
