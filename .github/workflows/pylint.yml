@@ -5,6 +5,9 @@ on:
     paths:
       - '**/*.py'
       - '.pylintrc'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - '.github/workflows/pylint.yml'
   merge_group:  # Needed for required workflows
   # Run after a review has been submitted (this is a required workflow which
   # might not be triggered when no code changes -- trigger before going to
@@ -19,7 +22,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Check licence headers
         run: ./tools/check_copyright.sh
 
@@ -32,9 +35,9 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'

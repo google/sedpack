@@ -14,6 +14,11 @@ on:
       - 'website/**'
       - '.github/workflows/deploy.yml'
   merge_group:  # Needed for required workflows
+  # Run after a review has been submitted (this is a required workflow which
+  # might not be triggered when no code changes -- trigger before going to
+  # merge queue).
+  pull_request_review:
+    types: [submitted]
   # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 
