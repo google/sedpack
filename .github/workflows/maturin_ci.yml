@@ -48,7 +48,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build wheels
-        uses: PyO3/maturin-action@e10f6c464b90acceb5f640d31beda6d586ba7b4a
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -79,7 +79,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build wheels
-        uses: PyO3/maturin-action@e10f6c464b90acceb5f640d31beda6d586ba7b4a
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -107,7 +107,7 @@ jobs:
           python-version: 3.x
           architecture: ${{ matrix.platform.target }}
       - name: Build wheels
-        uses: PyO3/maturin-action@e10f6c464b90acceb5f640d31beda6d586ba7b4a
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -132,7 +132,7 @@ jobs:
         with:
           python-version: 3.x
       - name: Build wheels
-        uses: PyO3/maturin-action@e10f6c464b90acceb5f640d31beda6d586ba7b4a
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b
         with:
           target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
@@ -148,7 +148,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Build sdist
-        uses: PyO3/maturin-action@e10f6c464b90acceb5f640d31beda6d586ba7b4a
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b
         with:
           command: sdist
           args: --out dist
@@ -180,7 +180,7 @@ jobs:
           subject-path: 'wheels-*/*'
       - name: Publish to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: PyO3/maturin-action@e10f6c464b90acceb5f640d31beda6d586ba7b4a
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b
         with:
           command: upload
           args: --non-interactive --skip-existing wheels-*/*
