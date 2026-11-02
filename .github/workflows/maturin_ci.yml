@@ -54,6 +54,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: ${{ matrix.platform.target == 'x86' && '2_28' || 'auto' }}  # https://github.com/google/sedpack/issues/440
+          docker-options: --network=host  # https://github.com/google/sedpack/issues/440
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
