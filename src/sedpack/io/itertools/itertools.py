@@ -17,7 +17,6 @@
 import random
 from typing import AsyncIterable, Iterable, TypeVar
 
-import asyncstdlib
 import numpy as np
 
 
@@ -73,8 +72,11 @@ async def shuffle_buffer_async(iterable: AsyncIterable[T],
 
     # Fill the buffer.
     buffer: list[T] = []
-    async for _, item in asyncstdlib.zip(range(buffer_size), iterable):
-        buffer.append(item)
+    for _ in range(buffer_size):
+        try:
+            buffer.append(await anext(iterable))
+        except StopAsyncIteration:
+            break
 
     # Iterate and keep filling the buffer.
     r = initial_random_state()

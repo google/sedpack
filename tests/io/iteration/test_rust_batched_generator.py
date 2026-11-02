@@ -317,3 +317,87 @@ def test_end_to_end_as_numpy_iterator_rust(
                                          i] == attribute_values[i]).all()
 
         index += current_batch_size
+
+
+def test_end_to_end_as_numpy_iterator_rust_batched_shuffled(
+    tmpdir: Union[str, Path],) -> None:
+    # 64 shards of examples_per_shard=2 (128 examples total).
+    # Shard k contains examples (2*k, 2*k + 1).
+    # With shuffle=3 (> examples_per_shard=2), the shuffle buffer must both:
+    # 1) mix examples across different shards within batches of size 2, and
+    # 2) mix the relative order of examples (2*k, 2*k + 1) from a single shard.
+    data_points: int = 128
+    examples_per_shard: int = 2
+    batch_size: int = 2
+    shuffle: int = 3
+
+    tiny_experiment_path: Path = Path(tmpdir) / "e2e_small_shards"
+    dataset = Dataset.create(
+        path=tiny_experiment_path,
+        metadata=Metadata(description="Test small shards shuffle"),
+        dataset_structure=DatasetStructure(
+            saved_data_description=[
+                sedpack.io.metadata.Attribute(
+                    name="id",
+                    dtype="int64",
+                    shape=(1,),
+                ),
+            ],
+            compression="LZ4",
+            examples_per_shard=examples_per_shard,
+            shard_file_type="fb",
+        ),
+    )
+
+    with dataset.filler() as filler:
+        for i in range(data_points):
+            filler.write_example(
+                values={"id": np.array([i], dtype=np.int64)},
+                split=TRAIN_SPLIT,
+            )
+
+    dataset = Dataset(tiny_experiment_path)
+
+    def collect_batches(shuffle_val: int) -> list[list[int]]:
+        batches: list[list[int]] = []
+        for batch in dataset.as_numpy_iterator_rust_batched(
+                split=TRAIN_SPLIT,
+                process_batch=None,
+                shards=None,
+                shard_filter=None,
+                repeat=False,
+                batch_size=batch_size,
+                file_parallelism=4,
+                shuffle=shuffle_val,
+        ):
+            batches.append([int(x[0]) for x in batch["id"]])
+        return batches
+
+    # Deterministic iteration (shuffle=0) must yield exact sequential order.
+    det_batches = collect_batches(shuffle_val=0)
+    det_flat = [x for b in det_batches for x in b]
+    assert det_flat == list(range(data_points))
+
+    # Shuffled iteration with shuffle=3 (> examples_per_shard=2):
+    batches_run1 = collect_batches(shuffle_val=shuffle)
+    batches_run2 = collect_batches(shuffle_val=shuffle)
+    flat_run1 = [x for b in batches_run1 for x in b]
+    flat_run2 = [x for b in batches_run2 for x in b]
+
+    # All examples are seen, and two runs produce different sequences.
+    assert sorted(flat_run1) == list(range(data_points))
+    assert sorted(flat_run2) == list(range(data_points))
+    assert flat_run1 != det_flat
+    assert flat_run2 != det_flat
+    assert flat_run1 != flat_run2
+
+    # Across-shard mixing: with examples_per_shard=2 and shuffle=3, batches of
+    # size 2 must not all be intact pairs from the same shard (b[0]//2 == b[1]//2).
+    assert any(b[0] // examples_per_shard != b[1] // examples_per_shard
+               for b in batches_run1)
+
+    # Intra-shard mixing: examples (2*k, 2*k + 1) from the same shard k must
+    # not always appear in their original intra-shard order (2*k before 2*k + 1).
+    pos = {val: idx for idx, val in enumerate(flat_run1)}
+    assert any(pos[2 * k + 1] < pos[2 * k]
+               for k in range(data_points // examples_per_shard))

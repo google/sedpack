@@ -27,7 +27,9 @@ from sedpack.io.utils import is_module_present
 
 def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
             shard_file_type: ShardFileTypeT, compression: CompressionT) -> None:
-    array_of_values = np.random.random((1024, 138))
+    # Super small shards (16 examples per shard, 64 total across 4 shards)
+    # to ensure intra-shard shuffling and small shuffle buffers are tested.
+    array_of_values = np.random.random((64, 138))
     array_of_values = array_of_values.astype(dtype)
 
     tiny_experiment_path: Path = Path(tmpdir) / "e2e_experiment"
@@ -47,7 +49,7 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
     dataset_structure = sedpack.io.metadata.DatasetStructure(
         saved_data_description=example_attributes,
         compression=compression,
-        examples_per_shard=256,
+        examples_per_shard=16,
         shard_file_type=shard_file_type,
     )
 
@@ -71,37 +73,110 @@ def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
     dataset = Dataset(tiny_experiment_path)
     dataset.check()
 
-    seen = set()
-
-    match method:
-        case "as_tfdataset":
-            for i, example in enumerate(
-                    dataset.as_tfdataset(
+    def iterate_sequence(shuffle: int,
+                         shards: int | None = None) -> list[bytes]:
+        seq: list[bytes] = []
+        match method:
+            case "as_tfdataset":
+                for example in dataset.as_tfdataset(
                         split=TRAIN_SPLIT,
-                        shuffle=100,
+                        shards=shards,
+                        shuffle=shuffle,
                         repeat=False,
                         batch_size=1,
-                    )):
-                seen.add(example["attribute_name"].tobytes())
-        case "as_numpy_iterator":
-            for i, example in enumerate(
-                    dataset.as_numpy_iterator(
+                ):
+                    seq.append(example["attribute_name"].numpy()[0].tobytes())
+            case "as_numpy_iterator":
+                for example in dataset.as_numpy_iterator(
                         split=TRAIN_SPLIT,
-                        shuffle=100,
+                        shards=shards,
+                        shuffle=shuffle,
                         repeat=False,
-                    )):
-                seen.add(example["attribute_name"].tobytes())
-        case "as_numpy_iterator_concurrent":
-            for i, example in enumerate(
-                    dataset.as_numpy_iterator_concurrent(
+                ):
+                    seq.append(example["attribute_name"].tobytes())
+            case "as_numpy_iterator_concurrent":
+                for example in dataset.as_numpy_iterator_concurrent(
                         split=TRAIN_SPLIT,
-                        shuffle=100,
+                        shards=shards,
+                        shuffle=shuffle,
                         repeat=False,
-                    )):
-                seen.add(example["attribute_name"].tobytes())
+                ):
+                    seq.append(example["attribute_name"].tobytes())
+            case "as_numpy_iterator_rust":
+                for example in dataset.as_numpy_iterator_rust(
+                        split=TRAIN_SPLIT,
+                        shards=shards,
+                        shuffle=shuffle,
+                        repeat=False,
+                ):
+                    seq.append(example["attribute_name"].tobytes())
+            case "as_numpy_iterator_rust_batched":
+                for batch in dataset.as_numpy_iterator_rust_batched(
+                        split=TRAIN_SPLIT,
+                        shards=shards,
+                        shuffle=shuffle,
+                        repeat=False,
+                        batch_size=4,
+                ):
+                    for item in batch["attribute_name"]:
+                        seq.append(item.tobytes())
+            case _:
+                raise ValueError(f"Unknown method: {method}")
+        return seq
 
-    assert seen == set(
-        array_of_values[i].tobytes() for i in range(array_of_values.shape[0]))
+    expected_all = [
+        array_of_values[i].tobytes() for i in range(array_of_values.shape[0])
+    ]
+    expected_first_shard = expected_all[:16]
+
+    # 1. Deterministic iteration (shuffle=0) must reproduce exact order.
+    assert iterate_sequence(shuffle=0) == expected_all
+    assert iterate_sequence(shuffle=0, shards=1) == expected_first_shard
+
+    # 2. Shuffled iteration across all shards with a small shuffle buffer (8):
+    # two runs must yield all examples in two different orders.
+    run1_all = iterate_sequence(shuffle=8)
+    run2_all = iterate_sequence(shuffle=8)
+    assert set(run1_all) == set(expected_all)
+    assert set(run2_all) == set(expected_all)
+    assert run1_all != expected_all
+    assert run2_all != expected_all
+    assert run1_all != run2_all
+
+    # 3. Shuffled iteration on a single small shard (shards=1, 16 examples)
+    # with a small shuffle buffer (8): even without multiple shards to shuffle,
+    # intra-shard shuffling must produce two different sequences.
+    run1_single = iterate_sequence(shuffle=8, shards=1)
+    run2_single = iterate_sequence(shuffle=8, shards=1)
+    assert set(run1_single) == set(expected_first_shard)
+    assert set(run2_single) == set(expected_first_shard)
+    assert run1_single != expected_first_shard
+    assert run2_single != expected_first_shard
+    assert run1_single != run2_single
+
+
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
+def test_end2end_as_tfdataset_tfrec(tmpdir: Union[str, Path]) -> None:
+    end2end(tmpdir=tmpdir,
+            dtype="float32",
+            method="as_tfdataset",
+            shard_file_type="tfrec",
+            compression="GZIP")
+
+
+@pytest.mark.skipif(
+    not is_module_present("tensorflow"),
+    reason="TensorFlow is optional, skip test if not present.",
+)
+def test_end2end_as_tfdataset_fb(tmpdir: Union[str, Path]) -> None:
+    end2end(tmpdir=tmpdir,
+            dtype="float32",
+            method="as_tfdataset",
+            shard_file_type="fb",
+            compression="LZ4")
 
 
 @pytest.mark.skipif(
@@ -159,5 +234,22 @@ def test_end2end_as_numpy_iterator_fb(tmpdir: Union[str, Path]) -> None:
     end2end(tmpdir=tmpdir,
             dtype="float32",
             method="as_numpy_iterator",
+            shard_file_type="fb",
+            compression="LZ4")
+
+
+def test_end2end_as_numpy_iterator_rust_fb(tmpdir: Union[str, Path]) -> None:
+    end2end(tmpdir=tmpdir,
+            dtype="float32",
+            method="as_numpy_iterator_rust",
+            shard_file_type="fb",
+            compression="LZ4")
+
+
+def test_end2end_as_numpy_iterator_rust_batched_fb(
+        tmpdir: Union[str, Path]) -> None:
+    end2end(tmpdir=tmpdir,
+            dtype="float32",
+            method="as_numpy_iterator_rust_batched",
             shard_file_type="fb",
             compression="LZ4")

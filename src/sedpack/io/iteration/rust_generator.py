@@ -28,6 +28,7 @@ from typing_extensions import Self
 import numpy as np
 
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
+from sedpack.io.itertools import shuffle_buffer
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.shard_file_metadata import ShardInfo
@@ -94,6 +95,7 @@ class RustGenerator:
         shard_iterator: Iterable[ShardInfo],
         process_record: Callable[[ExampleT], T] | None = None,
         file_parallelism: int = os.cpu_count() or 1,
+        shuffle_buffer_size: int = 0,
     ) -> None:
         """A reentrant generator.
 
@@ -110,6 +112,9 @@ class RustGenerator:
           transformation of each example.
 
           file_parallelism (int): How many files to read in parallel.
+
+          shuffle_buffer_size (int): How large should the shuffle buffer be.
+          Defaults to 0 for deterministic iteration.
         """
         self._rust_iter: RustIter | None  # type: ignore[no-any-unimported]
         self._rust_iter = None
@@ -131,6 +136,7 @@ class RustGenerator:
         self._shard_iterator: Iterator[ShardInfo] = iter(shard_iterator)
         self._process_record: Callable[[ExampleT], T] | None = process_record
         self._file_parallelism: int = file_parallelism
+        self._shuffle_buffer_size: int = shuffle_buffer_size
 
         # Only FlatBuffers are supported.
         if dataset_structure.shard_file_type != "fb":
@@ -207,7 +213,15 @@ class RustGenerator:
         elif not self._rust_iter.can_iterate:
             self._rust_iter.__enter__()  # pylint: disable=unnecessary-dunder-call
 
-        example_iterator = map(self._to_dict, iter(self._rust_iter))
+        example_iterator: Iterable[ExampleT] = map(
+            self._to_dict,
+            iter(self._rust_iter),
+        )
+        if self._shuffle_buffer_size > 0:
+            example_iterator = shuffle_buffer(
+                example_iterator,
+                buffer_size=self._shuffle_buffer_size,
+            )
         if self._process_record:
             yield from map(self._process_record, example_iterator)
         else:
