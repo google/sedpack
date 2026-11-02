@@ -84,6 +84,33 @@ async def end2end(tmpdir: Union[str, Path], dtype: npt.DTypeLike, method: str,
     # We tested everything
     assert i == array_of_values.shape[0], "Not all examples have been iterated"
 
+    # Also test shuffled async iteration on a single shard (shards=1) with a
+    # small shuffle buffer: two runs must differ and not be deterministic.
+    expected_first_shard = [array_of_values[j].tobytes() for j in range(256)]
+    run1: list[bytes] = []
+    async for example in dataset.as_numpy_iterator_async(
+            split=TRAIN_SPLIT,
+            shards=1,
+            shuffle=16,
+            repeat=False,
+    ):
+        run1.append(example["attribute_name"].tobytes())
+
+    run2: list[bytes] = []
+    async for example in dataset.as_numpy_iterator_async(
+            split=TRAIN_SPLIT,
+            shards=1,
+            shuffle=16,
+            repeat=False,
+    ):
+        run2.append(example["attribute_name"].tobytes())
+
+    assert set(run1) == set(expected_first_shard)
+    assert set(run2) == set(expected_first_shard)
+    assert run1 != expected_first_shard
+    assert run2 != expected_first_shard
+    assert run1 != run2
+
 
 @pytest.mark.asyncio
 async def test_end2end_as_numpy_iterator_npz(tmpdir: Union[str, Path]) -> None:

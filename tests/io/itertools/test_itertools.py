@@ -13,8 +13,13 @@
 # limitations under the License.
 
 import random
+from typing import AsyncIterator
+
+import pytest
 
 from sedpack.io.itertools import *
+
+pytest_plugins = ("pytest_asyncio",)
 
 
 def test_round_robin_simple() -> None:
@@ -42,6 +47,24 @@ def test_random_shuffle() -> None:
     seen = []
 
     for x in shuffle_buffer(l, buffer_size=3):
+        seen.append(x)
+
+    # We have seen all elements and each only once.
+    assert sorted(l) == sorted(seen)
+    assert l != seen
+
+
+@pytest.mark.asyncio
+async def test_random_shuffle_async() -> None:
+    random.seed(42)
+    l = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    async def gen() -> AsyncIterator[int]:
+        for item in l:
+            yield item
+
+    seen = []
+    async for x in shuffle_buffer_async(gen(), buffer_size=3):
         seen.append(x)
 
     # We have seen all elements and each only once.

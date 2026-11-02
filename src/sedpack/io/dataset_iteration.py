@@ -28,7 +28,12 @@ import asyncstdlib
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.flatbuffer import IterateShardFlatBuffer
 from sedpack.io.itertools import LazyPool
-from sedpack.io.itertools import round_robin, round_robin_async, shuffle_buffer
+from sedpack.io.itertools import (
+    round_robin,
+    round_robin_async,
+    shuffle_buffer,
+    shuffle_buffer_async,
+)
 from sedpack.io.npz import IterateShardNP
 from sedpack.io.shard import IterateShardBase
 from sedpack.io.shard.iterate_shard_base import T
@@ -176,13 +181,16 @@ class DatasetIteration(DatasetBase):
         # TODO(issue #85) Async iterator typing.
         example_iterator: AsyncIterator[ExampleT]
         if shuffle:
-            example_iterator = round_robin_async(
-                asyncstdlib.map(
-                    shard_iterator.
-                    iterate_shard_async,  # type: ignore[arg-type]
-                    shard_paths_iterator,
+            example_iterator = shuffle_buffer_async(
+                round_robin_async(
+                    asyncstdlib.map(
+                        shard_iterator.
+                        iterate_shard_async,  # type: ignore[arg-type]
+                        shard_paths_iterator,
+                    ),
+                    buffer_size=file_parallelism,
                 ),
-                buffer_size=file_parallelism,
+                buffer_size=shuffle,
             )  # type: ignore[assignment]
         else:
             example_iterator = asyncstdlib.chain.from_iterable(
@@ -356,14 +364,17 @@ class DatasetIteration(DatasetBase):
         with context:
             if shuffle:
                 with LazyPool(file_parallelism) as pool:
-                    yield from round_robin(
-                        pool.imap_unordered(
-                            shard_iterator.
-                            process_and_list,  # type: ignore[arg-type]
-                            shard_paths_iterator,
+                    yield from shuffle_buffer(
+                        round_robin(
+                            pool.imap_unordered(
+                                shard_iterator.
+                                process_and_list,  # type: ignore[arg-type]
+                                shard_paths_iterator,
+                            ),
+                            # round_robin keeps the whole shard files in memory.
+                            buffer_size=file_parallelism,
                         ),
-                        # round_robin keeps the whole shard files in memory.
-                        buffer_size=file_parallelism,
+                        buffer_size=shuffle,
                     )
             else:
                 # Iterate in order but avoid out of memory caused by eagerly
@@ -579,6 +590,7 @@ class DatasetIteration(DatasetBase):
                 batch_size=batch_size,
                 process_batch=process_batch,
                 file_parallelism=file_parallelism,
+                shuffle_buffer_size=shuffle,
         ) as rust_generator:
             yield from rust_generator()
 
@@ -640,5 +652,6 @@ class DatasetIteration(DatasetBase):
                 shard_iterator=shard_iterator,
                 process_record=process_record,
                 file_parallelism=file_parallelism,
+                shuffle_buffer_size=shuffle,
         ) as rust_generator:
             yield from rust_generator()
