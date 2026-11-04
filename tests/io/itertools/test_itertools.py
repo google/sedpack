@@ -11,15 +11,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for sedpack.io.itertools."""
 
 import random
 from typing import AsyncIterator
 
+import numpy as np
 import pytest
 
-from sedpack.io.itertools import *
+from sedpack.io.itertools import (
+    round_robin,
+    shuffle_buffer,
+    shuffle_buffer_async,
+)
+from sedpack.io.itertools.itertools import (
+    initial_random_state,
+    next_random_state,
+)
 
 pytest_plugins = ("pytest_asyncio",)
+
+
+def test_random_state() -> None:
+    assert initial_random_state(-42) == 42
+    assert initial_random_state(np.uint32(123)) == 123  # type: ignore[arg-type]
+    r = initial_random_state(2**30)
+    assert isinstance(r, int)
+    r = next_random_state(r)
+    assert r == 2087646047
+    assert isinstance(r, int)
 
 
 def test_round_robin_simple() -> None:

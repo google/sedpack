@@ -17,10 +17,8 @@
 import random
 from typing import AsyncIterable, Iterable, TypeVar
 
-import numpy as np
 
-
-def initial_random_state(seed: int | None = None) -> np.uint32:
+def initial_random_state(seed: int | None = None) -> int:
     """Get a random seed. Defaults to using random.randint.
 
     Args:
@@ -30,24 +28,21 @@ def initial_random_state(seed: int | None = None) -> np.uint32:
     if seed is None:
         seed = random.randint(0, 2**30)
 
-    # Make sure what we return is really np.uint32 and not Python int.
-    return np.array([seed], np.uint32)[0]  # type: ignore[no-any-return]
+    return abs(int(seed))
 
 
-def next_random_state(r: np.uint32) -> np.uint32:
+def next_random_state(r: int) -> int:
     """Linear congruential generator get next state. See the book "Numerical
-    Recipes in C" 2nd edition, Press et al., isbn 0521431085, p. 284
+    Recipes in C" 2nd edition, Press et al., isbn 0521431085, p. 284. The state
+    is unsigned 32 bit integer.
 
     Args:
 
-      r (np.uint32): Previous state.
+      r (int): Previous state.
 
     Returns the next state.
     """
-    with np.testing.suppress_warnings() as sup:
-        sup.filter(RuntimeWarning, "overflow encountered in scalar")
-        r = np.uint32(r * 1664525 + 1013904223)
-    return r
+    return (r * 1664525 + 1013904223) & 0xFFFFFFFF
 
 
 T = TypeVar("T")
