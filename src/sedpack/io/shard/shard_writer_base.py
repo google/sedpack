@@ -25,7 +25,9 @@ from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
 
 
 class ShardWriterBase(ABC):
-    """Shard writing capabilities.
+    """Base class for shard writing. Buffers examples in memory so the shard
+    is pickleable and format-specific serialization in `close()` can run in a
+    different process.
     """
 
     def __init__(self, dataset_structure: DatasetStructure,
@@ -42,9 +44,7 @@ class ShardWriterBase(ABC):
         # Information needed to save the shard.
         self.dataset_structure: DatasetStructure = dataset_structure
         self._shard_file: Path = shard_file
-
-        # Make sure that the directory exists.
-        self._shard_file.parent.mkdir(exist_ok=True, parents=True)
+        self._examples: list[ExampleT] = []
 
         # Make sure that the compression is supported for this shard file type.
         assert dataset_structure.compression in self.supported_compressions()
@@ -96,17 +96,18 @@ class ShardWriterBase(ABC):
         return np.asarray(value_np, dtype=np.uint8, order="C").tobytes()
 
     def write(self, values: ExampleT) -> None:
-        """Write an example on disk. Writing may be buffered.
+        """Buffer an example in memory to be serialized on `close()`.
 
         Args:
 
             values (ExampleT): Attribute values.
         """
+        example: ExampleT = {}
         # Check the values are correct type and shape.
         for attribute in self.dataset_structure.saved_data_description:
             value = values[attribute.name]
             if attribute.dtype == "bytes":
-                self.attribute_value_to_bytes(
+                example[attribute.name] = self.attribute_value_to_bytes(
                     attribute=attribute,
                     value=value,
                 )
@@ -119,30 +120,41 @@ class ShardWriterBase(ABC):
 
             # If the attribute dtype is "bytes" and shape is empty tuple we
             # consider this a variable size attribute and do not check shape.
-            if attribute.has_variable_size():
-                continue
+            if not attribute.has_variable_size():
+                # Else check the shape (the value should be a NumPy array but
+                # maybe it is an int or bytearray).
+                current_shape = np.asarray(value).shape
+                if current_shape != attribute.shape:
+                    raise ValueError(
+                        f"Attribute {attribute.name} has shape "
+                        f"{current_shape} expected {attribute.shape}")
 
-            # Else check the shape (the value should be a NumPy array but maybe
-            # it is an int or bytearray).
-            current_shape = np.asarray(value).shape
-            if current_shape != attribute.shape:
-                raise ValueError(f"Attribute {attribute.name} has shape "
-                                 f"{current_shape} expected {attribute.shape}")
+            example[attribute.name] = (np.copy(value) if isinstance(
+                value, np.ndarray) else value)
 
-        self._write(values=values)
+        self._examples.append(example)
 
-    @abstractmethod
-    def _write(self, values: ExampleT) -> None:
-        """Write an example on disk. Writing may be buffered.
-
-        Args:
-
-            values (ExampleT): Attribute values.
-        """
-
-    @abstractmethod
     def close(self) -> tuple[str, ...]:
-        """Close the shard file(-s).
+        """Serialize buffered examples into the shard file(-s) and return hash
+        checksums.
+        """
+        if not self._examples:
+            # Nothing to save.
+            assert not self._shard_file.is_file()
+            return ()
+
+        # Make sure that the directory exists before writing the shard file.
+        self._shard_file.parent.mkdir(exist_ok=True, parents=True)
+
+        hash_checksums = self._close()
+        self._examples.clear()
+        assert self._shard_file.is_file()
+        return hash_checksums
+
+    @abstractmethod
+    def _close(self) -> tuple[str, ...]:
+        """Implementation of shard file(-s) serialization for non-empty
+        `self._examples`.
         """
 
     @staticmethod

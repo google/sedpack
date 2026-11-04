@@ -24,7 +24,7 @@ import tenacity
 
 from sedpack.io.compress import CompressedFile
 from sedpack.io.metadata import Attribute, DatasetStructure
-from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
+from sedpack.io.types import AttributeValueT, CompressionT
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
 from sedpack.io.utils import hash_checksums_from_bytes
 
@@ -55,51 +55,6 @@ class ShardWriterFlatBuffer(ShardWriterBase):
             dataset_structure=dataset_structure,
             shard_file=shard_file,
         )
-
-        # Offsets.
-        self._examples: list[int] = []
-
-        self._builder: Builder | None = None  # type: ignore[no-any-unimported]
-
-    def _write(self, values: ExampleT) -> None:
-        """Write an example on disk. Writing may be buffered.
-
-        Args:
-
-            values (ExampleT): Attribute values.
-        """
-        if self._builder is None:
-            self._builder = Builder(0)
-
-        # Since we are not saving attribute names we need to make sure to
-        # iterate in the correct order.
-        saved_attributes: list[int] = []
-        for attribute in self.dataset_structure.saved_data_description:
-            attribute_bytes: int = self.save_numpy_vector_as_bytearray(
-                builder=self._builder,
-                attribute=attribute,
-                value=values[attribute.name],
-            )
-
-            fbapi_Attribute.AttributeStart(self._builder)
-            fbapi_Attribute.AttributeAddAttributeBytes(
-                self._builder,
-                attribute_bytes,
-            )
-            saved_attributes.append(fbapi_Attribute.AttributeEnd(self._builder))
-
-        # Save attributes vector.
-        fbapi_Example.ExampleStartAttributesVector(self._builder,
-                                                   len(saved_attributes))
-        for offset in reversed(saved_attributes):
-            self._builder.PrependUOffsetTRelative(offset)
-        attributes_vector_offset = self._builder.EndVector()
-
-        # Save the example.
-        fbapi_Example.ExampleStart(self._builder)
-        fbapi_Example.ExampleAddAttributes(self._builder,
-                                           attributes_vector_offset)
-        self._examples.append(fbapi_Example.ExampleEnd(self._builder))
 
     @staticmethod
     def _np_to_bytes(
@@ -205,6 +160,10 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         length: int = len(byte_representation)
 
         # Start a vector and move head accordingly.
+        # FlatBuffers grows `builder.Bytes` backwards from the end toward index
+        # 0. `StartVector` ensures capacity and aligns the write cursor
+        # (`builder.Head()`, an index from the start of `builder.Bytes`), so
+        # decrementing `head` by `length` reserves the slice for a bulk copy.
         builder.StartVector(
             elemSize=1,  # Storing bytes.
             numElems=length,
@@ -221,11 +180,16 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         builder.vectorNumElems = length
 
         # Return the vector offset.
+        # `EndVector` prepends the 4-byte element count (`vectorNumElems`) and
+        # returns a `UOffsetT` offset measured from the *end* of `builder.Bytes`
+        # (`len(builder.Bytes) - builder.Head()`), which remains valid if the
+        # buffer is later reallocated at the front.
         return builder.EndVector()  # type: ignore[no-any-return]
 
     @tenacity.retry(
         wait=tenacity.wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
         stop=tenacity.stop_after_attempt(10),
+        retry=tenacity.retry_if_exception_type(OSError),
         reraise=True,
     )
     def _write_file(self, file_content: bytes) -> None:
@@ -233,39 +197,70 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         with open(self._shard_file, "wb") as file:
             file.write(file_content)
 
-    def close(self) -> tuple[str, ...]:
-        """Close the shard file(-s).
+    def _close(self) -> tuple[str, ...]:
+        """Serialize buffered examples into a FlatBuffer shard file.
         """
-        if not self._examples:
-            # Nothing to save.
-            assert not self._shard_file.is_file()
-            return hash_checksums_from_bytes(
-                file_content=b"",
-                hashes=self.dataset_structure.hash_checksum_algorithms,
-            )
+        builder = Builder(0)
 
-        if not self._builder:
-            raise ValueError("Attempting to close a closed shard")
+        # Since we are not saving attribute names we need to make sure to
+        # iterate in the correct order.
+        # FlatBuffers forbids nested table/vector construction (`Start...` /
+        # `End...` cannot be interleaved). Child objects must be built bottom-up
+        # first (byte vector -> Attribute table -> Attributes vector -> Example
+        # table -> Examples vector -> Shard table) and referenced via their
+        # buffer-end-relative `UOffsetT` offsets.
+        examples: list[int] = []
+        for example in self._examples:
+            saved_attributes: list[int] = []
+            for attribute in self.dataset_structure.saved_data_description:
+                attribute_bytes: int = self.save_numpy_vector_as_bytearray(
+                    builder=builder,
+                    attribute=attribute,
+                    value=example[attribute.name],
+                )
+                fbapi_Attribute.AttributeStart(builder)
+                fbapi_Attribute.AttributeAddAttributeBytes(
+                    builder,
+                    attribute_bytes,
+                )
+                saved_attributes.append(fbapi_Attribute.AttributeEnd(builder))
+
+            # Save attributes vector.
+            # `PrependUOffsetTRelative` converts each buffer-end-relative offset
+            # into a 4-byte self-relative pointer (`cursor - target`) and writes
+            # it backwards (`head` decreases), so `reversed(...)` places element
+            # 0 at the lowest address right after the vector length header.
+            fbapi_Example.ExampleStartAttributesVector(builder,
+                                                       len(saved_attributes))
+            for offset in reversed(saved_attributes):
+                builder.PrependUOffsetTRelative(offset)
+            attributes_vector_offset = builder.EndVector()
+
+            # Save the example.
+            fbapi_Example.ExampleStart(builder)
+            fbapi_Example.ExampleAddAttributes(builder,
+                                               attributes_vector_offset)
+            examples.append(fbapi_Example.ExampleEnd(builder))
 
         # Save examples vector.
-        fbapi_Shard.ShardStartExamplesVector(self._builder, len(self._examples))
-        for offset in reversed(self._examples):
-            self._builder.PrependUOffsetTRelative(offset)
-        examples_vector_offset = self._builder.EndVector()
+        fbapi_Shard.ShardStartExamplesVector(builder, len(examples))
+        for offset in reversed(examples):
+            builder.PrependUOffsetTRelative(offset)
+        examples_vector_offset = builder.EndVector()
 
         # Save the shard.
-        fbapi_Shard.ShardStart(self._builder)
-        fbapi_Shard.ShardAddExamples(self._builder, examples_vector_offset)
-        shard = fbapi_Shard.ShardEnd(self._builder)
+        fbapi_Shard.ShardStart(builder)
+        fbapi_Shard.ShardAddExamples(builder, examples_vector_offset)
+        shard = fbapi_Shard.ShardEnd(builder)
 
-        # Finish the builder.
-        self._builder.Finish(shard)
+        # Finish the builder (prepends the root pointer to `shard`; `Output()`
+        # slices the populated tail `builder.Bytes[builder.Head():]`).
+        builder.Finish(shard)
 
         # Hash check-sums must be computed from already compressed file.
         file_content: bytes = CompressedFile(
-            self.dataset_structure.compression).compress(
-                bytes(self._builder.Output()))
-        self._builder = None
+            self.dataset_structure.compression).compress(bytes(
+                builder.Output()))
         hash_checksums: tuple[str, ...] = hash_checksums_from_bytes(
             file_content=file_content,
             hashes=self.dataset_structure.hash_checksum_algorithms,

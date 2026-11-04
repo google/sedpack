@@ -18,11 +18,10 @@ https://www.tensorflow.org/tutorials/load_data/tfrecord
 """
 
 from pathlib import Path
-from typing import Any
 
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.tfrec.tfdata import to_tfrecord
-from sedpack.io.types import ExampleT, CompressionT
+from sedpack.io.types import CompressionT
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
 
 
@@ -48,46 +47,24 @@ class ShardWriterTFRec(ShardWriterBase):
             shard_file=shard_file,
         )
 
-        # Open the tf.io.TFRecordWriter only with the first `write` call. Make
-        # it None immediately during a call to `close`.
-        self._tf_shard_writer: Any | None = None
-
-    def _write(self, values: ExampleT) -> None:
-        """Write an example on disk. Writing may be buffered.
-
-        Args:
-
-            values (ExampleT): Attribute values.
+    def _close(self) -> tuple[str, ...]:
+        """Serialize buffered examples into a TFRecord shard file.
         """
         # TensorFlow is an optional dependency.
         import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
-        if (self.dataset_structure.compression
-                not in ShardWriterTFRec.supported_compressions()):
-            raise ValueError(
-                f"Unsupported compression {self.dataset_structure.compression}"
-                " requested for TFRecordWriter, expected "
-                f"{ShardWriterTFRec.supported_compressions()}")
-        if not self._tf_shard_writer:
-            self._tf_shard_writer = tf.io.TFRecordWriter(
+        with tf.io.TFRecordWriter(
                 str(self._shard_file),
                 self.dataset_structure.compression,  # type: ignore[arg-type]
-            )
+        ) as writer:
+            for example in self._examples:
+                writer.write(
+                    to_tfrecord(
+                        saved_data_description=self.dataset_structure.
+                        saved_data_description,
+                        values=example,
+                    ))
 
-        example = to_tfrecord(
-            saved_data_description=self.dataset_structure.
-            saved_data_description,
-            values=values,
-        )
-        self._tf_shard_writer.write(example)
-
-    def close(self) -> tuple[str, ...]:
-        """Close the shard file(-s).
-        """
-        if not self._tf_shard_writer:
-            raise ValueError("Trying to close a shard that was not open")
-        self._tf_shard_writer.close()
-        self._tf_shard_writer = None
         return self._compute_file_hash_checksums()
 
     @staticmethod
