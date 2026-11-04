@@ -278,3 +278,139 @@ def test_invalid_bytes_attribute_raises(
     )
     with pytest.raises(ValueError):
         writer.write({"b": invalid_value})
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Příliš žluťoučký kůň úpěl ďábelské ódy. "
+        "PŘÍLIŠ ŽLUŤOUČKÝ KŮŇ ÚPĚL ĎÁBELSKÉ ÓDY.",
+        "« Dès Noël, où un zéphyr haï me vêt de glaçons würmiens, "
+        "je dîne d’exquis rôtis de bœuf au kir à l’aÿ d’âge mûr & cætera ! » "
+        "« DÈS NOËL, OÙ UN ZÉPHYR HAÏ ME VÊT DE GLAÇONS WÜRMIENS, "
+        "JE DÎNE D’EXQUIS RÔTIS DE BŒUF AU KIR À L’AŸ D’ÂGE MÛR & CÆTERA ! »",
+    ],
+)
+@pytest.mark.parametrize(
+    "shard_file_type,compression",
+    [
+        ("fb", "LZ4"),
+        ("npz", "ZIP"),
+        ("tfrec", "GZIP"),
+    ],
+)
+def test_utf8_special_characters(
+    tmp_path: Path,
+    shard_file_type: ShardFileTypeT,
+    compression: CompressionT,
+    sentence: str,
+) -> None:
+    """Verify UTF-8 strings containing special characters (diacritics and
+    ligatures) round-trip across shard formats and iterators.
+    """
+    if shard_file_type == "tfrec" and not is_module_present("tensorflow"):
+        pytest.skip("TensorFlow is optional, skip test if not present.")
+
+    sentences = [sentence]
+
+    dataset_structure = DatasetStructure(
+        saved_data_description=[
+            Attribute(name="text", dtype="str", shape=()),
+            Attribute(name="utf8_bytes", dtype="bytes", shape=()),
+        ],
+        compression=compression,
+        examples_per_shard=2,
+        shard_file_type=shard_file_type,
+    )
+    dataset = Dataset.create(
+        path=tmp_path / f"ds_utf8_{shard_file_type}",
+        metadata=Metadata(description="Test UTF-8 special characters"),
+        dataset_structure=dataset_structure,
+    )
+
+    with dataset.filler(concurrency=2) as filler:
+        for item in sentences:
+            filler.write_example(
+                values={
+                    "text": item,
+                    "utf8_bytes": item.encode("utf-8"),
+                },
+                split=TRAIN_SPLIT,
+            )
+
+    dataset = Dataset(dataset.path)
+    dataset.check()
+
+    expected_bytes = [s.encode("utf-8") for s in sentences]
+    expected_text: list[Any] = (expected_bytes
+                                if shard_file_type == "tfrec" else sentences)
+
+    for iterator in [
+            dataset.as_numpy_iterator(
+                split=TRAIN_SPLIT,
+                shuffle=0,
+                repeat=False,
+            ),
+            dataset.as_numpy_iterator_concurrent(
+                split=TRAIN_SPLIT,
+                shuffle=0,
+                repeat=False,
+            ),
+    ]:
+        seen = list(iterator)
+        assert [ex["text"] for ex in seen] == expected_text
+        assert [ex["utf8_bytes"] for ex in seen] == expected_bytes
+
+    if shard_file_type in ("fb", "npz"):
+
+        async def collect_async() -> list[dict[str, Any]]:
+            return [
+                ex async for ex in dataset.as_numpy_iterator_async(
+                    split=TRAIN_SPLIT,
+                    shuffle=0,
+                    repeat=False,
+                )
+            ]
+
+        seen_async = asyncio.run(collect_async())
+        assert [ex["text"] for ex in seen_async] == sentences
+        assert [ex["utf8_bytes"] for ex in seen_async] == expected_bytes
+
+    if shard_file_type == "fb":
+        seen_rust = list(
+            dataset.as_numpy_iterator_rust(
+                split=TRAIN_SPLIT,
+                shuffle=0,
+                repeat=False,
+            ))
+        assert [ex["text"] for ex in seen_rust] == sentences
+        assert [ex["utf8_bytes"] for ex in seen_rust] == expected_bytes
+
+        seen_batched_text: list[str] = []
+        seen_batched_bytes: list[bytes] = []
+        for batch in dataset.as_numpy_iterator_rust_batched(
+                split=TRAIN_SPLIT,
+                shuffle=0,
+                repeat=False,
+                batch_size=2,
+        ):
+            seen_batched_text.extend(batch["text"])  # type: ignore[arg-type]
+            seen_batched_bytes.extend(
+                batch["utf8_bytes"])  # type: ignore[arg-type]
+        assert seen_batched_text == sentences
+        assert seen_batched_bytes == expected_bytes
+
+    if is_module_present("tensorflow"):
+        seen_tf_text: list[str] = []
+        seen_tf_bytes: list[bytes] = []
+        for batch in dataset.as_tfdataset(
+                split=TRAIN_SPLIT,
+                shuffle=0,
+                repeat=False,
+                batch_size=2,
+        ):
+            seen_tf_text.extend(
+                b.decode("utf-8") for b in batch["text"].numpy().tolist())
+            seen_tf_bytes.extend(batch["utf8_bytes"].numpy().tolist())
+        assert seen_tf_text == sentences
+        assert seen_tf_bytes == expected_bytes

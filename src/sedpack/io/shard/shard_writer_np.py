@@ -24,7 +24,7 @@ from numpy import typing as npt
 
 from sedpack.io.metadata import Attribute, DatasetStructure
 from sedpack.io.shard.shard_writer_base import ShardWriterBase
-from sedpack.io.types import AttributeValueT, CompressionT, ExampleT
+from sedpack.io.types import AttributeValueT, CompressionT
 
 
 class ShardWriterNP(ShardWriterBase):
@@ -49,8 +49,6 @@ class ShardWriterNP(ShardWriterBase):
             shard_file=shard_file,
         )
 
-        self._buffer: dict[str, list[AttributeValueT]] = {}
-
         # A prefix such that prepended it creates a new name without collision
         # with any attribute name.
         self._counting_prefix: str = "len" + "_" * max(
@@ -69,33 +67,23 @@ class ShardWriterNP(ShardWriterBase):
                 assert isinstance(value, str)
                 return value
             case _:
-                return np.copy(value)
+                return np.asarray(value)
 
-    def _write(self, values: ExampleT) -> None:
-        """Write an example on disk. Writing may be buffered.
-
-        Args:
-
-            values (dict[str, npt.NDArray[np.generic]]): Attribute values.
+    def _close(self) -> tuple[str, ...]:
+        """Serialize buffered examples into an NPZ shard file.
         """
-        # Just buffer all values.
-        if not self._buffer:
-            self._buffer = {}
-
+        buffer: dict[str, list[AttributeValueT]] = {}
         for attribute in self.dataset_structure.saved_data_description:
             name = attribute.name
-            value = values[name]
-
             if attribute.dtype != "bytes":
-                current_values = self._buffer.get(name, [])
-                current_values.append(
+                buffer[name] = [
                     self._value_to_np(
                         attribute=attribute,
-                        value=value,
-                    ))
-                self._buffer[name] = current_values
+                        value=example[name],
+                    ) for example in self._examples
+                ]
             else:
-                # Extend and remember the length.  Attributes with dtype "bytes"
+                # Extend and remember the length. Attributes with dtype "bytes"
                 # may have variable length. Handle this case. We need to avoid
                 # two things:
                 # - Having wrong length of the bytes array and ideally also
@@ -104,39 +92,20 @@ class ShardWriterNP(ShardWriterBase):
                 # execution when loading malicious dataset.
                 # We prefix the attribute name by `len_?` such that the new name
                 # is unique and tells us the lengths of the byte arrays.
-                byte_bytes: bytes = self.attribute_value_to_bytes(
-                    attribute=attribute,
-                    value=value,
-                )
-                counts = self._buffer.get(self._counting_prefix + name, [0])
-                counts.append(counts[-1] +
-                              len(byte_bytes)  # type: ignore[operator]
-                             )
-                self._buffer[self._counting_prefix + name] = counts
-
-                byte_list: list[list[int]]
-                byte_list = self._buffer.get(  # type: ignore[assignment]
-                    name, [[]])
-                byte_list[0].extend(byte_bytes)
-                self._buffer[name] = byte_list  # type: ignore[assignment]
-
-    def close(self) -> tuple[str, ...]:
-        """Close the shard file and return hash check-sums.
-        """
-        if not self._buffer:
-            assert not self._shard_file.is_file()
-            return ()
-
-        # Deal properly with "bytes" attributes.
-        for attribute in self.dataset_structure.saved_data_description:
-            if attribute.dtype != "bytes":
-                continue
-            self._buffer[attribute.name] = [
-                np.array(
-                    self._buffer[attribute.name][0],
-                    dtype=np.uint8,
-                )
-            ]
+                byte_chunks: list[bytes] = [
+                    self.attribute_value_to_bytes(
+                        attribute=attribute,
+                        value=example[name],
+                    ) for example in self._examples
+                ]
+                counts: list[int] = [0]
+                for chunk in byte_chunks:
+                    counts.append(counts[-1] + len(chunk))
+                buffer[self._counting_prefix +
+                       name] = counts  # type: ignore[assignment]
+                buffer[name] = [
+                    np.frombuffer(b"".join(byte_chunks), dtype=np.uint8)
+                ]
 
         # Write the buffer into a file. We should not need to allow_pickle while
         # saving (the default value is True). But on GitHub actions macos-13
@@ -146,12 +115,12 @@ class ShardWriterNP(ShardWriterBase):
             case "ZIP":
                 np.savez_compressed(
                     str(self._shard_file),
-                    **self._buffer,  # type: ignore[arg-type]
+                    **buffer,  # type: ignore[arg-type]
                 )
             case "":
                 np.savez(
                     str(self._shard_file),
-                    **self._buffer,  # type: ignore[arg-type]
+                    **buffer,  # type: ignore[arg-type]
                 )
             case _:
                 # Default should never happen since ShardWriterBase checks that
@@ -161,8 +130,6 @@ class ShardWriterNP(ShardWriterBase):
                                  f"ShardWriterNP, supported values are: "
                                  f"{self.supported_compressions()}")
 
-        self._buffer = {}
-        assert self._shard_file.is_file()
         return self._compute_file_hash_checksums()
 
     @staticmethod
