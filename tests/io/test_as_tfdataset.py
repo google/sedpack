@@ -25,7 +25,6 @@ import numpy.typing as npt
 
 import sedpack
 from sedpack.io import Dataset, Metadata
-from sedpack.io.shard.iterate_shard_base import T
 from sedpack.io.shard.shard_writer_flatbuffer import ShardWriterFlatBuffer
 from sedpack.io.shard.shard_writer_np import ShardWriterNP
 from sedpack.io.shard.shard_writer_tfrec import ShardWriterTFRec
@@ -43,7 +42,7 @@ def end2end(
     dtype: npt.DTypeLike,
     shard_file_type: ShardFileTypeT,
     compression: CompressionT,
-    process_record: Callable[[ExampleT], T] | None,
+    process_record: Callable[[ExampleT], ExampleT] | None,
 ) -> None:
     array_of_values = np.random.random((1024, 138))
     array_of_values = array_of_values.astype(dtype)
@@ -89,6 +88,7 @@ def end2end(
     dataset = Dataset(tiny_experiment_path)
     dataset.check()
 
+    i = -1
     for i, example in enumerate(
             dataset.as_tfdataset(
                 split=TRAIN_SPLIT,
@@ -118,47 +118,48 @@ def end2end(
 )
 @pytest.mark.parametrize(
     "shard_file_type,compression,dtype,process_record",
-    itertools.chain(
-        itertools.product(
-            ["tfrec"],
-            ShardWriterTFRec.supported_compressions(),
-            ["float16", "float32"],
-            [
-                None,
-                lambda d: {
-                    k: v + 1 for k, v in d.items()
-                },
-            ],
-        ),
-        itertools.product(
-            ["npz"],
-            ShardWriterNP.supported_compressions(),
-            ["float16", "float32"],
-            [
-                None,
-                lambda d: {
-                    k: v + 1 for k, v in d.items()
-                },
-            ],
-        ),
-        itertools.product(
-            ["fb"],
-            ShardWriterFlatBuffer.supported_compressions(),
-            ["float16", "float32"],
-            [
-                None,
-                lambda d: {
-                    k: v + 1 for k, v in d.items()
-                },
-            ],
-        ),
-    ),
+    list(
+        itertools.chain(
+            itertools.product(
+                ["tfrec"],
+                ShardWriterTFRec.supported_compressions(),
+                ["float16", "float32"],
+                [
+                    None,
+                    lambda d: {
+                        k: v + 1 for k, v in d.items()
+                    },
+                ],
+            ),
+            itertools.product(
+                ["npz"],
+                ShardWriterNP.supported_compressions(),
+                ["float16", "float32"],
+                [
+                    None,
+                    lambda d: {
+                        k: v + 1 for k, v in d.items()
+                    },
+                ],
+            ),
+            itertools.product(
+                ["fb"],
+                ShardWriterFlatBuffer.supported_compressions(),
+                ["float16", "float32"],
+                [
+                    None,
+                    lambda d: {
+                        k: v + 1 for k, v in d.items()
+                    },
+                ],
+            ),
+        )),
 )
 def test_end2end_as_tfdataset(
-    shard_file_type: str,
-    compression: str,
+    shard_file_type: ShardFileTypeT,
+    compression: CompressionT,
     dtype: str,
-    process_record: Callable[[ExampleT], T] | None,
+    process_record: Callable[[ExampleT], ExampleT] | None,
     tmp_path: Union[str, Path],
 ) -> None:
     end2end(
