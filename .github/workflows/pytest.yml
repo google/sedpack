@@ -1,5 +1,7 @@
 name: pytest
 on:
+  push:
+    branches: [ main ]
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -35,7 +37,7 @@ jobs:
           - runner: macos-15  # arm64
           - runner: macos-15-intel  # Intel
           - runner: macos-latest  # arm64
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' && github.event_name != 'push'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set up Python 3.11
