@@ -67,8 +67,13 @@ point when loading a dataset and always serializes three top-level sections:
     -   `saved_data_description`: List of `Attribute` definitions (`name`,
         `dtype`, `shape`, and `custom_metadata` such as global `"min"` and
         `"max"` trace values in TinyAES). When `dtype` is `"bytes"` or `"str"`
-        and `shape` is `()`, the attribute has variable size. When
-        `shard_file_type` is `"fb"`, attributes are stored in this exact order.
+        and `shape` is `()`, the attribute has variable size (returned as
+        `bytes` or `str`). When `dtype` is `"bytes"` and `shape` is a 1D tuple
+        `(N,)`, the attribute has fixed length `N` bytes (can be written as
+        `bytes` of length `N` or a 1D integer array/sequence of shape `(N,)`
+        with values in `[0, 255]`, and is returned as `bytes` of length `N`).
+        When `shard_file_type` is `"fb"`, attributes are stored in this exact
+        order.
     -   `compression`: Compression algorithm applied to shard files (`""`,
         `"BZ2"`, `"GZIP"`, `"LZMA"`, `"LZ4"`, `"ZIP"`, `"ZLIB"`, `"ZSTD"`).
     -   `examples_per_shard`: Maximum number of examples written to a single

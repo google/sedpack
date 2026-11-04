@@ -22,6 +22,7 @@ from typing import Any, Callable, cast
 import numpy as np
 
 from sedpack.io.metadata import Attribute
+from sedpack.io.shard.shard_writer_base import ShardWriterBase
 
 
 def bytes_feature(value: Any) -> Any:
@@ -41,13 +42,8 @@ def float_feature(value: Any) -> Any:
     import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
     # Fix shape to 1D
-    value = tf.constant([value])  # scalar to list, reshaped anyway
-    value = tf.reshape(value, -1)
-    # Workaround for https://github.com/tensorflow/tensorflow/issues/61671
-    value = value.numpy()
-
-    float_list = tf.train.FloatList(value=value)
-    return tf.train.Feature(float_list=float_list)
+    value = np.asarray(value).reshape(-1)
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
 def int64_feature(value: Any) -> Any:
@@ -56,11 +52,7 @@ def int64_feature(value: Any) -> Any:
     import tensorflow as tf  # pylint: disable=import-outside-toplevel
 
     # Fix shape to 1D
-    value = tf.constant([value])  # scalar to list, reshaped anyway
-    value = tf.reshape(value, -1)
-    # Workaround for https://github.com/tensorflow/tensorflow/issues/61671
-    value = value.numpy()
-
+    value = np.asarray(value).reshape(-1)
     return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
 
@@ -93,8 +85,8 @@ def get_from_tfrecord(
         }[attribute.dtype]
 
         shape: tuple[int, ...] = attribute.shape
-        if attribute.dtype == "float16":
-            # We parse from bytes so no shape
+        if attribute.dtype in ("float16", "bytes", "str"):
+            # We parse from a single serialized bytes/string scalar.
             shape = ()
 
         tf_features[attribute.name] = tf.io.FixedLenFeature(shape, dtype)
@@ -175,7 +167,12 @@ def to_tfrecord(saved_data_description: list[Attribute],
             feature[attribute.name] = bytes_feature(
                 [values[attribute.name].encode("utf-8")])
         elif attribute.dtype == "bytes":
-            feature[attribute.name] = bytes_feature([values[attribute.name]])
+            feature[attribute.name] = bytes_feature([
+                ShardWriterBase.attribute_value_to_bytes(
+                    attribute=attribute,
+                    value=value,
+                )
+            ])
         else:
             raise ValueError(f"Unsupported dtype {attribute.dtype} of "
                              f"{attribute.name}.")

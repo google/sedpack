@@ -104,17 +104,20 @@ class ShardWriterNP(ShardWriterBase):
                 # execution when loading malicious dataset.
                 # We prefix the attribute name by `len_?` such that the new name
                 # is unique and tells us the lengths of the byte arrays.
+                byte_bytes: bytes = self.attribute_value_to_bytes(
+                    attribute=attribute,
+                    value=value,
+                )
                 counts = self._buffer.get(self._counting_prefix + name, [0])
                 counts.append(counts[-1] +
-                              len(value)  # type: ignore[arg-type,operator]
+                              len(byte_bytes)  # type: ignore[operator]
                              )
                 self._buffer[self._counting_prefix + name] = counts
 
                 byte_list: list[list[int]]
                 byte_list = self._buffer.get(  # type: ignore[assignment]
                     name, [[]])
-                byte_list[0].extend(list(value)  # type: ignore[arg-type]
-                                   )
+                byte_list[0].extend(byte_bytes)
                 self._buffer[name] = byte_list  # type: ignore[assignment]
 
     def close(self) -> tuple[str, ...]:

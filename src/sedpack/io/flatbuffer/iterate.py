@@ -168,6 +168,8 @@ class IterateShardFlatBuffer(IterateShardBase[T]):
             case "str":
                 return [value.tobytes().decode("utf-8") for value in np_bytes]
             case "bytes":
+                if not attribute.has_variable_size():
+                    np_bytes = np_bytes.reshape((batch_size, *attribute.shape))
                 return [value.tobytes() for value in np_bytes]
             case "int":
                 array = np.frombuffer(

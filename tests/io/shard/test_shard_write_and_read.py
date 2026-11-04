@@ -297,7 +297,7 @@ def test_wrong_shape(tmp_path):
                 "CONSTSIZE4": 1_024,
                 "CONSTSIZE5": np.arange(5),
             })
-        assert "CONSTSIZE1" in str(err.value)
+    assert "CONSTSIZE1" in str(err.value)
 
     with pytest.raises(ValueError) as err:
         writer.write(
@@ -309,40 +309,40 @@ def test_wrong_shape(tmp_path):
                 "CONSTSIZE4": 1_024,
                 "CONSTSIZE5": np.arange(5),
             })
-        assert "CONSTSIZE2" in str(err.value)
+    assert "CONSTSIZE2" in str(err.value)
 
     with pytest.raises(ValueError) as err:
         writer.write(
             values={
                 "VARSIZE": bytearray(range(11)),
-                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE1": bytes(range(10)),
                 "CONSTSIZE2": 7,
                 "CONSTSIZE3": [-1, 0],
                 "CONSTSIZE4": 1_024,
                 "CONSTSIZE5": np.arange(5),
             })
-        assert "CONSTSIZE3" in str(err.value)
+    assert "CONSTSIZE3" in str(err.value)
 
     with pytest.raises(ValueError) as err:
         writer.write(
             values={
                 "VARSIZE": bytearray(range(11)),
-                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE1": bytes(range(10)),
                 "CONSTSIZE2": 7,
                 "CONSTSIZE3": -1,
                 "CONSTSIZE4": [0, 1_024],
                 "CONSTSIZE5": np.arange(5),
             })
-        assert "CONSTSIZE4" in str(err.value)
+    assert "CONSTSIZE4" in str(err.value)
 
     with pytest.raises(ValueError) as err:
         writer.write(
             values={
                 "VARSIZE": bytearray(range(11)),
-                "CONSTSIZE1": bytes(range(11)),
+                "CONSTSIZE1": bytes(range(10)),
                 "CONSTSIZE2": 7,
                 "CONSTSIZE3": -1,
                 "CONSTSIZE4": 1_024,
                 "CONSTSIZE5": np.arange(6),
             })
-        assert "CONSTSIZE5" in str(err.value)
+    assert "CONSTSIZE5" in str(err.value)

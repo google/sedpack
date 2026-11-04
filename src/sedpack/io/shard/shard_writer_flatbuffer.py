@@ -17,7 +17,6 @@ For information about FlatBuffers see https://flatbuffers.dev/
 """
 
 from pathlib import Path
-import sys
 
 from flatbuffers import Builder
 import numpy as np
@@ -103,8 +102,7 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         self._examples.append(fbapi_Example.ExampleEnd(self._builder))
 
     @staticmethod
-    def _np_to_bytes(  # type: ignore[no-any-unimported]
-        builder: Builder,
+    def _np_to_bytes(
         attribute: Attribute,
         value: AttributeValueT,
     ) -> bytes:
@@ -112,8 +110,6 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         saved in a FlatBuffer shard.
 
         Args:
-
-          builder (Builder): The FlatBuffer builder.
 
           attribute (Attribute): Description of the attribute defining dtype and
           shape.
@@ -123,47 +119,19 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         Raises: ValueError if the value cannot be cast to the correct dtype with
         the correct byteorder.
         """
-        assert builder is not None
-
-        # Copy the value in order not to modify the original and flatten for
-        # better saving.
-        value_flattened = np.copy(value).flatten()
-        del value
+        target_dtype = np.dtype(attribute.dtype).newbyteorder("<")
+        value_np = np.asarray(value)
 
         # This is the workaround when the user passes a value which is
         # wrong dtype. Then a different number of bytes could be saved than
         # read causing unpredictable issues.
-        if not np.can_cast(value_flattened, to=attribute.dtype, casting="safe"):
+        if not np.can_cast(value_np, to=target_dtype, casting="safe"):
             raise ValueError("Cannot cast value of dtype "
-                             f"{value_flattened.dtype} passed as "
+                             f"{value_np.dtype} passed as "
                              f"{attribute = }")
-        value_np = np.array(value_flattened, dtype=attribute.dtype)
 
-        # Ensure little endian which is needed for FlatBuffers.
-        match value_np.dtype.byteorder:
-            case "=":
-                # Native, check sys
-                match sys.byteorder:
-                    case "big":
-                        value_np = value_np.byteswap(inplace=False)
-                    case "little":
-                        pass
-                    case _:
-                        raise ValueError("Unexpected sys.byteorder")
-            case ">":
-                # Big endian we need to byteswap.
-                value_np = value_np.byteswap(inplace=False)
-            case "<" | "|":
-                # Either little endian (good for us) or not applicable
-                # (distinction does not matter).
-                pass
-            case _:
-                # Should not happen according to NumPy.
-                raise ValueError("Unexpected value of byteorder for attribute"
-                                 f" {attribute.name}")
-
-        # This is going to be saved, ensure c_contiguous ordering.
-        return value_np.tobytes(order="C")
+        # Ensure little endian ("<") and C-contiguous order for FlatBuffers.
+        return np.asarray(value_np, dtype=target_dtype, order="C").tobytes()
 
     @staticmethod
     def save_numpy_vector_as_bytearray(  # type: ignore[no-any-unimported]
@@ -208,7 +176,6 @@ class ShardWriterFlatBuffer(ShardWriterBase):
         assert builder is not None
 
         # See `flatbuffers.builder.Builder.CreateNumpyVector`.
-
         byte_representation: bytes
         alignment: int
         match attribute.dtype:
@@ -216,22 +183,23 @@ class ShardWriterFlatBuffer(ShardWriterBase):
                 byte_representation = str(value).encode("utf-8")
                 alignment = 16
             case "bytes":
-                byte_representation = np.array(value).tobytes()
+                byte_representation = ShardWriterBase.attribute_value_to_bytes(
+                    attribute=attribute,
+                    value=value,
+                )
                 alignment = 16
             case _:
                 try:
-                    _ = np.dtype(attribute.dtype)
+                    dtype = np.dtype(attribute.dtype)
                 except Exception as exc:
                     raise ValueError(
                         f"Unsupported dtype {attribute.dtype}") from exc
 
                 byte_representation = ShardWriterFlatBuffer._np_to_bytes(
-                    builder=builder,
                     attribute=attribute,
                     value=value,
                 )
-                value_np = np.array(value, dtype=attribute.dtype)
-                alignment = value_np.dtype.itemsize
+                alignment = dtype.itemsize
 
         # Total length of the array (in bytes).
         length: int = len(byte_representation)
