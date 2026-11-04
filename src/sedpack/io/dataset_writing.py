@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Mixin for sedpack.io.Dataset to do writing."""
-from collections import defaultdict
+import concurrent.futures
 import contextlib
 import itertools
-from multiprocessing import Pool
 from pathlib import Path
 from typing import (
     Any,
     Callable,
     Mapping,
-    get_args,
 )
 import uuid
 
@@ -30,10 +28,9 @@ from tqdm.auto import tqdm
 import sedpack
 from sedpack.io.dataset_base import DatasetBase
 from sedpack.io.file_info import FileInfo
-from sedpack.io.merge_shard_infos import merge_shard_infos
+from sedpack.io.merge_shard_infos import merge_splits_shard_infos
 from sedpack.io.shard_file_metadata import ShardsList, ShardListInfo
 
-from sedpack.io.types import SplitT
 import sedpack.io.utils as diutils
 from sedpack.io.dataset_filler import DatasetFiller
 
@@ -43,13 +40,14 @@ class DatasetWriting(DatasetBase):
     """
 
     def write_multiprocessing(  # pylint: disable=too-many-arguments
-            self,
-            *,
-            feed_writer: Callable[..., Any],
-            custom_arguments: list[Any],
-            custom_kwarguments: list[dict[str, Any]] | None = None,
-            consistency_check: bool = True,
-            single_process: bool = False) -> list[Any]:
+        self,
+        *,
+        feed_writer: Callable[..., Any],
+        custom_arguments: list[Any],
+        custom_kwarguments: list[dict[str, Any]] | None = None,
+        consistency_check: bool = True,
+        single_process: bool = False,
+    ) -> list[Any]:
         """Multiprocessing write support. Spawn `len(custom_arguments)`
         processes to write examples in parallel. Note that all computation is
         run on the CPU (using `tf.device("CPU")`) in order to prevent each
@@ -82,7 +80,40 @@ class DatasetWriting(DatasetBase):
 
         Returns: A list of values returned by calls to `feed_writer`.
 
-        Example use: See docs/tutorials/writing/ for more information.
+        Example use (see `docs/tutorials/writing/` for more information):
+        `feed_writer` takes `dataset_filler: DatasetFiller` as its first
+        positional argument, followed by arbitrary `*args` and `**kwargs`
+        unpacked from the worker's entry in `custom_arguments` and
+        `custom_kwarguments`:
+        ```python
+        def feed_worker(
+            dataset_filler: DatasetFiller,
+            chunk: list[ExampleT],
+            split: SplitT = TRAIN_SPLIT,
+        ) -> int:
+            # First argument is always `dataset_filler`; remaining `*args` and
+            # `**kwargs` come from `custom_arguments` and `custom_kwarguments`.
+            with dataset_filler:
+                for values in chunk:
+                    dataset_filler.write_example(
+                        values=values,
+                        split=split,
+                    )
+            return len(chunk)
+
+        counts = dataset.write_multiprocessing(
+            feed_writer=feed_worker,
+            custom_arguments=[(chunk_0,), (chunk_1,)],
+            custom_kwarguments=[{"split": TRAIN_SPLIT}, {"split": TEST_SPLIT}],
+        )
+        ```
+        Each worker receives a `DatasetFiller` isolated under a unique
+        non-empty `relative_path_from_split` (so exiting the worker's `with`
+        block updates metadata only up to
+        `<split>/<relative_path_from_split>/shards_list.json`); once all
+        workers finish, `write_multiprocessing` collects
+        `dataset_filler.get_updated_infos()` and calls
+        `self.write_config(updated_infos=updated_infos)`.
         """
         # Default to no kwargs.
         if custom_kwarguments is None:
@@ -100,7 +131,6 @@ class DatasetWriting(DatasetBase):
             DatasetFiller(
                 dataset=self,
                 relative_path_from_split=Path(uuid.uuid4().hex),
-                auto_update_dataset=False,
             ) for _ in range(len(custom_arguments))
         ]
 
@@ -111,13 +141,17 @@ class DatasetWriting(DatasetBase):
             custom_arguments,
             custom_kwarguments,
         )
-        if single_process:
+        if single_process or not custom_arguments:
             # Testing mode.
             wrapper_outputs = list(map(_wrapper_func, wrapper_inputs))
         else:
-            # Fill writers and collect results.
-            with Pool(len(custom_arguments)) as pool:
-                wrapper_outputs = list(pool.imap(_wrapper_func, wrapper_inputs))
+            # Fill writers and collect results. Use ProcessPoolExecutor (whose
+            # workers are non-daemon) so each DatasetFiller can use its own
+            # ProcessPoolExecutor for shard writing.
+            with concurrent.futures.ProcessPoolExecutor(
+                    max_workers=len(custom_arguments)) as executor:
+                wrapper_outputs = list(
+                    executor.map(_wrapper_func, wrapper_inputs))
 
         # Retrieve filled dataset_fillers and feed_writer results.
         dataset_fillers = [
@@ -140,13 +174,22 @@ class DatasetWriting(DatasetBase):
         # Return user-defined results.
         return results
 
-    def filler(self, concurrency: int = 1) -> DatasetFiller:
+    def filler(
+        self,
+        concurrency: int = 4,
+    ) -> DatasetFiller:
         """Return a dataset filler context manager for writing examples.
+
+        Uses the default empty `relative_path_from_split=Path(".")`, so exiting
+        the `with` block automatically updates `<split>/shards_list.json` and
+        the root `dataset_info.json`. For multi-worker or distributed writing,
+        use `Dataset.write_multiprocessing` or `DatasetFiller` with a non-empty
+        `relative_path_from_split` (see `DatasetFiller` docstring).
 
         Args:
 
           concurrency (int): Setting to a positive integer allows writing shard
-          files in parallel. Defaults to 1 (sequential writes).
+          files in parallel. Defaults to 4.
 
         Example use:
         # Context manager properly opens and closes shards.
@@ -158,7 +201,10 @@ class DatasetWriting(DatasetBase):
                     split=split,
                 )
         """
-        return DatasetFiller(dataset=self, concurrency=concurrency)
+        return DatasetFiller(
+            dataset=self,
+            concurrency=concurrency,
+        )
 
     def write_config(
         self,
@@ -166,41 +212,34 @@ class DatasetWriting(DatasetBase):
     ) -> FileInfo:
         """Save configuration as json.
 
+        When multiple `DatasetFiller` instances are used with a non-empty
+        `relative_path_from_split` (see `DatasetFiller` docstring for the
+        advanced use-case and caveats), pass the concatenated
+        `filler.get_updated_infos()` list here after all fillers have exited.
+
         Args:
 
           updated_infos (list[ShardListInfo] | None): List of updates or new
-          shard list infos.
+          `ShardListInfo` descriptors (as returned by
+          `DatasetFiller.get_updated_infos()`). Each `ShardListInfo` references
+          a written `shards_list.json` file (such as
+          `<split>/<relative_path_from_split>/shards_list.json` or a leaf
+          `shards_list.json`, with `file_path` relative to `dataset.path`)
+          along with its `hash_checksums`, `number_of_examples`, and
+          `number_of_shards`. `write_config` recursively merges these shard
+          lists up through intermediate directories to
+          `<split>/shards_list.json` and writes the root `dataset_info.json`.
 
-        Returns: a tuple of hash checksums corresponding to the root dataset
-        info file.
+        Returns: a `FileInfo` with the path and hash checksums corresponding to
+        the root `dataset_info.json` file.
         """
-        updated_infos_list: list[ShardListInfo]
         if updated_infos:
-            updated_infos_list = updated_infos
-        else:
-            updated_infos_list = []
-
-        # Update shards lists in splits.
-        splits_to_update: defaultdict[SplitT,
-                                      list[ShardListInfo]] = defaultdict(list)
-
-        # Sort the infos by their split.
-        for info in updated_infos_list:
-            # The path is at least `split / shards_list.json` or longer.
-            split = str(info.shard_list_info_file.file_path.parts[0])
-            # Type narrowing with get_args does not seem to work with mypy.
-            if split not in get_args(SplitT):
-                raise ValueError(f"Not a known split value: {split}")
-            splits_to_update[split].append(info)  # type: ignore[index]
-
-        # Merge recursively.
-        for split, updates in splits_to_update.items():
-            self._dataset_info.splits[split] = merge_shard_infos(
-                updates=updates,
-                dataset_root=self.path,
-                common=1,
-                hashes=self.dataset_structure.hash_checksum_algorithms,
-            )
+            self._dataset_info.splits.update(
+                merge_splits_shard_infos(
+                    updates=updated_infos,
+                    dataset_root=self.path,
+                    hashes=self.dataset_structure.hash_checksum_algorithms,
+                ))
 
         # Update the main dataset info config.
         return diutils.safe_update_file(

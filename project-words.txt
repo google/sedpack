@@ -46,6 +46,8 @@ compresslevel
 convnet
 crossentropy
 ddof
+deepcopy
+deque
 diutils
 dtype
 dtypes
@@ -76,6 +78,8 @@ patchelf
 perfcounters
 perfetto
 pickleable
+popitem
+popleft
 pyarray
 pyclass
 pyfunction

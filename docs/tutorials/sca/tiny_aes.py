@@ -33,7 +33,7 @@ from scaaml.metrics.custom import MeanRank
 from scaaml.models import get_gpam_model
 from sedpack.io import (
     Dataset,
-    DatasetFillerContext,
+    DatasetFiller,
     Metadata,
     DatasetStructure,
     Attribute,
@@ -41,7 +41,7 @@ from sedpack.io import (
 from sedpack.io.types import SplitT
 
 
-def add_shard(shard_file: Path, dataset_filler: DatasetFillerContext,
+def add_shard(shard_file: Path, dataset_filler: DatasetFiller,
               split: SplitT) -> tuple[float, float]:
     # Reading these one by one is slow.
     shard = np.load(shard_file)

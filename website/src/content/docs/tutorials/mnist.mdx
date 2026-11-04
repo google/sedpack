@@ -203,10 +203,8 @@ information on this see any classical book, e.g., The Elements of Statistical
 Learning by Jerome H. Friedman, Robert Tibshirani, and Trevor Hastie.
 
 An additional detail is that we do not call `write_example` on the dataset
-object itself but on a `DatasetFiller` object. This acts as a context manager
-which ensures that all data gets saved. A benefit of using a `DatasetFiller` is
-that we can create more of those to write in a multithreaded way if we choose
-so.
+object itself but on a `DatasetFiller` object returned by `dataset.filler()`.
+This acts as a context manager which ensures that all data gets saved.
 
 The full code is as follows:
 
