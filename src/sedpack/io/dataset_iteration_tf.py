@@ -162,11 +162,24 @@ class DatasetIterationTF(DatasetBase):
         # The user requested a tf.data.Dataset use as_numpy_iterator_concurrent
         # to provide.
         if self.dataset_structure.shard_file_type != "tfrec":
-            output_signature = {
-                attribute.name:
-                    tf.TensorSpec(shape=attribute.shape, dtype=attribute.dtype)
-                for attribute in self.dataset_structure.saved_data_description
-            }
+            output_signature = {}
+            for attribute in self.dataset_structure.saved_data_description:
+                match attribute.dtype:
+                    case "bytes" | "str":
+                        output_signature[attribute.name] = tf.TensorSpec(
+                            shape=(),
+                            dtype=tf.string,
+                        )
+                    case "int":
+                        output_signature[attribute.name] = tf.TensorSpec(
+                            shape=attribute.shape,
+                            dtype=tf.int64,
+                        )
+                    case _:
+                        output_signature[attribute.name] = tf.TensorSpec(
+                            shape=attribute.shape,
+                            dtype=attribute.dtype,
+                        )
             tf_dataset = tf.data.Dataset.from_generator(
                 # The following method is provided by DatasetIteration.
                 lambda: self.

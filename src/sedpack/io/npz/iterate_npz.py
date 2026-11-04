@@ -108,18 +108,20 @@ class IterateShardNP(IterateShardBase[T]):
         if attribute.dtype != "bytes":
             raise ValueError("One needs to use decode_attribute")
         # Help with type-checking:
-        my_value = np.array(value, np.uint8)
-        my_indexes = np.array(indexes, np.int64)
+        my_value = np.asarray(value, dtype=np.uint8)
+        my_indexes = np.asarray(indexes, dtype=np.int64)
         del value
         del indexes
 
-        begin: int = my_indexes[index]
-        end: int = my_indexes[index + 1]
-        return bytes(my_value[begin:end])
+        begin = int(my_indexes[index])
+        end = int(my_indexes[index + 1])
+        return my_value[begin:end].tobytes()
 
-    def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
-        """Iterate a shard saved in the NumPy format npz.
-        """
+    def _iterate_shard_content(
+        self,
+        shard_content: dict[str, list[AttributeValueT]],
+    ) -> Iterable[ExampleT]:
+        """Decode examples from loaded NPZ `shard_content`."""
         # A prefix such that prepended it creates a new name without collision
         # with any attribute name.
         counting_prefix: str = "len" + "_" * max(
@@ -129,11 +131,6 @@ class IterateShardNP(IterateShardBase[T]):
             attribute.name: counting_prefix + attribute.name
             for attribute in self.dataset_structure.saved_data_description
         }
-
-        shard_content: dict[str, list[AttributeValueT]] = np.load(
-            file_path,
-            allow_pickle=False,
-        )
 
         # A given shard contains the same number of elements for each
         # attribute.
@@ -157,6 +154,12 @@ class IterateShardNP(IterateShardBase[T]):
                 for attribute in self.dataset_structure.saved_data_description
             }
 
+    def iterate_shard(self, file_path: Path) -> Iterable[ExampleT]:
+        """Iterate a shard saved in the NumPy format npz.
+        """
+        with np.load(file_path, allow_pickle=False) as shard_content:
+            yield from self._iterate_shard_content(shard_content=shard_content)
+
     # TODO(issue #85) fix and test async iterator typing
     async def iterate_shard_async(  # pylint: disable=invalid-overridden-method
         self,
@@ -168,23 +171,10 @@ class IterateShardNP(IterateShardBase[T]):
             content_bytes: bytes = await f.read()
             content_io = io.BytesIO(content_bytes)
 
-        shard_content: dict[str, list[AttributeValueT]] = np.load(
-            content_io,
-            allow_pickle=False,
-        )
-
-        # A given shard contains the same number of elements for each
-        # attribute.
-        elements: int = 0
-        for values in shard_content.values():
-            elements = len(values)
-            break
-
-        for example_index in range(elements):
-            yield {
-                name: value[example_index]
-                for name, value in shard_content.items()
-            }
+        with np.load(content_io, allow_pickle=False) as shard_content:
+            for example in self._iterate_shard_content(
+                    shard_content=shard_content):
+                yield example
 
     def process_and_list(self, shard_file: Path) -> list[T]:
         process_record = func_or_identity(self.process_record)
