@@ -213,7 +213,19 @@ class DatasetWriting(DatasetBase):
         )
 
     def _check_shard_list_info(self, shard_list_info: ShardListInfo) -> None:
-        """Check consistency of metadata files.
+        """Recursively check consistency of a `ShardsList` file and its
+        children.
+
+        Verifies the file's hash checksums, `relative_path_self`,
+        `number_of_examples`, and `number_of_shards` against its `ShardListInfo`
+        descriptor and child entries.
+
+        Args:
+
+          shard_list_info (ShardListInfo): Descriptor of the `shards_list.json`
+          file to validate.
+
+        Raises: ValueError if any checksum, path, or count is inconsistent.
         """
         # Check the current file.
         file_path: Path = shard_list_info.shard_list_info_file.file_path
@@ -227,9 +239,31 @@ class DatasetWriting(DatasetBase):
             raise ValueError(f"Hash checksum miss-match in {file_path} "
                              f"{real = } {expected = }")
 
-        # Check children.
+        # Check children and count consistency.
         shard_list: ShardsList = ShardsList.model_validate_json(
             (self.path / file_path).read_text())
+        if shard_list.relative_path_self != file_path:
+            raise ValueError(
+                f"Path mismatch in {file_path}: "
+                f"{shard_list.relative_path_self = } != {file_path = }")
+
+        expected_examples: int = (
+            sum(s.number_of_examples for s in shard_list.shard_files) +
+            sum(c.number_of_examples for c in shard_list.children_shard_lists))
+        if (shard_list.number_of_examples != expected_examples or
+                shard_list_info.number_of_examples != expected_examples):
+            raise ValueError(f"Number of examples mismatch in {file_path}: "
+                             f"{shard_list.number_of_examples = }, "
+                             f"{shard_list_info.number_of_examples = }, "
+                             f"{expected_examples = }")
+
+        expected_shards: int = len(shard_list.shard_files) + sum(
+            c.number_of_shards for c in shard_list.children_shard_lists)
+        if shard_list_info.number_of_shards != expected_shards:
+            raise ValueError(f"Number of shards mismatch in {file_path}: "
+                             f"{shard_list_info.number_of_shards = }, "
+                             f"{expected_shards = }")
+
         for child in shard_list.children_shard_lists:
             self._check_shard_list_info(child)
 

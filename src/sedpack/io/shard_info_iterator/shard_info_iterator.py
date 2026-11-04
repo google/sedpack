@@ -91,12 +91,15 @@ class ShardInfoIterator:
             yield from self._shard_info_iterator(child)
 
     def __iter__(self) -> Iterator[ShardInfo]:
-        """Return the shard information iterator (reentrant).
+        """Return the shard information iterator (reentrant). Yields an empty
+        iterator if the requested split is not present in `dataset_info.splits`.
         """
         if self.split is None:
             self._iterator = itertools.chain.from_iterable(
                 self._shard_info_iterator(shard_list_info)
                 for shard_list_info in self.dataset_info.splits.values())
+        elif self.split not in self.dataset_info.splits:
+            self._iterator = iter([])
         else:
             self._iterator = self._shard_info_iterator(
                 self.dataset_info.splits[self.split])

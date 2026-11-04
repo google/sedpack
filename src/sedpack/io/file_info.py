@@ -48,11 +48,12 @@ class FileInfo(BaseModel):
 
         Return: the original path `v`.
 
-        Raises: ValueError in case `v` contains "..".
+        Raises: ValueError in case `v` is absolute or contains "..".
         """
-        if ".." in v.parts:
-            raise ValueError("A .. is present in the path which could allow "
-                             "directory traversal above `dataset_root_path`.")
+        if v.is_absolute() or ".." in v.parts:
+            raise ValueError("Path must be relative and may not contain '..' "
+                             "which could allow directory traversal above "
+                             "`dataset_root_path`.")
         return v
 
 

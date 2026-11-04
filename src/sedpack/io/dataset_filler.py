@@ -96,15 +96,11 @@ class DatasetFillerContext:
         """
         # Make sure that we do not accidentally traverse the directory above
         # `dataset_root_path`.
-        if ".." in relative_path_from_split.parts:
-
-            raise ValueError("The `relative_path_from_split` may not contain "
-                             "'..' which could allow accidental directory "
-                             "traversal.")
+        self._relative_path_from_split: Path = FileInfo.no_directory_traversal(
+            relative_path_from_split)
 
         self._dataset_root_path: Path = dataset_root_path
         self._dataset_structure: DatasetStructure = dataset_structure
-        self._relative_path_from_split: Path = relative_path_from_split
         self._concurrent_pool: concurrent.futures.Executor = concurrent_pool
         self._write_updates: bool = write_updates
 

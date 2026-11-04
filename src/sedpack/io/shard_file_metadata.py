@@ -134,16 +134,13 @@ class ShardsList(BaseModel):
 
         Returns: the original path `v`.
 
-        Raises: ValueError in case the file name is not `shards_list.json` or
-        if there is ".." in the path.
+        Raises: ValueError in case the file name is not `shards_list.json`, `v`
+        is absolute, or there is ".." in the path.
         """
         if v.name != "shards_list.json":
             raise ValueError(f"The name must be \"shards_list.json\", got "
                              f"{v.name} in the path {v}")
-        if ".." in v.parts:
-            raise ValueError("A .. is present in the path which could allow "
-                             "directory traversal above `dataset_root_path`.")
-        return v
+        return FileInfo.no_directory_traversal(v)
 
     def write_config(self, dataset_root_path: Path,
                      hashes: tuple[HashChecksumT, ...]) -> ShardListInfo:
@@ -186,6 +183,7 @@ class ShardsList(BaseModel):
 
             relative_path_self (Path): Path to this file.
         """
+        FileInfo.no_directory_traversal(relative_path_self)
         canonical_path = (dataset_root_path / relative_path_self).resolve()
 
         if canonical_path.is_file():
