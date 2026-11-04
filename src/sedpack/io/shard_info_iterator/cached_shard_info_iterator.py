@@ -151,8 +151,12 @@ class CachedShardInfoIterator(ShardInfoIterator):
         return self
 
     def __next__(self) -> ShardInfo:
-        """Get the next item.
+        """Return the next `ShardInfo`, or raise `StopIteration` when empty or
+        exhausted (unless `repeat=True` and at least one shard is present).
         """
+        if not self._shards:
+            raise StopIteration
+
         self._index += 1
 
         if self._index >= len(self._shards):

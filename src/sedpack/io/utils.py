@@ -140,6 +140,7 @@ def safe_update_file(dataset_root_path: Path, relative_path: Path, info: str,
 
     Returns: A FileInfo object representing this file.
     """
+    FileInfo.no_directory_traversal(relative_path)
     file_path = dataset_root_path / relative_path
 
     # Create parent directory if it does not exist yet.
