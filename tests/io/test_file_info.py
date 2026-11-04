@@ -29,7 +29,7 @@ from sedpack.io.utils import safe_update_file
 def test_multilevel() -> None:
     levels: int = 3
     max_branching: int = 2
-    name_length: int = 3
+    name_length: int = 5
 
     generator = PathGenerator(
         levels=levels,
@@ -60,7 +60,7 @@ def test_multilevel() -> None:
 
 def test_single_level() -> None:
     max_branching: int = 3
-    name_length: int = 3
+    name_length: int = 5
     generator = PathGenerator(
         levels=1,
         max_branching=max_branching,
