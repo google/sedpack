@@ -185,9 +185,13 @@ Example intermediate `train/shards_list.json`:
 ```
 
 When writing examples concurrently or across multiple processes, each writer
-writes into its own directory subtree and produces local `shards_list.json`
-files. Calling `write_config` runs `merge_shard_infos` to recursively merge
-those updates up to `<split>/shards_list.json` and `dataset_info.json`.
+writes into its own directory subtree (`<split>/<relative_path_from_split>/...`)
+and merges its local `shards_list.json` files up to
+`<split>/<relative_path_from_split>/shards_list.json` on exit. Calling
+`dataset.write_config(updated_infos=...)` on the coordinator then runs
+`merge_shard_infos` to merge each worker subtree up to
+`<split>/shards_list.json` and `dataset_info.json` (see
+[Parallel and Distributed Writing](#parallel-and-distributed-writing) below).
 
 ### 4. Individual Shard Metadata (`ShardInfo`)
 
@@ -225,6 +229,98 @@ Example leaf `train/8a745b3853/412a5873e4/20fd9888f6/shards_list.json`:
   ]
 }
 ```
+
+## Parallel and Distributed Writing
+
+`DatasetFiller` decouples in-memory example buffering from shard serialization,
+compression, hashing, and metadata merging:
+
+1.  **Single-coordinator writing (`dataset.filler(concurrency=4)`)**:
+    Each full shard is serialized, compressed, and hashed asynchronously in a
+    `ProcessPoolExecutor` (`concurrency=4` worker processes by default) across
+    all shard formats (`"fb"`, `"npz"`, `"tfrec"`). Because
+    `relative_path_from_split` defaults to `Path(".")` (empty), exiting the
+    `with` block writes the leaf `shards_list.json` files and automatically
+    calls `dataset.write_config(...)` to update all the way up to
+    `<split>/shards_list.json` and `dataset_info.json`.
+2.  **Built-in multi-process writing (`dataset.write_multiprocessing`)**:
+    When generating examples in parallel across multiple CPU processes on one
+    machine, `dataset.write_multiprocessing` assigns each worker a
+    `DatasetFiller` with a unique non-empty `relative_path_from_split`
+    (`Path(uuid.uuid4().hex)`). The user-supplied `feed_writer` callable
+    receives `dataset_filler: DatasetFiller` as its first positional argument,
+    followed by arbitrary `*args` and `**kwargs` unpacked from that worker's
+    entry in `custom_arguments` and `custom_kwarguments`. On exit, each worker
+    updates metadata up to its own `<split>/<worker_uuid>/shards_list.json`, and
+    `write_multiprocessing` then merges all worker `ShardListInfo` objects into
+    `<split>/shards_list.json` and `dataset_info.json`:
+    ```python
+    def feed_worker(
+        dataset_filler: DatasetFiller,
+        chunk: list[ExampleT],
+        split: SplitT = "train",
+    ) -> int:
+        # First argument is `dataset_filler`; remaining `*args` and `**kwargs`
+        # are unpacked from `custom_arguments` and `custom_kwarguments`.
+        with dataset_filler:
+            for values in chunk:
+                dataset_filler.write_example(values=values, split=split)
+        return len(chunk)
+
+    counts = dataset.write_multiprocessing(
+        feed_writer=feed_worker,
+        custom_arguments=[(chunk_0,), (chunk_1,)],
+        custom_kwarguments=[{"split": "train"}, {"split": "test"}],
+    )
+    ```
+3.  **Custom multi-worker / distributed writing (`DatasetFiller` with non-empty `relative_path_from_split`)**:
+    When running custom worker processes or distributed jobs, pass a unique,
+    non-empty `relative_path_from_split` (e.g., `Path(f"worker_{worker_id}")`)
+    to each worker's `DatasetFiller`. Exiting the `with` block merges and
+    hashes that worker's shard lists up to
+    `<split>/<relative_path_from_split>/shards_list.json` without touching
+    `<split>/shards_list.json` or `dataset_info.json`. Once all workers finish,
+    collect `filler.get_updated_infos()` on the coordinator and call
+    `dataset.write_config(updated_infos=...)`:
+    ```python
+    def run_worker(
+        dataset_path: Path,
+        worker_id: int,
+        items: list[ExampleT],
+    ) -> list[ShardListInfo]:
+        ds = Dataset(dataset_path)
+        filler = DatasetFiller(
+            dataset=ds,
+            relative_path_from_split=Path(f"worker_{worker_id}"),
+        )
+        with filler:
+            for item in items:
+                filler.write_example(values=item, split="train")
+        return filler.get_updated_infos()
+
+    # Coordinator: merge all worker ShardListInfo updates into the dataset.
+    updated_infos: list[ShardListInfo] = []
+    for worker_id, chunk in enumerate(chunks):
+        updated_infos.extend(run_worker(dataset.path, worker_id, chunk))
+    dataset.write_config(updated_infos=updated_infos)
+    ```
+
+    **Caveats for custom multi-worker / distributed writing**:
+    -   `relative_path_from_split` **must be non-empty** for every concurrent
+        worker even when each worker writes to a different split (e.g., one
+        worker writing only `"train"` and another writing only `"test"`). If
+        `relative_path_from_split` is left empty (`Path(".")`), exiting the
+        `with` block calls `dataset.write_config(...)` and overwrites the shared
+        root `dataset_info.json`, racing with other workers and losing their
+        split metadata.
+    -   Concurrent workers must use disjoint `relative_path_from_split` paths
+        where neither path is a parent prefix of another (e.g., do not run
+        `Path("a")` and `Path("a/b")` concurrently, since the `Path("a")` worker
+        writes `<split>/a/shards_list.json` on exit). Sibling paths such as
+        `Path("job_1/worker_0")` and `Path("job_1/worker_1")` are safe.
+    -   When `relative_path_from_split` is non-empty, the written shards are
+        not visible in `<split>/shards_list.json` or `dataset_info.json` until
+        the coordinator calls `dataset.write_config(updated_infos=...)`.
 
 ## Integrity and Merkle Tree
 
