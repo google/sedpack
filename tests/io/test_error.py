@@ -107,12 +107,12 @@ def test_filler_raises_at_creation_when_disk_full(tmpdir: str | Path) -> None:
         assert exc_info.value.current_utilization == pytest.approx(0.8)
         assert exc_info.value.max_disk_utilization == pytest.approx(0.8)
 
-    # Disabling check (None) allows creation even when free == 0.
+    # Default (max_disk_utilization=None) disables check even when free == 0.
     with patch(
             "sedpack.io.dataset_filler.shutil.disk_usage",
             return_value=_DiskUsage(total=1000, used=1000, free=0),
     ):
-        with dataset.filler(max_disk_utilization=None) as filler:
+        with dataset.filler() as filler:
             filler.write_example(
                 values={"attribute_name": np.ones(10, dtype=np.float32)},
                 split="train",

@@ -144,7 +144,7 @@ class DatasetFiller:
         concurrency: int = 4,
         relative_path_from_split: Path = Path("."),
         *,
-        max_disk_utilization: float | None = 0.8,
+        max_disk_utilization: float | None = None,
     ) -> None:
         """Context manager for writing examples into a dataset.
 
@@ -170,8 +170,8 @@ class DatasetFiller:
 
           max_disk_utilization (float | None): Maximum fraction of disk capacity
           in `(0.0, 1.0]` allowed before raising `DiskFullError`, or `None` to
-          disable the disk utilization check. Defaults to `0.8` (80%). Checked
-          at creation (`__init__`) and in `write_example` before opening a new
+          disable the disk utilization check. Defaults to `None`. Checked at
+          creation (`__init__`) and in `write_example` before opening a new
           shard. When `DiskFullError` is raised during `write_example`,
           `__exit__` still flushes and saves all so-far opened shards and
           updates the dataset metadata so no previously written data is lost

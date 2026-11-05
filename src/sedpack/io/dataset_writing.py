@@ -47,7 +47,7 @@ class DatasetWriting(DatasetBase):
         custom_kwarguments: list[dict[str, Any]] | None = None,
         consistency_check: bool = True,
         single_process: bool = False,
-        max_disk_utilization: float | None = 0.8,
+        max_disk_utilization: float | None = None,
     ) -> list[Any]:
         """Multiprocessing write support. Spawn `len(custom_arguments)`
         processes to write examples in parallel. Note that all computation is
@@ -81,7 +81,7 @@ class DatasetWriting(DatasetBase):
 
             max_disk_utilization (float | None): Maximum fraction of disk
             capacity in `(0.0, 1.0]` allowed before raising `DiskFullError`, or
-            `None` to disable the disk utilization check. Defaults to `0.8`.
+            `None` to disable the disk utilization check. Defaults to `None`.
 
         Returns: A list of values returned by calls to `feed_writer`.
 
@@ -183,7 +183,7 @@ class DatasetWriting(DatasetBase):
     def filler(
         self,
         concurrency: int = 4,
-        max_disk_utilization: float | None = 0.8,
+        max_disk_utilization: float | None = None,
     ) -> DatasetFiller:
         """Return a dataset filler context manager for writing examples.
 
@@ -200,8 +200,8 @@ class DatasetWriting(DatasetBase):
 
           max_disk_utilization (float | None): Maximum fraction of disk capacity
           in `(0.0, 1.0]` allowed before raising `DiskFullError`, or `None` to
-          disable the disk utilization check. Defaults to `0.8` (80%). Checked
-          at creation (`__init__`) and in `write_example` before opening a new
+          disable the disk utilization check. Defaults to `None`. Checked at
+          creation (`__init__`) and in `write_example` before opening a new
           shard. When `DiskFullError` is raised during `write_example`,
           `DatasetFiller.__exit__` still flushes and saves all so-far opened
           shards so no previously written data is lost (which may cause final
