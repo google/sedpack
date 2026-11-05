@@ -42,8 +42,8 @@ itself, read `src/sedpack/.agents/skills/sedpack/SKILL.md` for the high-level
     checked against `.markdownlint.json`:
     -   Wrap prose, list items, and block quotes at 80 characters (120 for
         headings; tables and fenced code blocks are exempt).
-    -   Use `-   ` (hyphen + 3 spaces) for unordered list items and `1.  `
-        (number + period + 2 spaces) for ordered list items, with 4-space
+    -   Use a hyphen followed by 3 spaces for unordered list items and a number
+        plus period followed by 2 spaces for ordered list items, with 4-space
         indentation for nested lists and continuation lines.
     -   Always specify a language tag on fenced code blocks (`python`, `bash`,
         `text`, `json`, `toml`).

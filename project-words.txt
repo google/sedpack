@@ -36,6 +36,7 @@ Yokeable
 arange
 argmax
 argnames
+asarray
 asyncstdlib
 bldr
 booktitle

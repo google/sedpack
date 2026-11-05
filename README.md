@@ -132,6 +132,7 @@ frameworks:
         ```bash
         UV_PROJECT_ENVIRONMENT="$(poetry env info --path)" uvx library-skills install --skill sedpack --yes
         ```
+
     -   **Option 2 — Install from GitHub via
         [Agent Skills CLI (`npx skills`)](https://skills.sh/)**: Installs the
         skill directly from `google/sedpack` (or a local checkout) into

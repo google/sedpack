@@ -87,9 +87,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc52ffb4fe02cd7fb24
-        with:
-          toolchain: nightly
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f
       - name: Build sedpack wheel and install environment managers + library-skills
         run: |
           python -m pip install --upgrade pip
