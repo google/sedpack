@@ -15,6 +15,7 @@
 
 from sedpack.io.dataset import Dataset
 from sedpack.io.dataset_filler import DatasetFiller
+from sedpack.io.errors import DatasetExistsError, DiskFullError
 from sedpack.io.metadata import Attribute
 from sedpack.io.metadata import DatasetStructure
 from sedpack.io.metadata import Metadata
@@ -22,7 +23,9 @@ from sedpack.io.metadata import Metadata
 __all__ = [
     "Attribute",
     "Dataset",
+    "DatasetExistsError",
     "DatasetFiller",
     "DatasetStructure",
+    "DiskFullError",
     "Metadata",
 ]

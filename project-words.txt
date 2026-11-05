@@ -5,6 +5,7 @@ Bursztein
 CHES
 CUDA
 Corinna
+ENOSPC
 Elems
 GPAM
 Hastie
@@ -71,6 +72,7 @@ linalg
 logpdf
 mathbb
 mathjax
+namedtuple
 ndarray
 newbyteorder
 parseable
@@ -85,6 +87,7 @@ pyclass
 pyfunction
 pymethods
 pymodule
+retryable
 riscure
 rlib
 rngs
@@ -93,6 +96,7 @@ savez
 sedpack
 setaf
 shardfile
+shutil
 subclassing
 tensorspec
 tfdata

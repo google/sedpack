@@ -47,6 +47,7 @@ class DatasetWriting(DatasetBase):
         custom_kwarguments: list[dict[str, Any]] | None = None,
         consistency_check: bool = True,
         single_process: bool = False,
+        max_disk_utilization: float | None = None,
     ) -> list[Any]:
         """Multiprocessing write support. Spawn `len(custom_arguments)`
         processes to write examples in parallel. Note that all computation is
@@ -77,6 +78,10 @@ class DatasetWriting(DatasetBase):
 
             single_process (bool): Debugging run in a single process. Defaults
             to False.
+
+            max_disk_utilization (float | None): Maximum fraction of disk
+            capacity in `(0.0, 1.0]` allowed before raising `DiskFullError`, or
+            `None` to disable the disk utilization check. Defaults to `None`.
 
         Returns: A list of values returned by calls to `feed_writer`.
 
@@ -131,6 +136,7 @@ class DatasetWriting(DatasetBase):
             DatasetFiller(
                 dataset=self,
                 relative_path_from_split=Path(uuid.uuid4().hex),
+                max_disk_utilization=max_disk_utilization,
             ) for _ in range(len(custom_arguments))
         ]
 
@@ -177,6 +183,7 @@ class DatasetWriting(DatasetBase):
     def filler(
         self,
         concurrency: int = 4,
+        max_disk_utilization: float | None = None,
     ) -> DatasetFiller:
         """Return a dataset filler context manager for writing examples.
 
@@ -191,6 +198,15 @@ class DatasetWriting(DatasetBase):
           concurrency (int): Setting to a positive integer allows writing shard
           files in parallel. Defaults to 4.
 
+          max_disk_utilization (float | None): Maximum fraction of disk capacity
+          in `(0.0, 1.0]` allowed before raising `DiskFullError`, or `None` to
+          disable the disk utilization check. Defaults to `None`. Checked at
+          creation (`__init__`) and in `write_example` before opening a new
+          shard. When `DiskFullError` is raised during `write_example`,
+          `DatasetFiller.__exit__` still flushes and saves all so-far opened
+          shards so no previously written data is lost (which may cause final
+          disk utilization to slightly exceed `max_disk_utilization`).
+
         Example use:
         # Context manager properly opens and closes shards.
         with dataset.filler() as dataset_filler:
@@ -204,6 +220,7 @@ class DatasetWriting(DatasetBase):
         return DatasetFiller(
             dataset=self,
             concurrency=concurrency,
+            max_disk_utilization=max_disk_utilization,
         )
 
     def write_config(
