@@ -1,0 +1,310 @@
+name: skills
+permissions:
+  contents: read
+  pull-requests: write
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'skills.sh.json'
+      - 'pyproject.toml'
+      - 'src/sedpack/.agents/skills/**'
+      - 'tests/io/test_skills.py'
+      - '.github/workflows/skills.yml'
+  merge_group:  # Needed for required workflows
+  # Run after a review has been submitted (this is a required workflow which
+  # might not be triggered when no code changes -- trigger before going to
+  # merge queue).
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  validate_skills:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install schema and skill validators
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade check-jsonschema skills-ref pytest
+      - name: Validate skills.sh.json against schema
+        run: |
+          check-jsonschema --schemafile https://skills.sh/schemas/skills.sh.schema.json skills.sh.json
+      - name: Validate configured skill paths and SKILL.md files
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          from skills_ref import validate
+
+          config = json.loads(Path("skills.sh.json").read_text(encoding="utf-8"))
+          expected_schema = "https://skills.sh/schemas/skills.sh.schema.json"
+          assert config.get("$schema") == expected_schema, (
+              f"Expected $schema={expected_schema!r}, got {config.get('$schema')!r}"
+          )
+          paths = config.get("paths", [])
+          assert paths, "skills.sh.json must define non-empty 'paths'"
+
+          for rel_path in paths:
+              container = Path(rel_path)
+              assert container.is_dir(), (
+                  f"Configured skills path does not exist: {rel_path}"
+              )
+              skill_dirs = [p.parent for p in sorted(container.rglob("SKILL.md"))]
+              assert skill_dirs, f"No SKILL.md found under {rel_path}"
+              for skill_dir in skill_dirs:
+                  errors = validate(skill_dir)
+                  assert not errors, f"Validation failed for {skill_dir}: {errors}"
+                  print(f"Validated skill: {skill_dir}")
+          EOF
+      - name: Run unit tests for bundled skill metadata
+        run: |
+          PYTHONPATH=./src pytest tests/io/test_skills.py
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "24"
+      - name: Verify npx skills discovery and installation via skills.sh.json
+        run: |
+          npx --yes skills add . --list
+          npx --yes skills add . --skill sedpack --agent gemini-cli -y
+          test -f .agents/skills/sedpack/SKILL.md
+
+  env_managers:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc52ffb4fe02cd7fb24
+        with:
+          toolchain: nightly
+      - name: Build sedpack wheel and install environment managers + library-skills
+        run: |
+          python -m pip install --upgrade pip
+          pip install "maturin>=1.7,<2.0" library-skills virtualenv uv poetry pdm pipenv hatch
+          pip wheel --no-deps --no-build-isolation . -w "$RUNNER_TEMP/dist"
+          python - "$RUNNER_TEMP/dist" <<'EOF'
+          import sys, zipfile
+          from pathlib import Path
+          wheels = list(Path(sys.argv[1]).glob("sedpack-*.whl"))
+          assert len(wheels) == 1, wheels
+          with zipfile.ZipFile(wheels[0]) as zf:
+              names = zf.namelist()
+              assert "sedpack/.agents/skills/sedpack/SKILL.md" in names, names
+              rec = [n for n in names if n.endswith("RECORD")][0]
+              rec_text = zf.read(rec).decode("utf-8")
+              assert "sedpack/.agents/skills/sedpack/SKILL.md" in rec_text
+          EOF
+      - name: Test standard venv + library-skills (wheel and editable installs)
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/venv_test"
+          mkdir -p "$WORK/proj" "$WORK/edit_proj"
+
+          cd "$WORK/proj"
+          python -m venv .venv
+          .venv/bin/pip install --no-deps "$WHEEL"
+          library-skills install --skill sedpack --yes --claude
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          test -L .claude/skills/sedpack
+          test -f .claude/skills/sedpack/SKILL.md
+          python -c 'import os; link = os.readlink(".agents/skills/sedpack"); assert not os.path.isabs(link), link'
+          library-skills --check --claude
+
+          # Also test --copy mode
+          rm -rf .agents .claude
+          library-skills install --skill sedpack --yes --copy
+          test ! -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+
+          # Also test editable install discovery via direct_url.json
+          cd "$WORK/edit_proj"
+          python -m venv .venv
+          .venv/bin/pip install "maturin>=1.7,<2.0"
+          .venv/bin/pip install --no-deps --no-build-isolation -e "$GITHUB_WORKSPACE"
+          library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          library-skills --check
+      - name: Test virtualenv + library-skills
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/virtualenv_test"
+          mkdir -p "$WORK/proj"
+          cd "$WORK/proj"
+          virtualenv .venv
+          .venv/bin/pip install --no-deps "$WHEEL"
+          library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          python -c 'import os; link = os.readlink(".agents/skills/sedpack"); assert not os.path.isabs(link), link'
+          library-skills --check
+      - name: Test uv + library-skills
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/uv_test"
+          mkdir -p "$WORK/proj"
+          cd "$WORK/proj"
+          uv venv .venv
+          uv pip install --python .venv/bin/python --no-deps "$WHEEL"
+          library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          python -c 'import os; link = os.readlink(".agents/skills/sedpack"); assert not os.path.isabs(link), link'
+          library-skills --check
+      - name: Test poetry (in-project and external cache) + library-skills
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/poetry_test"
+          mkdir -p "$WORK/inproj" "$WORK/cache_proj" "$WORK/home"
+          export HOME="$WORK/home"
+
+          # 1. Poetry with virtualenvs.in-project = true
+          cd "$WORK/inproj"
+          cat > pyproject.toml <<'EOF'
+          [project]
+          name = "demo-poetry-inproj"
+          version = "0.1.0"
+          requires-python = ">=3.11"
+          dependencies = ["sedpack"]
+          EOF
+          poetry config virtualenvs.in-project true --local
+          poetry env use python
+          poetry run pip install --no-deps "$WHEEL"
+          library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          library-skills --check
+
+          # 2. Poetry with default external cache virtualenv
+          cd "$WORK/cache_proj"
+          cat > pyproject.toml <<'EOF'
+          [project]
+          name = "demo-poetry-cache"
+          version = "0.1.0"
+          requires-python = ">=3.11"
+          dependencies = ["sedpack"]
+          EOF
+          poetry config virtualenvs.in-project false --local
+          poetry env use python
+          poetry run pip install --no-deps "$WHEEL"
+          UV_PROJECT_ENVIRONMENT="$(poetry env info --path)" library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          UV_PROJECT_ENVIRONMENT="$(poetry env info --path)" library-skills --check
+      - name: Test pdm + library-skills
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/pdm_test"
+          mkdir -p "$WORK/proj" "$WORK/home"
+          export HOME="$WORK/home"
+          cd "$WORK/proj"
+          cat > pyproject.toml <<'EOF'
+          [project]
+          name = "demo-pdm"
+          version = "0.1.0"
+          requires-python = ">=3.11"
+          dependencies = ["sedpack"]
+          EOF
+          pdm venv create --force python
+          PDM_PY=$(pdm info --python)
+          uv pip install --python "$PDM_PY" --no-deps "$WHEEL"
+          library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          library-skills --check
+      - name: Test pipenv (in-project and external virtualenv) + library-skills
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/pipenv_test"
+          mkdir -p "$WORK/inproj" "$WORK/ext_proj" "$WORK/home"
+          export HOME="$WORK/home"
+
+          # 1. Pipenv with PIPENV_VENV_IN_PROJECT=1
+          cd "$WORK/inproj"
+          export PIPENV_VENV_IN_PROJECT=1
+          pipenv --python "$(which python)"
+          PIPENV_PY=$(pipenv --py)
+          uv pip install --python "$PIPENV_PY" --no-deps "$WHEEL"
+          library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          library-skills --check
+          unset PIPENV_VENV_IN_PROJECT
+
+          # 2. Pipenv default external virtualenv
+          cd "$WORK/ext_proj"
+          export WORKON_HOME="$WORK/home/.virtualenvs"
+          pipenv --python "$(which python)"
+          PIPENV_PY=$(pipenv --py)
+          uv pip install --python "$PIPENV_PY" --no-deps "$WHEEL"
+          UV_PROJECT_ENVIRONMENT="$(pipenv --venv)" library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          UV_PROJECT_ENVIRONMENT="$(pipenv --venv)" library-skills --check
+      - name: Test hatch + library-skills
+        run: |
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/hatch_test"
+          mkdir -p "$WORK/proj" "$WORK/home"
+          export HOME="$WORK/home"
+          cd "$WORK/proj"
+          cat > pyproject.toml <<'EOF'
+          [project]
+          name = "demo-hatch"
+          version = "0.1.0"
+          requires-python = ">=3.11"
+          dependencies = ["sedpack"]
+          EOF
+          hatch env create
+          HATCH_ENV_DIR=$(hatch env find)
+          uv pip install --python "$HATCH_ENV_DIR/bin/python" --no-deps "$WHEEL"
+          UV_PROJECT_ENVIRONMENT="$HATCH_ENV_DIR" library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          UV_PROJECT_ENVIRONMENT="$HATCH_ENV_DIR" library-skills --check
+      - name: Test conda (prefix and named environments) + library-skills
+        run: |
+          if ! command -v conda >/dev/null 2>&1; then
+            if [ -x "$CONDA/bin/conda" ]; then
+              export PATH="$CONDA/bin:$PATH"
+            else
+              echo "conda not installed on runner; skipping conda step"
+              exit 0
+            fi
+          fi
+          WHEEL=$(ls "$RUNNER_TEMP/dist"/sedpack-*.whl)
+          WORK="$RUNNER_TEMP/conda_test"
+          mkdir -p "$WORK/prefix_proj" "$WORK/named_proj"
+
+          # 1. Local prefix environment (./.conda)
+          cd "$WORK/prefix_proj"
+          conda create --yes --quiet --prefix ./.conda python=3.11 pip
+          ./.conda/bin/pip install --no-deps "$WHEEL"
+          CONDA_PREFIX="$WORK/prefix_proj/.conda" library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          CONDA_PREFIX="$WORK/prefix_proj/.conda" library-skills --check
+
+          # 2. Named conda environment
+          cd "$WORK/named_proj"
+          conda create --yes --quiet -n sedpack-conda-env python=3.11 pip
+          conda run -n sedpack-conda-env pip install --no-deps "$WHEEL"
+          CONDA_ENV_PATH=$(conda info --envs | awk '/^sedpack-conda-env / {print $NF}')
+          CONDA_PREFIX="$CONDA_ENV_PATH" library-skills install --skill sedpack --yes
+          test -L .agents/skills/sedpack
+          test -f .agents/skills/sedpack/SKILL.md
+          CONDA_PREFIX="$CONDA_ENV_PATH" library-skills --check

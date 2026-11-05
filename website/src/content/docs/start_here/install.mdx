@@ -39,7 +39,7 @@ Development dependencies:
 Clone and create a Python virtual environment:
 
 ```bash
-git clone github.com/google/sedpack/  # Clone the repository
+git clone https://github.com/google/sedpack  # Clone the repository
 python3 -m venv my_env  # Create Python virtual environment
 source my_env/bin/activate  # Activate your virtual environment
 cd sedpack/  # Change directory to the cloned git repository
@@ -106,3 +106,179 @@ python -m pytest
 ```bash
 maturin develop --release
 ```
+
+## AI Agents and LLM Skills
+
+Sedpack ships with instructions for both AI coding assistants using `sedpack`
+in downstream projects (`SKILL.md`) and agents contributing to the `sedpack`
+repository itself (`AGENTS.md`).
+
+### Using `sedpack` with Coding Agents (`SKILL.md`)
+
+The high-level `sedpack.io` API skill is bundled inside the `sedpack` Python
+package at `src/sedpack/.agents/skills/sedpack/SKILL.md` on
+[GitHub](https://github.com/google/sedpack/blob/main/src/sedpack/.agents/skills/sedpack/SKILL.md).
+Installing `sedpack` never mutates your home directory (`~/`) implicitly; use
+standard skill managers below to link or copy the skill.
+
+#### Project-Local vs. Global (`~/`) Installation
+
+| Approach | Auto-Updates on Upgrade? | Multi-Project `.venv` Safety | Resilience to `.venv` Rebuilds | Recommended When |
+| :--- | :--- | :--- | :--- | :--- |
+| **Project-Local Symlink** (`.agents/skills/sedpack` -> `.venv/...`) | Yes | High (matches the project's `.venv` version) | High (relative link resolves once `.venv` is installed) | **Default** for Python projects using virtual environments |
+| **Home-Directory Symlink** (`~/.agents/skills/sedpack` -> path) | Yes | Low (single global version across all repos) | Low (breaks if target `.venv` or Python minor version changes) | Editable local checkouts (`pip install -e`) or global environments |
+| **File Copy** (`--copy` to `.agents/skills/sedpack`) | No (re-run after upgrade) | High | High (no external target dependency) | Windows without Developer Mode symlink permissions |
+
+-   **Option 1 — Link from your Python environment via
+    [Library Skills (`library-skills`)](https://library-skills.io/) (recommended
+    default)**: After installing `sedpack` into your project's environment
+    (`venv`, `virtualenv`, `uv`, `pdm`, `poetry`, `pipenv`, `hatch`, or
+    `conda`), `library-skills` scans `site-packages` (and editable installs)
+    and creates a relative directory symlink in `./.agents/skills/sedpack`:
+
+    ```bash
+    # Interactive discovery and installation (or use `pipx run library-skills`):
+    uvx library-skills
+
+    # Non-interactive install of the sedpack skill into .agents/skills/sedpack:
+    uvx library-skills install --skill sedpack --yes
+
+    # Also link into .claude/skills/sedpack, or copy files instead of symlinking:
+    uvx library-skills install --skill sedpack --yes --claude
+    uvx library-skills install --skill sedpack --yes --copy
+
+    # List discovered/installed skills, verify symlinks in CI, or repair links:
+    uvx library-skills list
+    uvx library-skills --check
+    uvx library-skills --yes
+
+    # Remove the managed symlink:
+    uvx library-skills remove sedpack
+    ```
+
+    `library-skills` automatically discovers `.venv`, `UV_PROJECT_ENVIRONMENT`,
+    and `CONDA_PREFIX` environments and creates a relative directory symlink to
+    `sedpack/.agents/skills/sedpack` so running `pip install -U sedpack` updates
+    the skill automatically. If your environment manager stores virtual
+    environments outside the project root (such as Poetry's default cache,
+    Pipenv without `PIPENV_VENV_IN_PROJECT=1`, or Hatch), pass its path via
+    `UV_PROJECT_ENVIRONMENT`:
+
+    ```bash
+    UV_PROJECT_ENVIRONMENT="$(poetry env info --path)" uvx library-skills install --skill sedpack --yes
+    UV_PROJECT_ENVIRONMENT="$(pipenv --venv)" uvx library-skills install --skill sedpack --yes
+    UV_PROJECT_ENVIRONMENT="$(hatch env find)" uvx library-skills install --skill sedpack --yes
+    ```
+
+-   **Option 2 — Install from GitHub via
+    [Agent Skills CLI (`npx skills`)](https://skills.sh/)**: Reads
+    `skills.sh.json` at the repository root and installs the `sedpack` skill
+    directly from `google/sedpack` (or a local checkout) into project-local
+    (`.agents/skills/`) or global (`~/.agents/skills/` with `-g`) directories
+    across 40+ coding agents:
+
+    ```bash
+    # Interactive project-local install from GitHub:
+    npx skills add google/sedpack
+
+    # Non-interactive project-local install (or target a specific agent):
+    npx skills add google/sedpack --skill sedpack -y
+    npx skills add google/sedpack --skill sedpack --agent gemini-cli -y
+    npx skills add google/sedpack --skill sedpack --agent claude-code -y
+
+    # Global user-level install into ~/.agents/skills/sedpack:
+    npx skills add google/sedpack --skill sedpack -g -y
+
+    # List available skills in the repository, or check/update installed skills:
+    npx skills add google/sedpack --list
+    npx skills check
+    npx skills update
+    ```
+
+-   **Option 3 — Link with Gemini CLI**: Link the bundled skill directory
+    directly from the active Python environment (into `~/.gemini/skills` by
+    default, or `.gemini/skills` with `--scope workspace`):
+
+    ```bash
+    gemini skills link "$(python -c 'import importlib.resources as r; print(r.files("sedpack") / ".agents/skills/sedpack")')"
+    ```
+
+#### Updating Skills When `sedpack` Updates
+
+How your agent skill stays in sync when you upgrade `sedpack` depends on how it
+was installed:
+
+| Installation Method | Scope | Updates on `pip install -U sedpack`? | What Happens on `.venv` Rebuild / Python Upgrade? | How to Update or Repair |
+| :--- | :--- | :--- | :--- | :--- |
+| **`uvx library-skills` (symlink)** | Project-local (`.agents/skills/sedpack`) | **Automatic** (points directly into `.venv` `site-packages`) | Resolves automatically if same Python `X.Y`; breaks if `python3.12` -> `python3.13` | `uvx library-skills --yes` (only needed after Python minor version change) |
+| **`uvx library-skills --copy`** | Project-local (`.agents/skills/sedpack`) | **Manual** (static file copy) | Unaffected (files live in repo) | `rm -rf .agents/skills/sedpack && uvx library-skills install --skill sedpack --yes --copy` |
+| **Editable checkout (`pip install -e .`)** | Project-local or Global (`~/`) | **Automatic** on `git pull` / branch switch | Unaffected (points to git source tree) | `git pull` |
+| **`npx skills add google/sedpack`** | Project-local or Global (`-g` in `~/.agents/skills`) | **Manual** (tracks GitHub `main`, decoupled from `.venv`) | Unaffected (copied from GitHub) | `npx skills check` and `npx skills update` |
+| **`gemini skills link`** | Global (`~/.gemini/skills`) or Local (`--scope workspace`) | **Automatic** for in-place upgrade in the linked `.venv` | Breaks if the linked `.venv` is deleted or changes Python `X.Y` | Run `/skills reload` in Gemini CLI, or re-run `gemini skills link` if `.venv` moved |
+
+-   **Automatic updates with project-local `.venv` symlinks (`library-skills`)**:
+    When linked via `uvx library-skills`, `.agents/skills/sedpack` is a
+    directory symlink to `site-packages/sedpack/.agents/skills/sedpack`. Running
+    `pip install -U sedpack`, `uv sync --upgrade-package sedpack`,
+    `poetry update sedpack`, or `conda update` updates `SKILL.md` (and any new
+    companion files) immediately with zero extra steps, while keeping each
+    project matched to its own `.venv` version.
+-   **Repairing `.venv` symlinks after a Python minor version upgrade**:
+    On Linux and macOS, `site-packages` lives under `.venv/lib/pythonX.Y/`. If
+    you recreate `.venv` with the *same* Python `X.Y` version, the relative
+    symlink resolves again as soon as `sedpack` is installed. If you upgrade
+    from `python3.12` to `python3.13`, repair the symlink (and check symlink
+    health in CI) with:
+
+    ```bash
+    uvx library-skills --yes
+    uvx library-skills --check
+    ```
+
+-   **Manually updating a copied skill (`library-skills --copy`)**:
+    Because `--copy` writes regular files instead of a symlink, re-copy the
+    skill after upgrading `sedpack`:
+
+    ```bash
+    rm -rf .agents/skills/sedpack
+    uvx library-skills install --skill sedpack --yes --copy
+    ```
+
+-   **Manually updating GitHub-installed skills (`npx skills` local or global
+    `-g`)**:
+    `npx skills` installs from the `google/sedpack` GitHub repository and
+    records the commit hash in `skills-lock.json` rather than reading `.venv`.
+    Note that a global (`-g`) installation places a single version in
+    `~/.agents/skills/sedpack` shared across all repositories on your machine,
+    which can drift if different projects pin different `sedpack` versions. To
+    check for and pull the latest skill from GitHub:
+
+    ```bash
+    npx skills check
+    npx skills update
+    ```
+
+-   **Reloading or re-linking in Gemini CLI (`gemini skills link`)**:
+    After an in-place `pip install -U sedpack` in the linked environment, run
+    `/skills reload` inside an active Gemini CLI session to pick up changes. If
+    you recreated the environment under a new path or Python minor version,
+    re-run `gemini skills link`.
+
+#### Cross-Platform and Directory Casing Notes
+
+-   **Directory casing**: Always use lowercase `.agents/skills`,
+    `.gemini/skills`, and `.claude/skills` (case-sensitive Linux filesystems
+    will not discover `.Gemini/skills`).
+-   **Agent path conventions**: Project-local `.agents/skills/` is supported
+    across modern coding agents (and `.gemini/skills/` or `.claude/skills/` for
+    agent-specific local directories); for user-level global directories,
+    Gemini CLI reads `~/.gemini/skills/` and Claude Code reads
+    `~/.claude/skills/`.
+
+### Developing `sedpack` with Coding Agents (`AGENTS.md`)
+
+When working on the `sedpack` repository itself, coding agents automatically
+read [`AGENTS.md`](https://github.com/google/sedpack/blob/main/AGENTS.md) at the
+repository root for build, test (`pytest`), formatting (`yapf`, `cargo fmt`),
+type-checking (`mypy`), linting (`pylint`, `clippy`, `markdownlint`), and
+spell-checking (`cspell`) instructions.
