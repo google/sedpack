@@ -18,13 +18,16 @@ from __future__ import annotations
 from collections import OrderedDict, deque
 import concurrent.futures
 import copy
+import errno
 import json
 from pathlib import Path
+import shutil
 from types import TracebackType
 from typing import Any, Type, TYPE_CHECKING, get_args
 
 import tenacity
 
+from sedpack.io.errors import DiskFullError
 from sedpack.io.file_info import PathGenerator, FileInfo
 from sedpack.io.merge_shard_infos import merge_splits_shard_infos
 from sedpack.io.shard_file_metadata import ShardInfo, ShardsList, ShardListInfo
@@ -37,10 +40,15 @@ if TYPE_CHECKING:
     from sedpack.io.dataset_writing import DatasetWriting
 
 
+def _is_retryable_exception(exception: BaseException) -> bool:
+    """Retry transient OSErrors, but do not retry out-of-disk-space (ENOSPC)."""
+    return isinstance(exception, OSError) and exception.errno != errno.ENOSPC
+
+
 @tenacity.retry(
     wait=tenacity.wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
     stop=tenacity.stop_after_attempt(10),
-    retry=tenacity.retry_if_exception_type(OSError),
+    retry=tenacity.retry_if_exception(_is_retryable_exception),
     reraise=True,
 )
 def _close_shard(shard: Shard) -> ShardInfo:
@@ -131,10 +139,12 @@ class DatasetFiller:
     """
 
     def __init__(
-            self,
-            dataset: DatasetWriting,
-            concurrency: int = 4,
-            relative_path_from_split: Path = Path("."),
+        self,
+        dataset: DatasetWriting,
+        concurrency: int = 4,
+        relative_path_from_split: Path = Path("."),
+        *,
+        max_disk_utilization: float | None = 0.8,
     ) -> None:
         """Context manager for writing examples into a dataset.
 
@@ -157,15 +167,44 @@ class DatasetFiller:
           `get_updated_infos()` to `dataset.write_config(updated_infos=...)`
           (even if each worker writes to a different split). May not contain
           "..".
+
+          max_disk_utilization (float | None): Maximum fraction of disk capacity
+          in `(0.0, 1.0]` allowed before raising `DiskFullError`, or `None` to
+          disable the disk utilization check. Defaults to `0.8` (80%). Checked
+          at creation (`__init__`) and in `write_example` before opening a new
+          shard. When `DiskFullError` is raised during `write_example`,
+          `__exit__` still flushes and saves all so-far opened shards and
+          updates the dataset metadata so no previously written data is lost
+          (which may cause final disk utilization to slightly exceed
+          `max_disk_utilization`).
+
+        Raises:
+
+          ValueError: If `relative_path_from_split` contains '..' or
+          `max_disk_utilization` is outside `(0.0, 1.0]`.
+
+          DiskFullError: If disk utilization is already `>=
+          max_disk_utilization` at creation time.
         """
         # Make sure that we do not accidentally traverse the directory above
         # `dataset_root_path`.
         self._relative_path_from_split: Path = FileInfo.no_directory_traversal(
             relative_path_from_split)
 
+        if (max_disk_utilization is not None and
+                not 0.0 < max_disk_utilization <= 1.0):
+            raise ValueError(
+                "max_disk_utilization must be in the range (0.0, 1.0] or None, "
+                f"got {max_disk_utilization}")
+
         self._dataset: DatasetWriting = dataset
         self._dataset_root_path: Path = dataset.path
         self._dataset_structure: DatasetStructure = dataset.dataset_structure
+        self._max_disk_utilization: float | None = max_disk_utilization
+
+        # Check disk space before spawning the executor pool so we do not leak
+        # background processes if creation fails.
+        self._check_disk_space()
 
         self._max_workers: int = max(1, concurrency)
         self._concurrent_pool: concurrent.futures.Executor | None = None
@@ -187,6 +226,41 @@ class DatasetFiller:
 
         # Random path generator.
         self._path_generator = PathGenerator()
+
+    def _check_disk_space(self) -> None:
+        """Check that disk utilization is below `self._max_disk_utilization`.
+
+        Disk utilization is computed as
+        `(usage.total - usage.free) / usage.total` so that filesystem blocks
+        reserved for `root` (e.g., 5% on Linux ext4) are counted as unavailable
+        to non-root processes (`1.0` corresponds to `usage.free == 0`).
+
+        Raises:
+
+          DiskFullError: If current disk utilization is `>=
+          self._max_disk_utilization`.
+        """
+        if self._max_disk_utilization is None:
+            return
+
+        check_path: Path = self._dataset_root_path
+        while not check_path.exists() and check_path != check_path.parent:
+            check_path = check_path.parent
+
+        usage = shutil.disk_usage(check_path)
+        if usage.total <= 0:
+            return
+        current_utilization: float = (usage.total - usage.free) / usage.total
+        if current_utilization >= self._max_disk_utilization:
+            raise DiskFullError(
+                dataset_path=self._dataset_root_path,
+                message=(
+                    f"Disk utilization {current_utilization:.1%} at "
+                    f"'{self._dataset_root_path}' reached or exceeded "
+                    f"max_disk_utilization={self._max_disk_utilization:.1%}."),
+                current_utilization=current_utilization,
+                max_disk_utilization=self._max_disk_utilization,
+            )
 
     def _ensure_pool(self) -> concurrent.futures.Executor:
         if self._concurrent_pool is None:
@@ -259,6 +333,14 @@ class DatasetFiller:
             custom_metadata (dict[str, Any] | None): Optional JSON-serializable
             metadata saved in the shard's `ShardInfo`. Shards can later be
             filtered using these metadata.
+
+        Raises:
+
+            DiskFullError: If a new shard needs to be opened and disk
+            utilization is at or above `max_disk_utilization`. When used inside
+            a `DatasetFiller` context manager, all shards opened so far are
+            still closed and saved to the dataset on context exit (`__exit__`)
+            before the exception propagates.
         """
         if split not in get_args(SplitT):
             raise ValueError(f"Not a known split value: {split}")
@@ -280,6 +362,8 @@ class DatasetFiller:
         if len(self._current_shards) >= self._max_workers:
             _, evicted_shard = self._current_shards.popitem(last=False)
             self.close_shard(shard=evicted_shard)
+
+        self._check_disk_space()
 
         current_shard = self._get_new_shard(split=split)
         if custom_metadata:
