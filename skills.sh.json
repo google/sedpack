@@ -1,0 +1,6 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "paths": [
+    "./src/sedpack/.agents/skills"
+  ]
+}
