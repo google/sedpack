@@ -28,15 +28,12 @@ Top-level `import sedpack` only exposes `sedpack.__version__`. Import API
 classes from `sedpack.io` and type/split constants from `sedpack.io.types`:
 
 ```python
+import itertools
 from pathlib import Path
 import numpy as np
 
 from sedpack.io import (
-    Attribute,
-    Dataset,
-    DatasetFiller,
-    DatasetStructure,
-    Metadata,
+    Attribute, Dataset, DatasetFiller, DatasetStructure, Metadata,
 )
 from sedpack.io.errors import DatasetExistsError
 from sedpack.io.iteration import RustBatchedGenerator, RustGenerator
@@ -46,12 +43,7 @@ from sedpack.io.shard_info_iterator.balanced_iterator import (
     BalancedShardInfoIterator,
 )
 from sedpack.io.types import (
-    HOLDOUT_SPLIT,  # "holdout"
-    TEST_SPLIT,     # "test"
-    TRAIN_SPLIT,    # "train"
-    BatchT,
-    ExampleT,
-    SplitT,
+    HOLDOUT_SPLIT, TEST_SPLIT, TRAIN_SPLIT, BatchT, ExampleT, SplitT,
 )
 ```
 
@@ -99,8 +91,9 @@ dataset_structure = DatasetStructure(
     hash_checksum_algorithms=("sha256",),
 )
 
+dataset_path = Path("datasets/aes_traces")
 dataset = Dataset.create(
-    path=Path("/tmp/my_dataset"),
+    path=dataset_path,
     metadata=metadata,
     dataset_structure=dataset_structure,
 )
@@ -143,7 +136,7 @@ Selecting an unsupported `(shard_file_type, compression)` pair raises an
 | :--- | :--- | :--- |
 | `"fb"` (FlatBuffers, default) | `""`, `"LZ4"`, `"ZSTD"`, `"GZIP"`, `"ZLIB"`, `"BZ2"`, `"LZMA"` | **Recommended**. Rust iterators (`as_numpy_iterator_rust*`) support `""`, `"LZ4"`, `"ZSTD"`, `"GZIP"`, `"ZLIB"` (do **not** use `"BZ2"` or `"LZMA"` with Rust iterators). Does **not** support `"ZIP"`. |
 | `"npz"` (NumPy Zip) | `""`, `"ZIP"` | **Gotcha**: Default `compression="GZIP"` fails with `shard_file_type="npz"`. You **must** pass `compression="ZIP"` or `compression=""`. |
-| `"tfrec"` (TFRecord) | `""`, `"GZIP"`, `"ZLIB"` | Requires `tensorflow` (`pip install "sedpack[tf]"`). Note: `"str"` attributes are returned as UTF-8 `bytes` when read via `as_numpy_iterator*`. |
+| `"tfrec"` (TFRecord) | `""`, `"GZIP"`, `"ZLIB"` | Requires `tensorflow` (`sedpack[tf]` extra). Note: `"str"` attributes are returned as UTF-8 `bytes` when read via `as_numpy_iterator*`. |
 
 ## 4. Writing Examples to a Dataset
 
@@ -157,7 +150,7 @@ For `"fb"` shards, `write_example` enforces
     attribute, or a Python/NumPy `int64` to a `"uint8"`/`"int32"` attribute,
     raises `ValueError: Cannot cast value of dtype ...`.
 -   **Fix**: Explicitly cast values before writing (for example,
-    `trace.astype(np.float32)`, `np.uint8(label)`).
+    `trace.astype(np.float32)`, `np.asarray(label, dtype=np.uint8)`).
 
 ### Pattern A: Standard Single-Coordinator Writing (`dataset.filler`)
 
@@ -166,18 +159,21 @@ Full shards are serialized, compressed, and hashed asynchronously in a
 background `ProcessPoolExecutor` with `max(1, concurrency)` workers.
 
 ```python
+def make_example(i: int) -> ExampleT:
+    return {
+        "trace": np.zeros((5000,), dtype=np.float32),
+        "plaintext": np.zeros((16,), dtype=np.uint8),
+        "key_id": i,
+        "label": np.asarray(i % 256, dtype=np.uint8),
+        "raw_packet": b"variable_len_bytes",
+        "fixed_nonce": b"0123456789ab",
+        "notes": f"example_{i}",
+    }
+
 with dataset.filler(concurrency=4) as dataset_filler:
     for i in range(500):
         dataset_filler.write_example(
-            values={
-                "trace": np.zeros((5000,), dtype=np.float32),
-                "plaintext": np.zeros((16,), dtype=np.uint8),
-                "key_id": i,
-                "label": np.uint8(i % 256),
-                "raw_packet": b"variable_len_bytes",
-                "fixed_nonce": b"0123456789ab",
-                "notes": f"example_{i}",
-            },
+            values=make_example(i),
             split=TRAIN_SPLIT,
             custom_metadata={"device": i % 2},  # Optional per-shard metadata
         )
@@ -203,6 +199,13 @@ with dataset.filler(concurrency=4) as dataset_filler:
         *after* the `with dataset.filler():` block (for example, recording
         global min/max statistics), you **must** call `dataset.write_config()`
         afterwards to persist those updates.
+-   **Converting existing NPZ, HDF5, or raw trace files**:
+    -   Stream records into `with dataset.filler(concurrency=4) as filler:` and
+        cast each array to the schema `dtype` (`np.asarray(x, dtype=...)`).
+    -   When reading `.npz`/`.npy` files, pass `allow_pickle=False`
+        (`with np.load(npz_path, allow_pickle=False) as archive:`) to prevent
+        unsafe `pickle` deserialization. For HDF5 (`h5py.File(h5_path, "r")`),
+        slice rows incrementally rather than loading the entire file into RAM.
 
 ### Pattern B: Built-In Multiprocessing (`dataset.write_multiprocessing`)
 
@@ -220,10 +223,7 @@ def feed_worker(
     # MUST enter the context manager inside feed_writer
     with dataset_filler:
         for item in worker_items:
-            dataset_filler.write_example(
-                values={...},
-                split=split,
-            )
+            dataset_filler.write_example(values=make_example(item), split=split)
     return len(worker_items)
 
 # Spawn 2 workers (len(custom_arguments) determines the number of tasks)
@@ -262,7 +262,7 @@ filler = DatasetFiller(
     relative_path_from_split=Path(f"worker_{worker_id}"),
 )
 with filler:
-    filler.write_example(values={...}, split=TRAIN_SPLIT)
+    filler.write_example(values=make_example(worker_id), split=TRAIN_SPLIT)
 worker_infos: list[ShardListInfo] = filler.get_updated_infos()
 
 # On the coordinator after all workers complete:
@@ -456,16 +456,17 @@ with RustBatchedGenerator(
     process_batch=None,
     shuffle_buffer_size=1_000,
 ) as rust_generator:
-    for batch in rust_generator():
-        ...
+    for batch in itertools.islice(rust_generator(), 100):
+        traces = batch["trace"]
 
 # Option B: Python unbatched iteration over balanced shards (all formats)
-for example in dataset.example_iterator_from_shard_iterator(
+balanced_examples = dataset.example_iterator_from_shard_iterator(
     shard_iterator=balanced_shards,
     process_record=None,
     shuffle=1_000,
-):
-    ...
+)
+for example in itertools.islice(balanced_examples, 100):
+    trace = example["trace"]
 ```
 
 ### Verify Dataset Integrity (`dataset.check()`)

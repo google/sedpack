@@ -1,7 +1,9 @@
 name: skills
 permissions:
   contents: read
-  pull-requests: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -20,10 +22,13 @@ on:
 
 jobs:
   validate_skills:
+    name: Validate skills
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - name: Set up Python 3.11
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
@@ -77,10 +82,13 @@ jobs:
           test -f .agents/skills/sedpack/SKILL.md
 
   env_managers:
+    name: Test environment managers
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - name: Set up Python 3.11
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
