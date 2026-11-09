@@ -16,6 +16,7 @@
 For information about FlatBuffers see https://flatbuffers.dev/
 """
 
+import errno
 from pathlib import Path
 
 from flatbuffers import Builder
@@ -189,7 +190,8 @@ class ShardWriterFlatBuffer(ShardWriterBase):
     @tenacity.retry(
         wait=tenacity.wait_random(min=60, max=5 * 60),  # 1 to 5 minutes
         stop=tenacity.stop_after_attempt(10),
-        retry=tenacity.retry_if_exception_type(OSError),
+        retry=tenacity.retry_if_exception(
+            lambda exc: isinstance(exc, OSError) and exc.errno != errno.ENOSPC),
         reraise=True,
     )
     def _write_file(self, file_content: bytes) -> None:

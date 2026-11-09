@@ -5,6 +5,7 @@ Bursztein
 CHES
 CUDA
 Corinna
+ENOSPC
 Elems
 GPAM
 Hastie
@@ -78,6 +79,7 @@ logpdf
 markdownlint
 mathbb
 mathjax
+namedtuple
 ndarray
 newbyteorder
 npx
@@ -97,6 +99,7 @@ pyfunction
 pylintrc
 pymethods
 pymodule
+retryable
 riscure
 rlib
 rngs
@@ -106,6 +109,7 @@ sedpack
 setaf
 sharded
 shardfile
+shutil
 subclassing
 symlink
 symlinking
