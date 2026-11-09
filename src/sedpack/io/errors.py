@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2023-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,13 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Implement an error to indicate that a scaaml.io.Dataset already exists.
+"""Custom exceptions for sedpack.io."""
 
-Creating scaaml.io.Dataset should not overwrite existing files. When it could
-the constructor needs to raise an error, which should also contain the dataset
-directory.
-"""
-
+import errno
 from pathlib import Path
 
 
@@ -34,3 +30,30 @@ class DatasetExistsError(FileExistsError):
             f'Dataset info file exists and would be overwritten. Use instead:'
             f' Dataset(path="{dataset_path}")')
         self.dataset_path = dataset_path
+
+
+class DiskFullError(OSError):
+    """Error for signalling that disk utilization is at or above the safety
+    threshold.
+    """
+
+    def __init__(
+        self,
+        dataset_path: Path,
+        message: str,
+        *,
+        current_utilization: float | None = None,
+        max_disk_utilization: float | None = None,
+    ) -> None:
+        """Represents that the disk does not have enough free space.
+
+        Args:
+          dataset_path: The dataset path.
+          message: Human-readable error message.
+          current_utilization: Current disk utilization ratio in [0.0, 1.0].
+          max_disk_utilization: Maximum allowed disk utilization ratio.
+        """
+        super().__init__(errno.ENOSPC, message)
+        self.dataset_path = dataset_path
+        self.current_utilization = current_utilization
+        self.max_disk_utilization = max_disk_utilization
